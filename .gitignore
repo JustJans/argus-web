@@ -3,6 +3,8 @@ node_modules/
 builder/.env
 builder/state/
 builder/out/
+site/
+site-data/
 app/dist/
 *.log
 .DS_Store

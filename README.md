@@ -11,8 +11,27 @@ and language rules, run client-side.
 
 ## Status
 
-**Planning.** Nothing is built yet. The feasibility study (legal, budget, sources, audience)
-and the design were completed on 2026-09-03; the implementation will start from that plan.
+**Being built, Spain first.** The pile builder runs on GitHub Actions every six hours and
+publishes to GitHub Pages: <https://justjans.github.io/argus-web/>. Today the page shows
+what the pile holds, by country and, for Spain, by engineering family. The CV reader, the
+profile code and the filtered list come next.
+
+Sources read today: Lanbide (Basque Country), Feina Activa (Catalonia), the Junta de
+Castilla y León, Arbetsförmedlingen (Sweden, by occupation code) and the company boards
+listed in `builder/config/companies.yml`. Spanish supply is thin on purpose until a licensed
+feed covers the private market; every source's licence is shown on the page.
+
+## Running it yourself
+
+```
+npm ci
+npm test                                  # the builder's pure parts, no network
+node builder/build-pile.mjs --explain     # reads every source, writes builder/out
+node builder/build-site.mjs               # assembles site/ (the app plus the pile)
+```
+
+`--limit N` stops each source after N adverts for a quick look; `--explain` writes one line
+per dropped advert with the reason to `builder/out/explain.txt`.
 
 ## What it will be
 
@@ -31,16 +50,18 @@ and the design were completed on 2026-09-03; the implementation will start from 
   which parts to download. No servers holding user data.
 - **Money:** none at launch. If it ever earns, licensed pay-per-click feeds come before ads.
 
-## Repository layout (planned)
+## Repository layout
 
 ```
-catalogues/   families, countries, languages, degrees — shared by builder, app and tests
-sectors/      the occupation gate per family: ISCO codes and title terms
-builder/      source adapters → normalise → gate → dedupe → shards → publish
-app/          the static site: intake (CV + questionnaire), profile code, filtered list
-test/         codec round-trips, adapter fixtures, browser build of the engine's own checks
-docs/         design, codec, pile format, sources and their licences
+catalogues/   families (ISCO and SSYK codes, title terms in seven languages) and countries
+builder/      adapters (one per source) → normalise → gate → dedupe → shards and an index
+app/          the static site GitHub Pages serves
+test/         the builder's pure parts and the adapters' parsers on recorded answers
+.github/      tests on every push; the pile and the site rebuilt every six hours
 ```
+
+The matching engine (title rules, years, degrees, languages) is Argus's own, installed as a
+dependency from its repository at a tagged version.
 
 ## Licence
 
