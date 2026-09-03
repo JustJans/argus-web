@@ -9,6 +9,7 @@ import { dirname, join } from 'path';
 import yaml from 'js-yaml';
 import { compileFamilies, familiesOf, hygieneReason } from './gate.mjs';
 import { compileCountries, toRecord } from './normalise.mjs';
+import { compileScreens } from './screens.mjs';
 import { dedupe } from './dedupe.mjs';
 import { buildShards, writePile } from './shard.mjs';
 import * as jobtech from './adapters/jobtech.mjs';
@@ -30,6 +31,10 @@ const countries = JSON.parse(readFileSync(join(ROOT, 'catalogues', 'countries.js
 const companies = (yaml.load(readFileSync(join(ROOT, 'builder', 'config', 'companies.yml'), 'utf-8')) || {}).companies || [];
 const gate = compileFamilies(families);
 const cc = compileCountries(countries);
+const screens = compileScreens({
+  degrees: JSON.parse(readFileSync(join(ROOT, 'catalogues', 'degrees.json'), 'utf-8')),
+  languages: JSON.parse(readFileSync(join(ROOT, 'catalogues', 'languages.json'), 'utf-8')),
+});
 const europe = new Set(countries.map(c => c.iso));
 
 const startedAt = new Date();
@@ -55,7 +60,7 @@ for (const adapter of adapters) {
       if (!fam.length) { counts.outsideVertical++; dropped.push(['OUTSIDE VERTICAL', raw]); continue; }
       const why = hygieneReason(raw);
       if (why) { counts.hygiene++; dropped.push([`HYGIENE ${why}`, raw]); continue; }
-      const rec = toRecord(raw, fam, cc);
+      const rec = toRecord(raw, fam, cc, screens);
       if (rec.cc && rec.cc !== 'xx' && !europe.has(rec.cc)) { counts.outsideEurope++; dropped.push(['OUTSIDE EUROPE', raw]); continue; }
       items.push({ rec, kind: adapter.kind === 'board' ? 'board' : 'feed' });
     }

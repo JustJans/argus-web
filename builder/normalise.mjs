@@ -5,6 +5,7 @@ import { createHash } from 'crypto';
 import { fold } from 'argus/server-bot/text.mjs';
 import { extractRequiredYears } from 'argus/server-bot/requirements.mjs';
 import { snippet, requirements } from './excerpt.mjs';
+import { requiredDegrees, requiredLanguages } from './screens.mjs';
 
 // ➤ The address without its campaign tail, trailing slash or fragment: what makes two
 // ➤ sightings of the same advert compare equal.
@@ -54,8 +55,9 @@ function cityIn(raw, c) {
   return /^[A-Z]{2}$/.test(first) || fold(first) === fold(c.name) ? '' : first.slice(0, 40);
 }
 
-// ➤ The record itself. `families` come from the gate; `source` is the adapter's id.
-export function toRecord(raw, families, compiledCountries) {
+// ➤ The record itself. `families` come from the gate; `source` is the adapter's id;
+// ➤ `screens`, when given, adds the degree families and languages the text demands.
+export function toRecord(raw, families, compiledCountries, screens = null) {
   const place = raw.country ? { cc: raw.country, city: raw.city || cityIn(raw.location || '', compiledCountries.find(c => c.iso === raw.country) || { cities: [], name: '' }) } : placeOf(raw.location, compiledCountries);
   if (raw.remote && !place.cc) place.cc = 'xx';
   const text = String(raw.description || '');
@@ -78,5 +80,11 @@ export function toRecord(raw, families, compiledCountries) {
   if (Number.isFinite(years) && years > 0) rec.y = years;
   if (raw.lang) rec.tl = raw.lang;
   if (raw.expires) rec.x = raw.expires;
+  if (screens) {
+    const dg = requiredDegrees(text, screens);
+    const lg = requiredLanguages(text, screens);
+    if (dg.length) rec.dg = dg;
+    if (lg.length) rec.lg = lg;
+  }
   return rec;
 }

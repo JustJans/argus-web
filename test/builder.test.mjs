@@ -31,6 +31,9 @@ eq(familiesOf({ title: 'Ingénieur études et conception mécanique H/F', codes:
 eq(familiesOf({ title: 'Fisioterapeuta', codes: {} }, gate), [], 'a physiotherapist is outside the vertical');
 eq(familiesOf({ title: 'Software Engineer', codes: {} }, gate), ['engineering-other'], 'a software engineer only matches the generic word — the visitor\'s roles refine it');
 ok(!familiesOf({ title: 'Ingeniería del software - Comercial', codes: {} }, gate).includes('mechanical'), 'a word inside another word does not match');
+eq(familiesOf({ title: 'Naval Architect', codes: {} }, gate), ['marine-offshore'], 'a naval architect is not an architect');
+eq(familiesOf({ title: 'Senior Solution Architect', codes: {} }, gate), [], 'nor is a solution architect');
+eq(familiesOf({ title: 'Arquitecto/a técnico', codes: {} }, gate), ['architecture-planning'], 'a real architect is');
 eq(hygieneReason({ title: 'Sales Engineer' }), 'title names a sales, recruiting or trainee role', 'a sales engineer is hygiene');
 eq(hygieneReason({ title: 'Ingeniero/a de procesos' }), null, 'an engineer is not');
 

@@ -8,32 +8,52 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>Argus Web</h1>
+  <header class="site-header">
+    <a class="brand" href="./">Argus Web</a>
     <p class="tagline">Engineering and technical jobs in Europe, filtered on your device. No account, nothing stored.</p>
   </header>
+
   <main>
+    <section id="landing" class="card" hidden>
+      <h2>Your list, from your code</h2>
+      <form id="code-form" class="code-form">
+        <label for="code-input">Paste your code</label>
+        <div class="code-form__row">
+          <input id="code-input" name="code" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. AQEAAAAB…">
+          <button class="button" type="submit">Show my list</button>
+        </div>
+      </form>
+      <p>No code yet? <a class="button button--primary" href="intake/">Make one from your CV</a></p>
+      <p class="muted">The code holds your search profile (families, countries, languages, degrees, deal-breakers), nothing personal. It stays in this address bar; no server ever receives it.</p>
+    </section>
+
+    <section id="results" class="card" hidden>
+      <div class="results-head">
+        <h2>Your list</h2>
+        <a id="edit-link" class="button" href="intake/">Edit my profile</a>
+      </div>
+      <p id="profile-summary" class="muted"></p>
+      <p id="results-status">Reading your code…</p>
+      <div id="list"></div>
+      <div id="debug" hidden></div>
+    </section>
+
     <section id="status" class="card">
-      <h2>Today's offers</h2>
+      <h2>What the pile holds today</h2>
       <p id="generated">Loading the pile…</p>
       <table id="countries" hidden><thead><tr><th>Country</th><th class="num">Offers</th></tr></thead><tbody></tbody></table>
     </section>
-    <section id="spain" class="card" hidden>
-      <h2>Spain, by family</h2>
-      <table id="families"><thead><tr><th>Family</th><th class="num">Offers</th></tr></thead><tbody></tbody></table>
-    </section>
-    <section class="card">
-      <h2>What comes next</h2>
-      <p>Paste your CV, answer a few questions, get your code, see your list. The pile is rebuilt every six hours from sources that allow it; every offer links to the page it lives on.</p>
-    </section>
+
     <section id="sources" class="card" hidden>
       <h2>Sources and credits</h2>
       <ul id="source-list"></ul>
+      <p class="muted">Every offer links to the page it lives on. Spanish supply comes from public employment services only, until a licensed feed covers the private market.</p>
     </section>
   </main>
-  <footer>
-    <p>This page stores nothing about you and sets no cookies. Hosted on GitHub Pages, whose own access logs apply. <a href="https://github.com/JustJans/argus-web">Source code</a>.</p>
+
+  <footer class="site-footer">
+    <p>This site stores nothing about you and sets no cookies. Hosted on GitHub Pages, whose own access logs apply. <a href="legal/privacy.html">Privacy</a> · <a href="legal/sources.html">Sources</a> · <a href="legal/about.html">About</a> · <a href="https://github.com/JustJans/argus-web">Source code</a></p>
   </footer>
-  <script src="app.js"></script>
+  <script type="module" src="main.js"></script>
 </body>
 </html>
