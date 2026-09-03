@@ -1,0 +1,12 @@
+# Company boards read directly through their applicant-tracking system's public API.
+# One entry per company: its name as shown to visitors, ONE key naming the ATS with the
+# company's slug on it (lever, greenhouse, ashby, recruitee, personio), and optionally
+# the country the board's adverts are in when the board does not say (iso code), the
+# language its adverts are written in, and enabled: false to pause it.
+#
+# Every entry here has answered its API at least once. Add companies with
+#   node builder/tools/discover.mjs "Company name" [...]
+# which probes the five ATS patterns and prints what answers with adverts.
+companies:
+  - name: GEODIS
+    recruitee: geodis

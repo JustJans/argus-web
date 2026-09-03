@@ -1,0 +1,18 @@
+{
+  "name": "argus-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Public job portal for engineers and technicians in Europe: the CV is read in the browser, the profile becomes a code, the offers are filtered on the visitor's device.",
+  "license": "MIT",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "pile": "node builder/build-pile.mjs",
+    "site": "node builder/build-site.mjs"
+  },
+  "dependencies": {
+    "argus": "github:JustJans/argus#v1.11.0",
+    "js-yaml": "^4.1.1"
+  }
+}

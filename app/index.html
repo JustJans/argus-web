@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Argus Web</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Argus Web</h1>
+    <p class="tagline">Engineering and technical jobs in Europe, filtered on your device. No account, nothing stored.</p>
+  </header>
+  <main>
+    <section id="status" class="card">
+      <h2>Today's offers</h2>
+      <p id="generated">Loading the pile…</p>
+      <table id="countries" hidden><thead><tr><th>Country</th><th class="num">Offers</th></tr></thead><tbody></tbody></table>
+    </section>
+    <section id="spain" class="card" hidden>
+      <h2>Spain, by family</h2>
+      <table id="families"><thead><tr><th>Family</th><th class="num">Offers</th></tr></thead><tbody></tbody></table>
+    </section>
+    <section class="card">
+      <h2>What comes next</h2>
+      <p>Paste your CV, answer a few questions, get your code, see your list. The pile is rebuilt every six hours from sources that allow it; every offer links to the page it lives on.</p>
+    </section>
+    <section id="sources" class="card" hidden>
+      <h2>Sources and credits</h2>
+      <ul id="source-list"></ul>
+    </section>
+  </main>
+  <footer>
+    <p>This page stores nothing about you and sets no cookies. Hosted on GitHub Pages, whose own access logs apply. <a href="https://github.com/JustJans/argus-web">Source code</a>.</p>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>
