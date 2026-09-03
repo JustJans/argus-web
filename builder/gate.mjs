@@ -12,7 +12,14 @@ export function compileFamilies(families) {
     for (const c of f.isco || []) byIsco.set(c, [...(byIsco.get(c) || []), f.id]);
     for (const c of f.ssyk || []) bySsyk.set(c, [...(bySsyk.get(c) || []), f.id]);
     const terms = (f.terms || []).map(t => escapeRe(fold(t)).replace(/\s+/g, '\\s+'));
-    return { id: f.id, re: terms.length ? new RegExp(`(?:^|[^a-z0-9])(?:${terms.join('|')})(?![a-z0-9])`) : null };
+    // ➤ "unless" words veto the family for one title: a naval architect or a software
+    // ➤ architect is not an architect.
+    const unless = (f.unless || []).map(t => escapeRe(fold(t)).replace(/\s+/g, '\\s+'));
+    return {
+      id: f.id,
+      re: terms.length ? new RegExp(`(?:^|[^a-z0-9])(?:${terms.join('|')})(?![a-z0-9])`) : null,
+      unless: unless.length ? new RegExp(`(?:^|[^a-z0-9])(?:${unless.join('|')})(?![a-z0-9])`) : null,
+    };
   });
   return { compiled, byIsco, bySsyk };
 }
@@ -28,7 +35,7 @@ export function familiesOf(raw, { compiled, byIsco, bySsyk }) {
   // ➤ Gender marks ("Ingeniero/a", "Enginyer/a") and apostrophes go before the words are
   // ➤ read; the catch-all family only speaks when no specific one did.
   const title = fold(raw.title || '').replace(/\/(?:a|o|as|os|es|ra|ora|ores|e|in)(?![a-z])/g, '').replace(/['’]/g, ' ');
-  for (const f of compiled) if (f.id !== 'engineering-other' && f.re && f.re.test(title)) out.add(f.id);
+  for (const f of compiled) if (f.id !== 'engineering-other' && f.re && f.re.test(title) && !(f.unless && f.unless.test(title))) out.add(f.id);
   if (!out.size) { const generic = compiled.find(f => f.id === 'engineering-other'); if (generic?.re?.test(title)) out.add(generic.id); }
   return [...out];
 }

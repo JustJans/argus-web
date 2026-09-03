@@ -1,0 +1,25 @@
+{
+  "_about": "Degree families a visitor may hold, in a fixed order (the position is the bit in the profile code). stems: regex fragments over lower-case, accent-free text, used both to read the degrees a CV holds and the degree an advert demands. 'engineering-any' is the generic 'an engineering degree' an advert asks for without naming the field. APPEND ONLY.",
+  "words": "degree|bachelor|master|msc|bsc|beng|meng|phd|diploma|licenciatura|licenciado|licenciada|grado en|graduado|graduada|ingenieria|titulacion|titulado|titulada|licence|diplome|ecole d ingenieur|diplome d ingenieur|abschluss|studium|studiengang|diplom|hbo|wo|universitair|hogeskole|hogskole|civilingenjor|hogskoleingenjor|sivilingenior|universitet|university|universidad|universite|universitat|enginyeria|formacion|formation|opleiding|utbildning|utdanning",
+  "degrees": [
+    { "id": "mechanical", "label": "Mechanical engineering", "stems": "mechanical|mecanic|mecanique|maschinenbau|werktuigbouw|maskinteknik|maskiningenj" },
+    { "id": "electrical", "label": "Electrical engineering", "stems": "electrical|electricidad|electrica|electrico|electrique|electrotech|elektrotechnik|elektrotechniek|elektroteknik|elkraft|elektro" },
+    { "id": "electronics-telecom", "label": "Electronics or telecommunications", "stems": "electronic|electronica|telecom|nachrichtentechnik|elektronik|elettronic" },
+    { "id": "civil", "label": "Civil engineering", "stems": "civil(?!ingenj)|caminos|genie civil|bauingenieur|bauwesen|civiele techniek|byggteknik|byggingenj|edificacion|obras publicas" },
+    { "id": "industrial", "label": "Industrial engineering", "stems": "industrial|organizacion industrial|wirtschaftsingenieur|industriel|industriell ekonomi|produktionstechnik" },
+    { "id": "chemical", "label": "Chemical engineering or chemistry", "stems": "chemical|chemistry|quimic|chimie|chimique|chemie|verfahrenstechnik|kemi|kjemi" },
+    { "id": "aerospace", "label": "Aerospace engineering", "stems": "aerospace|aeronautic|aerospatial|aeronautique|luftfahrt|raumfahrt|ruimtevaart|flygteknik|romfart" },
+    { "id": "naval", "label": "Naval architecture or marine engineering", "stems": "naval|marine engineering|shipbuilding|schiffbau|scheepsbouw|skeppsbygg|skipsteknikk|nautic" },
+    { "id": "mining-metallurgy", "label": "Mining or metallurgy", "stems": "mining|minas|metallurg|bergbau|mijnbouw|gruvteknik|bergteknikk" },
+    { "id": "materials", "label": "Materials science", "stems": "materials|materiales|materiaux|werkstoff|materiaal|materialteknik" },
+    { "id": "environmental", "label": "Environmental engineering", "stems": "environmental|ambiental|environnement|umwelt|milieu|miljo" },
+    { "id": "energy", "label": "Energy engineering", "stems": "energy|energetic|energie|energi" },
+    { "id": "automation-mechatronics", "label": "Automation or mechatronics", "stems": "automation|automatiz|mechatronic|mecatronic|regelungstechnik|automatisering|automatique" },
+    { "id": "computer-science", "label": "Computer science or software", "stems": "computer science|informatic|informatique|informatik|software|datateknik|datavetenskap" },
+    { "id": "physics-maths", "label": "Physics or mathematics", "stems": "physics|fisica|physique|physik|fysik|fysikk|mathematic|matematic|mathematik|wiskunde" },
+    { "id": "architecture", "label": "Architecture", "stems": "(?<!naval )architect|arquitect(?:o|a|ura)?(?! naval)|architektur|arkitekt" },
+    { "id": "geomatics", "label": "Surveying or geomatics", "stems": "geomatic|topograf|geodes|geodas|vermessung|surveying|lantmat|landmal|cartograf" },
+    { "id": "business", "label": "Business or economics", "stems": "business|administracion de empresas|betriebswirtschaft|economics|econom|bedrijfskunde|ekonomi" },
+    { "id": "engineering-any", "label": "Any engineering degree", "stems": "engineering|ingenier|ingenieur|enginyer|ingenjor|ingenior|technische universit|technik" }
+  ]
+}
