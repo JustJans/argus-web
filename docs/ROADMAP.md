@@ -38,6 +38,12 @@ The structure is built for the changes already known. Each item names the seam.
   `ops/workflows/` move to `.github/workflows/` once the token can create them, and Pages
   switches back to "GitHub Actions" as the source. Then no commits carry data.
 
+## Decisions waiting for the owner
+- **Remembering what you have seen** ("seen", "hide", "undo", as the bot has): only possible
+  by keeping a list on the visitor's own device (local storage, never a server). The one
+  exception to "nothing stored" that visitors expect; off until decided.
+- **A Spanish interface**: the texts sit in the pages today; a strings file would come first.
+
 ## Money and law (when, and only when, wanted)
 - Ads: a certified consent tool before the first ad, the legal notice with the owner's
   identity, and the fiscal registrations. `app/index.html` has room for a slot; the intake
