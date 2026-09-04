@@ -32,6 +32,15 @@ p { margin: 0 0 8px; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; margin: 0 0 var(--gap); }
 .results-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 
+/* The search line and the code line on the first page */
+.search { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
+.search input { flex: 1 1 220px; }
+.search select { flex: 0 1 220px; }
+.code-line { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 0 0 8px; }
+.code-line input { flex: 1 1 160px; max-width: 320px; font-family: ui-monospace, Consolas, monospace; }
+.small { font-size: 13px; margin: 0; }
+.notice { background: var(--chip-on); border: 1px solid var(--accent); border-radius: 8px; padding: 8px 12px; margin: 0 0 var(--gap); }
+
 /* Buttons and fields */
 .button { display: inline-block; padding: 8px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); font: inherit; text-decoration: none; cursor: pointer; }
 .button:hover { border-color: var(--accent); }

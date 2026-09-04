@@ -11,10 +11,12 @@ and language rules, run client-side.
 
 ## Status
 
-**Being built, Spain first.** The pile builder runs on GitHub Actions every six hours and
-publishes to GitHub Pages: <https://justjans.github.io/argus-web/>. Today the page shows
-what the pile holds, by country and, for Spain, by engineering family. The CV reader, the
-profile code and the filtered list come next.
+**Working, Spain first.** Live at <https://justjans.github.io/argus-web/>: search the pile
+by words and country with no code at all, or make a code from your CV and get the list
+your profile deserves. Every advert past its deadline is hidden; the page says when the
+pile was last rebuilt. The pile is rebuilt and published with the three commands below
+(the six-hourly GitHub Actions workflow waits in `ops/workflows/` until the repository's
+token can create it).
 
 Sources read today: Lanbide (Basque Country), Feina Activa (Catalonia), the Junta de
 Castilla y León, Arbetsförmedlingen (Sweden, by occupation code) and the company boards
@@ -28,6 +30,8 @@ npm ci
 npm test                                  # the builder's pure parts, no network
 node builder/build-pile.mjs --explain     # reads every source, writes builder/out
 node builder/build-site.mjs               # assembles site/ (the app plus the pile)
+node builder/publish.mjs                  # publishes site/ to the gh-pages branch
+node ops/serve.mjs site 8787              # or preview it at http://localhost:8787/
 ```
 
 `--limit N` stops each source after N adverts for a quick look; `--explain` writes one line

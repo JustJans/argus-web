@@ -4,7 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="no-referrer">
+  <meta name="description" content="Engineering and technical jobs in Europe, searched and filtered on your own device. No account, nothing stored.">
   <title>Argus Web</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231a4d8f'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='sans-serif' font-size='18' font-weight='700' fill='white'%3EA%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,26 +16,31 @@
   </header>
 
   <main>
-    <section id="landing" class="card" hidden>
-      <h2>Your list, from your code</h2>
-      <form id="code-form" class="code-form">
-        <label for="code-input">Paste your code</label>
-        <div class="code-form__row">
-          <input id="code-input" name="code" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. AQEAAAAB…">
-          <button class="button" type="submit">Show my list</button>
-        </div>
+    <section class="card">
+      <form id="search" class="search" autocomplete="off">
+        <input id="q" name="q" type="search" placeholder="Words in the title, company or city" aria-label="Search words">
+        <select id="country" name="c" aria-label="Country"><option value="">Everywhere</option></select>
+        <button class="button button--primary" type="submit">Search</button>
       </form>
-      <p>No code yet? <a class="button button--primary" href="intake/">Make one from your CV</a></p>
-      <p class="muted">The code holds your search profile (families, countries, languages, degrees, deal-breakers), nothing personal. It stays in this address bar; no server ever receives it.</p>
+      <form id="code-form" class="code-line" autocomplete="off">
+        <label for="code-input">Have a code?</label>
+        <input id="code-input" name="code" type="text" spellcheck="false" placeholder="paste it here" aria-label="Your code">
+        <button class="button" type="submit">Show my list</button>
+        <span class="muted">or</span>
+        <a href="intake/">make one from your CV</a>
+      </form>
+      <p class="muted small">A code is your search profile (families, countries, languages, degrees, deal-breakers), nothing personal. It stays in the address bar; no server ever receives it.</p>
     </section>
+
+    <p id="stale" class="notice" hidden></p>
 
     <section id="results" class="card" hidden>
       <div class="results-head">
-        <h2>Your list</h2>
-        <a id="edit-link" class="button" href="intake/">Edit my profile</a>
+        <h2 id="results-title">Results</h2>
+        <a id="edit-link" class="button" href="intake/" hidden>Edit my profile</a>
       </div>
-      <p id="profile-summary" class="muted"></p>
-      <p id="results-status">Reading your code…</p>
+      <p id="profile-summary" class="muted" hidden></p>
+      <p id="results-status" aria-live="polite"></p>
       <div id="list"></div>
       <div id="debug" hidden></div>
     </section>
@@ -47,7 +54,7 @@
     <section id="sources" class="card" hidden>
       <h2>Sources and credits</h2>
       <ul id="source-list"></ul>
-      <p class="muted">Every offer links to the page it lives on. Spanish supply comes from public employment services only, until a licensed feed covers the private market.</p>
+      <p class="muted small">Every offer links to the page it lives on. Spanish supply comes from public employment services only, until a licensed feed covers the private market.</p>
     </section>
   </main>
 

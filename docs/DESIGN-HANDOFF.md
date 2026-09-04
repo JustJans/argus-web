@@ -6,7 +6,8 @@ Everything a designer needs to restyle Argus Web without breaking it.
 
 | Page | File | What it does |
 |---|---|---|
-| Home / list | `app/index.html` + `app/main.js` | Without a code: what the pile holds, a field to paste a code, a button to make one. With `#p=<code>`: the visitor's filtered list. |
+| Home / list | `app/index.html` + `app/main.js` | A search line (words + country, no code needed), a code line (paste a code, or make one), what the pile holds, the sources. With `#q=…&c=…` a plain search; with `#p=<code>` the visitor's filtered list; typing in the search box re-filters the list on screen. A notice appears when the pile is older than two days. |
+| Not found | `app/404.html` | GitHub Pages serves it for any missing address. |
 | Intake | `app/intake/index.html` + `app/intake/intake.js` | Eight steps (CV, families, role words, level and years, languages, degrees, countries in order, deal-breakers) that end in the code. |
 | Privacy, Sources, About | `app/legal/*.html` | Plain pages. Sources lists today's sources from the pile's index. |
 
@@ -15,9 +16,10 @@ the components below. Dark mode follows the system (`prefers-color-scheme`).
 
 ## The contract with the scripts
 
-- **Ids** are used by the scripts; keep them (`#code-form`, `#code-input`, `#landing`,
-  `#results`, `#list`, `#debug`, `#generated`, `#countries`, `#sources`, `#source-list`,
-  `#profile-summary`, `#results-status`, `#edit-link`; on the intake every `#…` in the HTML).
+- **Ids** are used by the scripts; keep them (`#search`, `#q`, `#country`, `#code-form`,
+  `#code-input`, `#stale`, `#results`, `#results-title`, `#list`, `#debug`, `#generated`,
+  `#countries`, `#sources`, `#source-list`, `#profile-summary`, `#results-status`,
+  `#edit-link`; on the intake every `#…` in the HTML).
 - **Class names** are the styling hooks; the scripts add elements with these classes:
   `offers`, `offer`, `offer__title`, `offer__meta`, `offer__snippet`, `offer__tags`, `tag`,
   `tag--source`, `empty`, `debug`, `chip`, `chips`, `button`, `button--primary`.
@@ -30,9 +32,9 @@ the components below. Dark mode follows the system (`prefers-color-scheme`).
 
 ## States to design
 
-- Home without a code, with a code and results, with a code and zero results (the empty
-  state lists how many offers fell at each stage and how to loosen the profile), with an
-  unreadable code, and while parts of the pile download.
+- Home with nothing chosen, a plain search with results, a code with results, a code with
+  zero results (the empty state lists how many offers fell at each stage and how to loosen
+  the profile), an unreadable code, parts of the pile downloading, and the stale-pile notice.
 - Intake: each step empty and filled; the CV read succeeded / was too short / the file
   could not be read; the final code box with Copy, Open my list, Share (only where the
   browser offers sharing).
