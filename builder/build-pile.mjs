@@ -27,10 +27,17 @@ const OUT = flag('--out', join(ROOT, 'builder', 'out'));
 const LIMIT = Number(flag('--limit', 0)) || 0;
 const EXPLAIN = args.includes('--explain');
 
-const families = JSON.parse(readFileSync(join(ROOT, 'catalogues', 'families.json'), 'utf-8')).families;
+const catalogue = JSON.parse(readFileSync(join(ROOT, 'catalogues', 'families.json'), 'utf-8'));
+const families = catalogue.families;
+// ➤ The classifications the gate reads: ESCO's occupations per ISCO unit group and JobTech's
+// ➤ SSYK→ISCO correspondence (both built by builder/isco-esco.mjs).
+const codes = {
+  isco: JSON.parse(readFileSync(join(ROOT, 'catalogues', 'codes', 'isco.json'), 'utf-8')),
+  ssyk: JSON.parse(readFileSync(join(ROOT, 'catalogues', 'codes', 'ssyk-isco.json'), 'utf-8')),
+};
 const countries = JSON.parse(readFileSync(join(ROOT, 'catalogues', 'countries.json'), 'utf-8')).countries;
 const companies = (yaml.load(readFileSync(join(ROOT, 'builder', 'config', 'companies.yml'), 'utf-8')) || {}).companies || [];
-const gate = compileFamilies(families);
+const gate = compileFamilies(catalogue, codes);
 const cc = compileCountries(countries);
 const screens = compileScreens({
   degrees: JSON.parse(readFileSync(join(ROOT, 'catalogues', 'degrees.json'), 'utf-8')),
@@ -41,7 +48,8 @@ const europe = new Set(countries.map(c => c.iso));
 const startedAt = new Date();
 const log = line => console.log(`[${new Date().toISOString().slice(11, 19)}] ${line}`);
 const failed = [];
-const ctx = { families, companies, log, fail: (who, why) => { failed.push(`${who}: ${why}`); log(`FAILED ${who}: ${why}`); } };
+// ➤ ssykGroups: the SSYK groups whose ISCO codes fall in the vertical, what JobTech is asked for.
+const ctx = { families, ssykGroups: [...gate.bySsyk.keys()], companies, log, fail: (who, why) => { failed.push(`${who}: ${why}`); log(`FAILED ${who}: ${why}`); } };
 
 const adapters = [lanbide, feinaactiva, jcyl, jobtech, boards];
 const items = [];
@@ -90,7 +98,7 @@ const perCountry = {};
 for (const rec of kept) perCountry[rec.cc || 'zz'] = (perCountry[rec.cc || 'zz'] || 0) + 1;
 
 const index = {
-  v: 1, generated_at: generatedAt, expires_at: new Date(Date.now() + 48 * 3600 * 1000).toISOString(), catalogue_v: 1,
+  v: 1, generated_at: generatedAt, expires_at: new Date(Date.now() + 48 * 3600 * 1000).toISOString(), catalogue_v: 2,
   families: familiesIndex, sources,
   counts: { offers: kept.length, found: counts.found, by_country: perCountry, companies: companies.filter(c => c.enabled !== false).length },
   status: { ok: kept.length > 0 && failed.length < adapters.length, sources_failed: failed, seconds: Math.round((Date.now() - startedAt) / 1000) },

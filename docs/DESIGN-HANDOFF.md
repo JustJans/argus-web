@@ -6,20 +6,22 @@ Everything a designer needs to restyle Argus Web without breaking it.
 
 | Page | File | What it does |
 |---|---|---|
-| Home / list | `app/index.html` + `app/main.js` | Filters on the left (country, engineering discipline, posted date: plain checkboxes with counts, the tick on the left), a search line, a code line (paste a code, or make one), what the pile holds, the sources. On a phone the filters are a panel the "☰ Filters" button opens and the "Done" button closes. State in the address: `#q=…&c=es,se&f=mechanical&d=30` for a search, `#p=<code>` for the visitor's list; the filters narrow either. A notice appears when the pile is older than two days. |
+| Home / list | `app/index.html` + `app/main.js` | Filters on the left (country; occupations by group — engineers, architects and surveyors, technicians, supervisors, plant operators, crews; posted date: plain checkboxes with counts, the tick on the left), one form with the search words, the code line (paste a code, or make one) and a single Search button that serves both, what the pile holds, a link to the sources. On a phone the filters are a panel the "☰ Filters" button opens and the "Done" button closes. State in the address: `#q=…&c=es,se&f=2144,3115&d=30` for a search, `#p=<code>` for the visitor's list; the filters narrow either. A notice appears when the pile is older than two days. |
 | Not found | `app/404.html` | GitHub Pages serves it for any missing address. |
-| Intake | `app/intake/index.html` + `app/intake/intake.js` | Eight steps (CV, families, role words, level and years, languages, degrees, countries in order, deal-breakers) that end in the code. |
+| Intake | `app/intake/index.html` + `app/intake/intake.js` | Eight steps (CV, occupations by group, title words, level and years, languages, degrees, countries in order, deal-breakers) that end in the code. |
 | Privacy, Sources, About | `app/legal/*.html` | Plain pages. Sources lists today's sources from the pile's index. |
 
 One stylesheet, `app/style.css`, holds the tokens (colours, radius, measure) at the top and
-the components below. Dark mode follows the system (`prefers-color-scheme`).
+the components below. Dark mode follows the system (`prefers-color-scheme`). Every page opens
+with the same header: the brand and the site links (`.site-nav`: Privacy, Sources, About,
+Source code); there is no footer.
 
 ## The contract with the scripts
 
 - **Ids** are used by the scripts; keep them (`#filters`, `#filters-form`, `#filters-toggle`,
-  `#filters-close`, `#filters-clear`, `#countries-pick`, `#families-pick`, `#search`, `#q`, `#code-form`,
+  `#filters-close`, `#filters-clear`, `#countries-pick`, `#families-pick`, `#search`, `#q`,
   `#code-input`, `#stale`, `#results`, `#results-title`, `#list`, `#debug`, `#generated`,
-  `#countries`, `#sources`, `#source-list`, `#profile-summary`, `#results-status`,
+  `#countries`, `#profile-summary`, `#results-status`,
   `#edit-link`; on the intake every `#…` in the HTML).
 - **Class names** are the styling hooks; the scripts add elements with these classes:
   `offers`, `offer`, `offer__title`, `offer__meta`, `offer__snippet`, `offer__tags`, `tag`,

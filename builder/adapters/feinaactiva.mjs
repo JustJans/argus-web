@@ -31,7 +31,7 @@ export function parseFeinaActiva(xml) {
       title: tag(block, 'title'), company: tag(block, 'company'),
       location: [city, region, 'Spain'].filter(Boolean).join(', '), country: 'es', city,
       url: tag(block, 'url'), description: parts.join('\n'),
-      posted: isoDay(tag(block, 'date')), expires: '', codes: {}, lang: '',
+      posted: isoDay(tag(block, 'date')), expires: '', codes: {}, lang: 'ca',
     };
   }).filter(r => r && r.url);
 }

@@ -11,6 +11,7 @@
 <body>
   <header class="site-header">
     <a class="brand" href="../">Argus Web</a>
+    <nav class="site-nav" aria-label="Site"><a href="privacy.html">Privacy</a><a href="sources.html">Sources</a><a href="about.html">About</a><a href="https://github.com/JustJans/argus-web" rel="noopener noreferrer">Source code</a></nav>
     <p class="tagline">Where the offers come from, and under which terms</p>
   </header>
   <main>
@@ -25,7 +26,6 @@
       <p>A source that no longer wants to be listed, or an employer who wants an advert removed: <a href="https://github.com/JustJans/argus-web/issues" rel="noopener noreferrer" target="_blank">open an issue</a>; it is acted on within 72 hours.</p>
     </section>
   </main>
-  <footer class="site-footer"><p><a href="../">Home</a> · <a href="privacy.html">Privacy</a> · <a href="about.html">About</a></p></footer>
   <script type="module">
     const r = await fetch('../data/index.json', { cache: 'no-cache' }).catch(() => null);
     const g = document.getElementById('generated'), ul = document.getElementById('source-list');
