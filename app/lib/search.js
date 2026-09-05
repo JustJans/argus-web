@@ -11,7 +11,7 @@ export function wordsOf(q) {
 // ➤ country name.
 export function matchesWords(o, words, countryName = () => '') {
   if (!words.length) return true;
-  const hay = fold([o.t, o.c, o.ci, o.l, countryName(o.cc)].filter(Boolean).join(' '));
+  const hay = fold([o.t, o.te, o.c, o.ci, o.l, countryName(o.cc)].filter(Boolean).join(' '));
   return words.every(w => hay.includes(w));
 }
 
