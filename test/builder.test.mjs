@@ -6,7 +6,7 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { harness } from 'argus/server-bot/test-harness.mjs';
-import { compileFamilies, familiesOf, hygieneReason, cleanTitle } from '../builder/gate.mjs';
+import { compileFamilies, familiesOf, hygieneReason, matchableTitle } from '../builder/gate.mjs';
 import { compileCountries, placeOf, normUrl, idFor, toRecord } from '../builder/normalise.mjs';
 import { snippet, requirements } from '../builder/excerpt.mjs';
 import { dedupe, roleKey } from '../builder/dedupe.mjs';
@@ -68,7 +68,7 @@ eq(familiesOf({ title: 'TALLYMAN, SUPERVISOR/RA', codes: {}, lang: 'es' }, gate)
 eq(familiesOf({ title: 'ARQUITECTO/TA TECNICO/CA - JEFE/FA DE OBRA', codes: {}, lang: 'es' }, gate).includes('3112') && !familiesOf({ title: 'ARQUITECTO/TA TECNICO/CA - JEFE/FA DE OBRA', codes: {}, lang: 'es' }, gate).includes('2161'), true, 'the /TA /CA /FA gender marks go too, so the building surveyor is read whole');
 eq(familiesOf({ title: 'TECNICO/A DE INFRAESTRUCTURAS IT', codes: {}, lang: 'es' }, gate), [], 'IT puts a title outside the vertical whatever else it says');
 ok(familiesOf({ title: "ENGINYER/A DE PONTS I CAMINS O D'OBRA CIVIL", codes: {}, lang: 'ca' }, gate).includes('2142'), 'the Catalan civil engineer');
-eq(cleanTitle("Enginyer/a d'automatització (m/f)"), 'enginyer d automatitzacio', 'gender marks and apostrophes go before the words are read');
+eq(matchableTitle("Enginyer/a d'automatització (m/f)"), 'enginyer d automatitzacio', 'gender marks and apostrophes go before the words are read');
 eq(hygieneReason({ title: 'Sales Engineer' }), 'title names a sales, recruiting, trainee or labourer role', 'a sales engineer is hygiene');
 eq(hygieneReason({ title: 'VENDEDOR/A, INTERIORISTA, DISEÑADOR/A' }), 'title names a sales, recruiting, trainee or labourer role', 'so is a Spanish shop assistant, whatever else the title says');
 eq(hygieneReason({ title: 'PEONES DE LA INDUSTRIA METALÚRGICA' }), 'title names a sales, recruiting, trainee or labourer role', 'and a labourer');
