@@ -6,5 +6,6 @@ builder/out/
 site/
 site-data/
 app/dist/
+app/lib/engine.js
 *.log
 .DS_Store

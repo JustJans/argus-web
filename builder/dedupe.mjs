@@ -2,15 +2,10 @@
 // ➤ feed both list it. First by address, then by company plus title (an aggregator's copy
 // ➤ has another address but the same words). A board's copy beats a feed's copy: it is the
 // ➤ page the employer maintains.
-import { titleKey } from 'argus/server-bot/text.mjs';
+import { roleKey } from 'argus/server-bot/scan.mjs';
+export { roleKey };
 
 const RANK = { feed: 1, board: 2 };
-
-export function roleKey(company, title) {
-  const who = titleKey(String(company || ''));
-  if (!who) return '';
-  return `${who}::${titleKey(String(title || ''))}`;
-}
 
 // ➤ records: [{rec, kind}] → the records to keep, and how many fell by each rule.
 export function dedupe(items) {

@@ -1,61 +1,46 @@
-// ➤ Titles in English, the way the Telegram bot shows them: Google's free translator is
-// ➤ asked once per distinct title, with the advert's language as the hint when the source
-// ➤ states it, and every answer is kept in a cache on disk so a title is never asked twice.
-// ➤ The result travels as `te` next to the original `t`, and only when it differs. A
-// ➤ rate-limited translator stops the asking for the rest of the build; the next build
-// ➤ carries on where it left off.
+// ➤ Titles in English, exactly the way the Telegram bot does it: Argus's own translateTitle
+// ➤ (Google's free translator, a second attempt with the country's language when the first
+// ➤ comes back unchanged). This file only adds what a pile needs and a bot does not: a cache
+// ➤ of its own on disk, so a title is asked once across builds, a cap per build, and a stop
+// ➤ when the translator starts answering 429. The English travels as `te` next to the
+// ➤ original `t`, only when it differs.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname } from 'path';
+import { translateTitle } from 'argus/server-bot/notify.mjs';
 import { fold } from 'argus/server-bot/text.mjs';
 
-const ENDPOINT = 'https://translate.googleapis.com/translate_a/single?client=gtx&tl=en&dt=t';
-const UA = 'Mozilla/5.0 (compatible; ArgusWeb/0.1; +https://github.com/JustJans/argus-web)';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+// ➤ The cache is the bot's Map, persisted as JSON: only real translations are kept, so a
+// ➤ title the translator could not answer is asked again next time.
 export function loadCache(path) {
-  try { return existsSync(path) ? JSON.parse(readFileSync(path, 'utf-8')) : {}; } catch { return {}; }
+  try { return new Map(existsSync(path) ? Object.entries(JSON.parse(readFileSync(path, 'utf-8'))) : []); } catch { return new Map(); }
 }
 export function saveCache(path, cache) {
   mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, JSON.stringify(cache));
+  writeFileSync(path, JSON.stringify(Object.fromEntries(cache)));
 }
 
-// ➤ One question to the translator: {text, src} or null when it did not answer; a 429 is
-// ➤ thrown as rateLimited so the caller can stop asking.
-export async function askTranslator(text, sl = 'auto', fetchImpl = fetch) {
-  const url = `${ENDPOINT}&sl=${encodeURIComponent(sl || 'auto')}&q=${encodeURIComponent(String(text).slice(0, 200))}`;
-  const res = await fetchImpl(url, { signal: AbortSignal.timeout(8_000), headers: { 'User-Agent': UA } });
-  if (res.status === 429) throw Object.assign(new Error('translator rate-limited'), { rateLimited: true });
-  if (!res.ok) return null;
-  const data = await res.json();
-  const out = (data?.[0] || []).map(seg => seg?.[0] || '').join('').trim();
-  const src = typeof data?.[2] === 'string' ? data[2].toLowerCase() : '';
-  return { text: out, src };
-}
-
-// ➤ Sets `te` on every record whose title has an English version that differs from the
-// ➤ original. records: the pile's records (t, tl). Answers what happened, for the log.
-export async function translateTitles(records, { cache, fetchImpl = fetch, gapMs = 150, maxNew = 800, log = () => {} } = {}) {
+export async function translateTitles(records, { cache = new Map(), fetchImpl = fetch, gapMs = 150, maxNew = 800, log = () => {} } = {}) {
   let asked = 0, fromCache = 0, translated = 0, limited = false;
+  // ➤ A 429 anywhere stops the asking for this build; the bot's function swallows errors,
+  // ➤ so the answer is watched on the way in.
+  const watched = async (url, opts) => { const res = await fetchImpl(url, opts); if (res.status === 429) limited = true; return res; };
   for (const rec of records) {
     if (!rec.t || rec.tl === 'en') continue;
-    const key = `${rec.tl || 'auto'}|${rec.t}`;
-    let entry = cache[key];
-    if (!entry) {
+    const key = `${rec.t} ${rec.l || ''}`;
+    let out;
+    if (cache.has(key)) { out = cache.get(key); fromCache++; }
+    else {
       if (limited || asked >= maxNew) continue;
       if (asked) await sleep(gapMs);
-      try {
-        const r = await askTranslator(rec.t, rec.tl || 'auto', fetchImpl);
-        asked++;
-        if (!r) continue;
-        entry = { en: r.text, src: r.src };
-        cache[key] = entry;
-      } catch (e) {
-        if (e.rateLimited) { limited = true; log('translator: rate-limited, the rest waits for the next build'); }
-        continue;
-      }
-    } else fromCache++;
-    if (entry.en && entry.src !== 'en' && fold(entry.en) !== fold(rec.t)) { rec.te = entry.en; translated++; }
+      const scratch = new Map();
+      out = await translateTitle(rec.t, rec.l || '', { fetchImpl: watched, cache: scratch });
+      asked++;
+      if (limited) { log('translator: rate-limited, the rest waits for the next build'); continue; }
+      if (fold(out) !== fold(rec.t)) cache.set(key, out);
+    }
+    if (out && fold(out) !== fold(rec.t)) { rec.te = out; translated++; }
   }
   return { asked, fromCache, translated, limited };
 }

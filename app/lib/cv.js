@@ -1,8 +1,10 @@
 // ➤ What a CV suggests for the profile, read on the device from its text alone: the degree
 // ➤ families it names, the languages it lists with a level, the engineering families its
 // ➤ job titles belong to. Nothing identifying is looked for and nothing leaves this
-// ➤ function but those suggestions. Pure, so Node tests run it as the browser does.
-const fold = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+// ➤ function but those suggestions. Pure, so Node tests run it as the browser does. Argus's
+// ➤ own CV readers (onboarding.mjs) need Node today; this stands in until Argus exports them
+// ➤ for the browser, and the accent folding is Argus's.
+import { fold } from './engine.js';
 const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // ➤ A level worth calling "a language you work in", and the levels that are not.
 const LEVEL = /\b(?:native|fluent|bilingual|c1|c2|b1|b2|advanced|upper intermediate|intermediate|working knowledge|professional|nativo|nativa|fluido|fluida|avanzado|avanzada|intermedio|intermedia|bilingue|nivel|niveau|courant|maternelle|muttersprache|fliessend|verhandlungssicher|moedertaal|vloeiend|goed|flytande|modersmal|flytende|morsmal)\b/;

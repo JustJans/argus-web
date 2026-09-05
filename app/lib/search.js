@@ -1,7 +1,8 @@
 // ➤ The plain search: words typed on the first page, matched against an advert's title,
-// ➤ company, city and country, accent-blind; and the one rule every list applies, code or
-// ➤ not — an advert past its deadline is not shown. Pure, tested under Node.
-export const fold = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+// ➤ company, city and country, accent-blind with Argus's own fold; and the one rule every
+// ➤ list applies, code or not — an advert past its deadline is not shown. Pure, tested
+// ➤ under Node against the same engine file the browser loads.
+import { fold } from './engine.js';
 
 export function wordsOf(q) {
   return fold(q).split(/[\s,;]+/).filter(w => w.length >= 2);

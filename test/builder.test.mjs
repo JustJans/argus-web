@@ -127,15 +127,17 @@ eq(snippet('A'.repeat(300), 50).length, 50, 'a single overlong sentence is cut')
   ok(rows[0].description.includes('3 años'), 'the HTML body is turned into text with its entities decoded');
 }
 {
-  const gh = ATS.greenhouse.parse({ jobs: [{ id: 1, title: 'Naval Architect', location: { name: 'Rotterdam, Netherlands' }, absolute_url: 'https://boards.greenhouse.io/x/jobs/1', updated_at: '2026-09-01T10:00:00Z', content: '&lt;p&gt;Design &amp; build.&lt;/p&gt;' }] });
-  eq([gh[0].title, gh[0].location, gh[0].description, gh[0].posted], ['Naval Architect', 'Rotterdam, Netherlands', 'Design & build.', '2026-09-01'], 'Greenhouse: escaped HTML content becomes text');
-  const lv = ATS.lever.parse([{ id: 'a', text: 'PLC Engineer', categories: { location: 'Remote' }, hostedUrl: 'https://jobs.lever.co/x/a', createdAt: 1756720000000, descriptionPlain: 'Intro.', lists: [{ text: 'Requirements', content: '<li>2 years</li>' }], workplaceType: 'remote' }]);
-  eq([lv[0].title, lv[0].remote, lv[0].description.includes('2 years')], ['PLC Engineer', true, true], 'Lever: lists join the description, remote is read');
+  const gh = ATS.greenhouse.parse({ jobs: [{ id: 1, title: 'Naval Architect', location: { name: 'Rotterdam, Netherlands' }, absolute_url: 'https://boards.greenhouse.io/x/jobs/1', updated_at: '2026-09-01T10:00:00Z', content: '&lt;p&gt;Design &amp; build.&lt;/p&gt;' }] }, 'x', 'Acme');
+  eq([gh[0].title, gh[0].location, gh[0].description, gh[0].posted, gh[0].sourceId], ['Naval Architect', 'Rotterdam, Netherlands', 'Design & build.', '2026-09-01', '1'], 'Greenhouse through Argus\'s parser: escaped HTML content becomes text, the date rides along');
+  const lv = ATS.lever.parse([{ id: 'a', text: 'PLC Engineer', categories: { location: 'Remote' }, hostedUrl: 'https://jobs.lever.co/x/a', createdAt: 1756720000000, descriptionPlain: 'Intro.', lists: [{ text: 'Requirements', content: '<li>2 years</li>' }], workplaceType: 'remote' }], 'x', 'Acme');
+  eq([lv[0].title, lv[0].remote, lv[0].description.includes('2 years')], ['PLC Engineer', true, true], 'Lever through Argus\'s parser: lists join the description, remote is read');
+  const sr = ATS.smartrecruiters.parse({ content: [{ id: '99', name: 'Commissioning Engineer', location: { city: 'Bilbao', region: 'Bizkaia', country: 'es', remote: false }, company: { identifier: 'Acme1' }, releasedDate: '2026-09-02T08:00:00.000Z' }] }, 'Acme1', 'Acme');
+  eq([sr[0].title, sr[0].url, sr[0].location, sr[0].posted], ['Commissioning Engineer', 'https://jobs.smartrecruiters.com/Acme1/99', 'Bilbao, Bizkaia, ES', '2026-09-02'], 'SmartRecruiters through Argus\'s parser: the posting address is built and the date read');
   const rc = ATS.recruitee.parse({ offers: [{ id: 5, title: 'Commissioning Engineer', city: 'Bilbao', country: 'Spain', careers_url: 'https://x.recruitee.com/o/c', description: '<p>Body</p>', requirements: '<ul><li>Degree</li></ul>', published_at: '2026-08-30' }] });
   eq([rc[0].location, rc[0].description.includes('Degree'), rc[0].posted], ['Bilbao, Spain', true, '2026-08-30'], 'Recruitee: city and country, requirements appended');
   const pe = ATS.personio.parse('<workzag-jobs><position><id>77</id><name>Konstrukteur (m/w/d)</name><office>Kiel</office><createdAt>2026-08-29</createdAt><jobDescriptions><jobDescription><name>Aufgaben</name><value><![CDATA[<p>Konstruktion.</p>]]></value></jobDescription></jobDescriptions></position></workzag-jobs>', 'acme');
   eq([pe[0].title, pe[0].location, pe[0].url, pe[0].description], ['Konstrukteur (m/w/d)', 'Kiel', 'https://acme.jobs.personio.de/job/77', 'Konstruktion.'], 'Personio: XML positions with CDATA bodies');
-  const ab = ATS.ashby.parse({ jobs: [{ id: 'z', title: 'Hardware Engineer', location: 'Berlin', jobUrl: 'https://jobs.ashbyhq.com/x/z', publishedAt: '2026-09-02T00:00:00Z', descriptionPlain: 'Plain.', isRemote: false }] });
+  const ab = ATS.ashby.parse({ jobs: [{ id: 'z', title: 'Hardware Engineer', location: 'Berlin', jobUrl: 'https://jobs.ashbyhq.com/x/z', publishedAt: '2026-09-02T00:00:00Z', descriptionPlain: 'Plain.', isRemote: false }] }, 'x', 'Acme');
   eq([ab[0].title, ab[0].location, ab[0].posted], ['Hardware Engineer', 'Berlin', '2026-09-02'], 'Ashby: plain fields');
 }
 
