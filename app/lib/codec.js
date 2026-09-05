@@ -12,6 +12,7 @@ const FAMILY_BYTES = 8, LANGUAGE_BYTES = 2, DEGREE_BYTES = 4;
 export const MAX_YEARS_STEPS = [null, 1, 2, 3, 5, 7, 10, 15];   // ➤ 3 bits
 export const LEVELS = ['any', 'junior', 'mid', 'senior'];         // ➤ 2 bits
 export const HIGHEST = ['none', 'bachelor', 'master', 'phd'];     // ➤ 2 bits
+export const POSTED_STEPS = [0, 7, 30];                           // ➤ 2 bits of the flags: posted within n days, 0 = any time
 const MAX_FREE = 8;
 const MAX_TERM_BYTES = 24;
 
@@ -83,11 +84,15 @@ export function normaliseProfile(p = {}) {
     maxYears: MAX_YEARS_STEPS.includes(p.maxYears) ? p.maxYears : null,
     highest: HIGHEST.includes(p.highest) ? p.highest : 'none',
     remote: !!p.remote,
+    posted: POSTED_STEPS.includes(p.posted) ? p.posted : 0,
     roles: cleanTerms(p.roles),
     vetoes: sorted(p.vetoes),
     noWords: cleanTerms(p.noWords),
   };
 }
+// ➤ Nothing set at all: the page shows its front instead of a list.
+const EMPTY = JSON.stringify(normaliseProfile({}));
+export const isEmptyProfile = p => JSON.stringify(normaliseProfile(p)) === EMPTY;
 
 // ➤ cats: { families: [ids], countries: [isos], languages: [codes], degrees: [ids], vetoes: [ids] }
 // ➤ in catalogue order — the same arrays the decoder must be given.
@@ -95,7 +100,7 @@ export function encodeProfile(profile, cats) {
   const p = normaliseProfile(profile);
   const w = new Writer();
   w.byte(VERSION);
-  w.byte(p.remote ? 1 : 0);
+  w.byte((p.remote ? 1 : 0) | (POSTED_STEPS.indexOf(p.posted) << 1));
   w.bits(p.families, cats.families, FAMILY_BYTES);
   w.byte((LEVELS.indexOf(p.level) << 6) | (MAX_YEARS_STEPS.indexOf(p.maxYears) << 3) | HIGHEST.indexOf(p.highest));
   w.bits(p.languages, cats.languages, LANGUAGE_BYTES);
@@ -132,7 +137,7 @@ export function decodeProfile(code, cats) {
   const nr = r.varint(); const roles = []; for (let i = 0; i < nr; i++) roles.push(r.string());
   const nv = r.varint(); const vetoes = []; for (let i = 0; i < nv; i++) { const idx = r.varint(); if (cats.vetoes[idx]) vetoes.push(cats.vetoes[idx]); }
   const nn = r.varint(); const noWords = []; for (let i = 0; i < nn; i++) noWords.push(r.string());
-  return normaliseProfile({ families, countries, languages, degrees, level, maxYears, highest, remote: !!(flags & 1), roles, vetoes, noWords });
+  return normaliseProfile({ families, countries, languages, degrees, level, maxYears, highest, remote: !!(flags & 1), posted: POSTED_STEPS[(flags >> 1) & 3] || 0, roles, vetoes, noWords });
 }
 
 // ➤ The catalogue id lists in order, from the loaded catalogue files.

@@ -1,11 +1,12 @@
-// ➤ The first page. Two ways in and one Search button: words (with the filters on the left:
-// ➤ country, occupations by group, date, each group a fold-out) or a code, which decodes into a
-// ➤ profile and judges every advert on the device; the filters narrow either list. A CV read
-// ➤ on the device ticks the occupations its job titles belong to. Everything downloads only
-// ➤ the parts of the pile it needs, hides adverts past their deadline, and draws the same
-// ➤ list. The state lives in the address after the #, so a search or a list can be
-// ➤ bookmarked and shared; nothing about the visitor leaves the browser.
-import { decodeProfile, normaliseProfile, catalogueIds } from './lib/codec.js';
+// ➤ The one page. The filters on the left are the visitor's whole profile: country (in the
+// ➤ order ticked), occupations by group, posted date, level and years, languages, degrees,
+// ➤ title words, deal-breakers; each a fold-out. The profile is packed into a short code that
+// ➤ appears as the filters change and can be copied or pasted; the code and the search words
+// ➤ live in the address after the #, so a list can be bookmarked and shared. A CV read on
+// ➤ the device ticks the occupations, degrees and languages it names. Everything downloads
+// ➤ only the parts of the pile it needs, judges them here, hides adverts past their deadline
+// ➤ and draws the list. Nothing about the visitor leaves the browser.
+import { encodeProfile, decodeProfile, normaliseProfile, isEmptyProfile, catalogueIds } from './lib/codec.js';
 import { makeJudge, sortOffers } from './lib/gates.js';
 import { shardFiles, loadShards } from './lib/shards.js';
 import { renderList, renderEmpty, renderDebug } from './lib/render.js';
@@ -18,23 +19,18 @@ const $$ = s => [...document.querySelectorAll(s)];
 const text = (sel, s) => { const e = $(sel); if (e) e.textContent = s; };
 const getJson = async url => { const r = await fetch(url, { cache: 'no-cache' }); if (!r.ok) throw new Error(`${r.status} for ${url}`); return r.json(); };
 const STALE_HOURS = 48;
+const OPEN_BY_DEFAULT = new Set(['country', 'posted']);
 
 let index, cats, ids, ctx;
-let loaded = null;   // ➤ the last set downloaded and judged, so filters and typing redraw without a download
-const openGroups = new Set();   // ➤ the occupation groups the visitor unfolded, kept across redraws
+let loaded = null;              // ➤ the last set downloaded and judged, so words and dates redraw without a download
+const foldState = new Map();    // ➤ fold-outs the visitor opened or closed, kept across redraws
+const countryOrder = [];        // ➤ the order countries were ticked in: the first comes first in the list
 let familyTerms = null;         // ➤ ESCO's job titles, fetched the first time a CV is read
-let cvHints = { degrees: [], languages: [] };   // ➤ what the last CV said, for the code page
 
-// ➤ The state in the address: p = code, q = words, c = countries, f = families, d = days.
+// ➤ The state in the address: p = the code (every filter), q = the search words.
 function readHash() {
   const p = new URLSearchParams(location.hash.replace(/^#/, ''));
-  const list = k => (p.get(k) || '').split(',').map(s => s.trim()).filter(Boolean);
-  return { code: (p.get('p') || '').trim(), q: (p.get('q') || '').trim(), c: list('c'), f: list('f'), d: Number(p.get('d')) || 0, debug: p.has('dbg') };
-}
-// ➤ The one form: the code field and the words travel together, so Search serves both.
-function stateFromForm() {
-  const { debug } = readHash();
-  return { p: $('#code-input').value.trim(), q: $('#q').value.trim(), c: $$('#countries-pick input:checked').map(i => i.value).join(','), f: $$('#families-pick input:checked').map(i => i.value).join(','), d: $('#filters-form input[name="d"]:checked')?.value || '', dbg: debug ? '1' : '' };
+  return { code: (p.get('p') || '').trim(), q: (p.get('q') || '').trim(), debug: p.has('dbg') };
 }
 function writeHash(parts, replace = false) {
   const p = new URLSearchParams();
@@ -46,6 +42,8 @@ function writeHash(parts, replace = false) {
 const countryName = cc => cc === 'xx' ? 'Remote' : cc === 'zz' || !cc ? 'Country not stated' : (cats.countries.countries.find(c => c.iso === cc)?.name || cc.toUpperCase());
 const familyOf = id => cats.families.families.find(f => f.id === id);
 const groupLabel = id => cats.families.groups.find(g => g.id === id)?.label || id;
+const degreeName = id => cats.degrees.degrees.find(d => d.id === id)?.label || id;
+const languageName = code => cats.languages.languages.find(l => l.code === code)?.label || code;
 // ➤ "Engineers: Mechanical, Civil · Technicians: Mechanical": the group gives a label its meaning.
 function familiesSummary(fams) {
   const byGroup = new Map();
@@ -53,51 +51,101 @@ function familiesSummary(fams) {
   return [...byGroup].map(([g, labels]) => `${groupLabel(g)}: ${labels.join(', ')}`).join(' · ');
 }
 
+// ➤ The profile is what the filters say; the code is the profile packed, empty when nothing is set.
+function profileFromForm() {
+  const checked = name => $$(`#filters-form input[name="${name}"]:checked`).map(i => i.value);
+  const words = sel => $(sel).value.split(',').map(s => s.trim()).filter(Boolean).slice(0, 8);
+  const ticked = new Set(checked('c'));
+  const countries = [...countryOrder.filter(c => ticked.has(c)), ...[...ticked].filter(c => !countryOrder.includes(c))];
+  return normaliseProfile({
+    families: checked('f'), countries, remote: $('#remote').checked, posted: Number($('#filters-form input[name="d"]:checked')?.value) || 0,
+    level: checked('level')[0] || 'any', maxYears: Number($('#max-years').value) || null, highest: $('#highest').value,
+    languages: checked('lg'), degrees: checked('dg'), vetoes: checked('v'), roles: words('#roles'), noWords: words('#no-words'),
+  });
+}
+function stateFromForm(profile = profileFromForm()) {
+  return { p: isEmptyProfile(profile) ? '' : encodeProfile(profile, ids), q: $('#q').value.trim(), dbg: readHash().debug ? '1' : '' };
+}
+
 // ➤ One row per choice: the tick on the left, the label, today's count on the right.
-function checkRow(container, { name, value, label, count }) {
+function row(container, { name, value, label, count, radio = false }) {
   const l = document.createElement('label'); l.className = 'check-row';
-  const i = document.createElement('input'); i.type = 'checkbox'; i.name = name; i.value = value;
+  const i = document.createElement('input'); i.type = radio ? 'radio' : 'checkbox'; i.name = name; i.value = value;
   const s = document.createElement('span'); s.textContent = label;
   l.append(i, s);
   if (count !== undefined) { const n = document.createElement('span'); n.className = 'check-row__count'; n.textContent = count.toLocaleString('en'); l.append(n); }
   container.append(l);
   return i;
 }
+const remember = (fold, key) => fold.addEventListener('toggle', () => foldState.set(key, fold.open));
 
-function drawFilters() {
-  const rows = Object.entries(index.counts?.by_country || {}).filter(([cc]) => cc !== 'zz').sort((a, b) => (a[0] === 'es' ? -1 : b[0] === 'es' ? 1 : b[1] - a[1]));
+// ➤ Countries with adverts, Spain first, plus any the profile names without adverts today (count 0).
+function drawCountries(profile) {
+  const counts = index.counts?.by_country || {};
+  const rows = Object.entries(counts).filter(([cc]) => cc !== 'zz').sort((a, b) => (a[0] === 'es' ? -1 : b[0] === 'es' ? 1 : b[1] - a[1]));
+  for (const cc of profile.countries) if (!counts[cc]) rows.push([cc, 0]);
   const pick = $('#countries-pick');
   pick.replaceChildren();
-  for (const [cc, n] of rows) checkRow(pick, { name: 'c', value: cc, label: countryName(cc), count: n });
-  drawFamilyCounts();
+  for (const [cc, n] of rows) row(pick, { name: 'c', value: cc, label: countryName(cc), count: n });
 }
 
-// ➤ One fold-out per occupation group (Engineers, Technicians, crews…) with the families that
-// ➤ have adverts in the countries ticked, so the numbers always mean "in what you chose". A
-// ➤ group stays open while the visitor has it open or has a tick inside.
-function drawFamilyCounts() {
-  const chosen = new Set($$('#countries-pick input:checked').map(i => i.value));
+// ➤ Inside "Occupations", one fold-out per group (Engineers, Technicians, crews…) with the families
+// ➤ that have adverts in the countries ticked, so the numbers always mean "in what you chose";
+// ➤ a family the profile names stays listed even at zero.
+function drawFamilyCounts(profile) {
+  const chosen = new Set(profile.countries);
   const count = id => Object.entries(index.families?.[id]?.countries || {}).filter(([cc]) => !chosen.size || chosen.has(cc)).reduce((s, [, e]) => s + (e.n || 0), 0);
   const pick = $('#families-pick');
-  const ticked = new Set($$('#families-pick input:checked').map(i => i.value));
   pick.replaceChildren();
   for (const g of cats.families.groups) {
-    const rows = cats.families.families.filter(f => f.group === g.id).map(f => [f, count(f.id)]).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+    const rows = cats.families.families.filter(f => f.group === g.id).map(f => [f, count(f.id)]).filter(([f, n]) => n > 0 || profile.families.includes(f.id)).sort((a, b) => b[1] - a[1]);
     if (!rows.length) continue;
-    const fold = document.createElement('details'); fold.className = 'filter-group'; fold.dataset.group = g.id;
-    fold.open = openGroups.has(g.id) || rows.some(([f]) => ticked.has(f.id));
-    fold.addEventListener('toggle', () => { if (fold.open) openGroups.add(g.id); else openGroups.delete(g.id); });
+    const fold = document.createElement('details'); fold.className = 'filter-group'; fold.dataset.group = `families:${g.id}`;
+    fold.open = foldState.has(fold.dataset.group) ? foldState.get(fold.dataset.group) : rows.some(([f]) => profile.families.includes(f.id));
+    remember(fold, fold.dataset.group);
     const summary = document.createElement('summary'); summary.textContent = g.label;
     const checks = document.createElement('div'); checks.className = 'checks';
     fold.append(summary, checks);
-    for (const [f, n] of rows) checkRow(checks, { name: 'f', value: f.id, label: f.label, count: n }).checked = ticked.has(f.id);
+    for (const [f, n] of rows) row(checks, { name: 'f', value: f.id, label: f.label, count: n });
     pick.append(fold);
   }
 }
-// ➤ Ticks the families the address names and unfolds their groups.
-function tickFamilies(f) {
-  for (const i of $$('#families-pick input')) i.checked = f.includes(i.value);
-  for (const fold of $$('#families-pick details')) if (fold.querySelector('input:checked')) fold.open = true;
+// ➤ The lists that never change: levels, languages, degrees, deal-breakers.
+function drawStaticLists() {
+  for (const l of cats.seniority.levels) row($('#levels-pick'), { name: 'level', value: l.id, label: l.label, radio: true });
+  for (const l of cats.languages.languages) row($('#languages-pick'), { name: 'lg', value: l.code, label: l.label });
+  for (const d of cats.degrees.degrees) row($('#degrees-pick'), { name: 'dg', value: d.id, label: d.label });
+  for (const v of cats.vetoes.vetoes) row($('#vetoes-pick'), { name: 'v', value: v.id, label: v.label });
+  for (const fold of $$('#filters-form > details')) remember(fold, fold.dataset.group);
+}
+
+// ➤ Puts a profile into the controls. A fold-out is open when the visitor left it open, when it
+// ➤ is open by default, or when something inside is set; it never closes on its own.
+function fillFilters(p) {
+  countryOrder.length = 0; countryOrder.push(...p.countries);
+  drawCountries(p);
+  drawFamilyCounts(p);
+  for (const i of $$('#countries-pick input')) i.checked = p.countries.includes(i.value);
+  $('#remote').checked = p.remote;
+  for (const i of $$('#families-pick input')) i.checked = p.families.includes(i.value);
+  for (const i of $$('#filters-form input[name="d"]')) i.checked = (Number(i.value) || 0) === p.posted;
+  for (const i of $$('#levels-pick input')) i.checked = i.value === p.level;
+  $('#max-years').value = p.maxYears ? String(p.maxYears) : '';
+  for (const i of $$('#languages-pick input')) i.checked = p.languages.includes(i.value);
+  for (const i of $$('#degrees-pick input')) i.checked = p.degrees.includes(i.value);
+  $('#highest').value = p.highest;
+  for (const i of $$('#vetoes-pick input')) i.checked = p.vetoes.includes(i.value);
+  $('#roles').value = p.roles.join(', ');
+  $('#no-words').value = p.noWords.join(', ');
+  const active = activeGroups(p);
+  for (const fold of $$('#filters-form > details')) {
+    const g = fold.dataset.group;
+    fold.open = foldState.has(g) ? foldState.get(g) || active.has(g) : OPEN_BY_DEFAULT.has(g) || active.has(g);
+  }
+}
+function activeGroups(p) {
+  const on = { country: p.countries.length || p.remote, occupations: p.families.length, posted: p.posted, level: p.level !== 'any' || p.maxYears, languages: p.languages.length, degrees: p.degrees.length || p.highest !== 'none', roles: p.roles.length, vetoes: p.vetoes.length || p.noWords.length };
+  return new Set(Object.keys(on).filter(k => on[k]));
 }
 
 function drawPile() {
@@ -117,76 +165,39 @@ function drawPile() {
   $('#countries').hidden = rows.length === 0;
 }
 
-// ➤ The filters and the words, applied to what is already downloaded. No network here.
+// ➤ The words and the date, applied to what is already downloaded and judged. No network here.
 function draw() {
   if (!loaded) return;
-  const { q, c, f, d, debug } = readHash();
+  const { q, debug } = readHash();
   const words = wordsOf(q);
-  const countries = new Set(c), families = new Set(f);
-  const since = d ? new Date(Date.now() - d * 864e5).toISOString().slice(0, 10) : '';
-  const shown = loaded.offers.filter(o =>
-    (!countries.size || !o.cc || countries.has(o.cc)) &&
-    (!families.size || (o.f || []).some(x => families.has(x))) &&
-    (!since || (o.d && o.d >= since)) &&
-    matchesWords(o, words, countryName));
+  const since = loaded.profile.posted ? new Date(Date.now() - loaded.profile.posted * 864e5).toISOString().slice(0, 10) : '';
+  const shown = loaded.offers.filter(o => (!since || (o.d && o.d >= since)) && matchesWords(o, words, countryName));
   const failed = loaded.failed.length ? ` (${loaded.failed.length} part${loaded.failed.length === 1 ? '' : 's'} failed to download)` : '';
-  const narrowed = countries.size || families.size || since || words.length;
-  text('#results-status', `${shown.length.toLocaleString('en')} of ${loaded.total.toLocaleString('en')} offers${loaded.profile ? ' match your profile' : ''}${narrowed ? (loaded.profile ? ' and your filters' : ' match your filters') : ''}${failed}.`);
+  text('#results-status', `${shown.length.toLocaleString('en')} of ${loaded.total.toLocaleString('en')} offers match your filters${failed}.`);
   if (shown.length) renderList($('#list'), shown, ctx); else renderEmpty($('#list'), loaded.stages, loaded.total);
   if (debug && loaded.dropped) renderDebug($('#debug'), loaded.dropped); else $('#debug').hidden = true;
-  const active = countries.size + families.size + (since ? 1 : 0);
-  text('#filters-toggle', active ? `☰ Filters · ${active}` : '☰ Filters');
 }
 
-// ➤ The "make a code" link carries the ticked occupations and what the CV said, so the code
-// ➤ page starts filled in.
-function pointMakeCodeLink() {
-  const p = new URLSearchParams();
-  const { f } = readHash();
-  if (f.length) p.set('f', f.join(','));
-  if (cvHints.degrees.length) p.set('dg', cvHints.degrees.join(','));
-  if (cvHints.languages.length) p.set('lg', cvHints.languages.join(','));
-  const s = p.toString();
-  $('#make-code').href = s ? `intake/#${s}` : 'intake/';
-}
-
-// ➤ Puts the address into the controls, downloads what the scope needs, judges, draws.
+// ➤ Reads the address, puts it into the controls, downloads what the scope needs, judges, draws.
 async function run() {
-  const { code, q, c, f, d } = readHash();
+  const { code, q } = readHash();
   $('#q').value = q;
   $('#code-input').value = code;
-  for (const i of $$('#countries-pick input')) i.checked = c.includes(i.value);
-  drawFamilyCounts();
-  tickFamilies(f);
-  for (const i of $$('#filters-form input[name="d"]')) i.checked = String(d || '') === i.value;
-  const active = c.length + f.length + (d ? 1 : 0);
-  text('#filters-toggle', active ? `☰ Filters · ${active}` : '☰ Filters');
-  pointMakeCodeLink();
-  if (!code && !q && !active) { $('#results').hidden = true; loaded = null; return; }
-
-  let profile = null;
+  let profile = normaliseProfile({});
   if (code) {
-    try { profile = decodeProfile(code, ids); } catch (e) { $('#results').hidden = false; text('#results-title', 'Your list'); text('#results-status', `That code cannot be read: ${e.message}.`); $('#list').replaceChildren(); loaded = null; return; }
+    try { profile = decodeProfile(code, ids); } catch (e) { $('#results').hidden = false; text('#results-status', `That code cannot be read: ${e.message}.`); $('#list').replaceChildren(); loaded = null; return; }
   }
+  fillFilters(profile);
+  const active = activeGroups(profile).size;
+  text('#filters-toggle', active ? `☰ Filters · ${active}` : '☰ Filters');
+  if (isEmptyProfile(profile) && !q) { $('#results').hidden = true; loaded = null; return; }
+
   // ➤ The same scope already downloaded? Then only redraw.
-  const scope = profile || normaliseProfile({ families: f, countries: c.filter(x => x !== 'xx'), remote: c.includes('xx') || !c.length });
-  const key = JSON.stringify([code, scope.families, scope.countries, scope.remote]);
+  const scope = { ...profile, remote: profile.remote || !profile.countries.length };
+  const key = JSON.stringify([code]);
   if (loaded && loaded.key === key) { draw(); return; }
   loaded = null;
   $('#results').hidden = false;
-  text('#results-title', profile ? 'Your list' : 'Results');
-  const edit = $('#edit-link');
-  edit.hidden = !profile; if (profile) edit.href = `intake/#p=${encodeURIComponent(code)}`;
-  const summary = $('#profile-summary');
-  summary.hidden = !profile;
-  if (profile) {
-    summary.textContent = [
-      familiesSummary(profile.families) || 'every occupation',
-      profile.countries.map(countryName).join(', ') || 'every country',
-      profile.level !== 'any' ? profile.level : null,
-      profile.maxYears ? `up to ${profile.maxYears} years asked` : null,
-    ].filter(Boolean).join(' · ');
-  }
   $('#list').replaceChildren();
   const files = shardFiles(index, scope);
   text('#results-status', `Downloading ${files.length} part${files.length === 1 ? '' : 's'} of the pile…`);
@@ -194,7 +205,7 @@ async function run() {
   const alive = offers.filter(o => !isExpired(o));
   const stages = {}, dropped = [];
   let kept = alive;
-  if (profile) {
+  if (!isEmptyProfile(profile)) {
     const judge = makeJudge(profile, cats, engine);
     kept = [];
     for (const o of alive) { const v = judge(o); if (v.ok) kept.push(o); else { dropped.push({ o, verdict: v }); stages[v.stage] = (stages[v.stage] || 0) + 1; } }
@@ -204,9 +215,9 @@ async function run() {
   draw();
 }
 
-// ➤ The CV: a text file is read as it is; a PDF through pdf.js, loaded from this site only
-// ➤ then. Its job titles tick the occupations they belong to; degrees and languages wait for
-// ➤ the code page. Nothing of it is kept or sent.
+// ➤ The CV: a text file is read as it is; a PDF through pdf.js, loaded from this site only then.
+// ➤ Its job titles tick the occupations they belong to, its degree lines the degrees, its
+// ➤ language lines the languages. Nothing of it is kept or sent.
 async function fileText(file) {
   if (/\.(txt|md)$/i.test(file.name) || file.type.startsWith('text/')) return file.text();
   const pdfjs = await import('./vendor/pdf.min.js');
@@ -223,28 +234,49 @@ async function readCvFile(file) {
     if (t.trim().length < 200) { text('#cv-status', 'That file is too short to be a CV.'); return; }
     familyTerms ||= await getJson('catalogues/family-terms.json');
     const s = readCv(t, { ...cats, familyTerms });
-    cvHints = { degrees: s.degrees, languages: s.languages };
-    const fams = [...new Set([...readHash().f, ...s.families])];
-    text('#cv-status', s.families.length ? `Ticked from your CV: ${familiesSummary(s.families)}.` : 'No occupation of ours in that CV; tick them by hand.');
-    writeHash({ ...stateFromForm(), f: fams.join(',') });
-    pointMakeCodeLink();
+    const p = profileFromForm();
+    const merged = normaliseProfile({ ...p, families: [...p.families, ...s.families], degrees: [...p.degrees, ...s.degrees], languages: [...p.languages, ...s.languages] });
+    const found = [s.families.length ? familiesSummary(s.families) : '', s.degrees.length ? `degrees: ${s.degrees.map(degreeName).join(', ')}` : '', s.languages.length ? `languages: ${s.languages.map(languageName).join(', ')}` : ''].filter(Boolean);
+    text('#cv-status', found.length ? `Ticked from your CV: ${found.join(' · ')}.` : 'Nothing of ours found in that CV; tick the filters by hand.');
+    writeHash(stateFromForm(merged));
   } catch (e) {
     text('#cv-status', `Could not read that file (${e.message}).`);
   }
 }
 
 // ➤ On a phone the filters are a panel the button opens and closes; on a desk they sit on the left.
-function wireFilters() {
+function wireControls() {
   const panel = $('#filters');
   const toggle = $('#filters-toggle');
   const open = on => { panel.classList.toggle('is-open', on); toggle.setAttribute('aria-expanded', String(on)); document.body.classList.toggle('filters-open', on); };
   toggle.addEventListener('click', () => open(!panel.classList.contains('is-open')));
   $('#filters-close').addEventListener('click', () => open(false));
+  // ➤ Any change in the panel is the new profile; ticking a country puts it last in the order.
   $('#filters-form').addEventListener('change', e => {
-    if (e.target.name === 'c') drawFamilyCounts();
+    if (e.target.name === 'c') { const k = countryOrder.indexOf(e.target.value); if (e.target.checked && k < 0) countryOrder.push(e.target.value); else if (!e.target.checked && k >= 0) countryOrder.splice(k, 1); }
     writeHash(stateFromForm());
   });
-  $('#filters-clear').addEventListener('click', () => { for (const i of $$('#filters-form input[type="checkbox"]')) i.checked = false; $('#filters-form input[name="d"][value=""]').checked = true; drawFamilyCounts(); writeHash(stateFromForm()); });
+  $('#filters-clear').addEventListener('click', () => { countryOrder.length = 0; writeHash({ q: $('#q').value.trim() }); });
+  // ➤ Search: a code pasted over the current one loads it; otherwise the filters as they are.
+  $('#search').addEventListener('submit', e => {
+    e.preventDefault();
+    const state = stateFromForm();
+    const typed = $('#code-input').value.trim();
+    if (typed && typed !== state.p) {
+      try { decodeProfile(typed, ids); state.p = typed; } catch (err) { $('#results').hidden = false; text('#results-status', `That code cannot be read: ${err.message}.`); return; }
+    }
+    writeHash(state);
+  });
+  $('#copy-code').addEventListener('click', async () => {
+    const code = $('#code-input').value.trim();
+    if (!code) return;
+    try { await navigator.clipboard.writeText(code); text('#copy-code', 'Copied'); setTimeout(() => text('#copy-code', 'Copy'), 1500); } catch { $('#code-input').select(); }
+  });
+  $('#cv-file').addEventListener('change', e => { const file = e.target.files[0]; if (file) readCvFile(file); e.target.value = ''; });
+  // ➤ Typing redraws at once; the address follows once the typing pauses.
+  let timer;
+  $('#q').addEventListener('input', () => { writeHash(stateFromForm(), true); draw(); clearTimeout(timer); timer = setTimeout(() => writeHash(stateFromForm(), true), 600); });
+  window.addEventListener('hashchange', () => run().catch(e => text('#results-status', `Something went wrong: ${e.message}`)));
 }
 
 async function main() {
@@ -253,17 +285,10 @@ async function main() {
   const all = await Promise.all(names.map(n => getJson(`catalogues/${n}.json`)));
   cats = Object.fromEntries(names.map((n, i) => [n, all[i]]));
   ids = catalogueIds(cats);
-  ctx = { countryName, sourceName: s => index.sources?.[s]?.short || index.sources?.[s]?.name || s, languageName: code => cats.languages.languages.find(l => l.code === code)?.label || code, degreeName: id => cats.degrees.degrees.find(d => d.id === id)?.label || id };
+  ctx = { countryName, sourceName: s => index.sources?.[s]?.short || index.sources?.[s]?.name || s, languageName, degreeName };
   drawPile();
-  drawFilters();
-  wireFilters();
-
-  $('#search').addEventListener('submit', e => { e.preventDefault(); writeHash(stateFromForm()); });
-  $('#cv-file').addEventListener('change', e => { const file = e.target.files[0]; if (file) readCvFile(file); e.target.value = ''; });
-  // ➤ Typing redraws at once; the address follows once the typing pauses.
-  let timer;
-  $('#q').addEventListener('input', () => { writeHash(stateFromForm(), true); draw(); clearTimeout(timer); timer = setTimeout(() => writeHash(stateFromForm(), true), 600); });
-  window.addEventListener('hashchange', () => run().catch(e => text('#results-status', `Something went wrong: ${e.message}`)));
+  drawStaticLists();
+  wireControls();
   await run();
 }
 

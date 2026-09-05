@@ -7,7 +7,7 @@ The code is base64url (`A-Z a-z 0-9 - _`, no padding) of these bytes:
 | Bytes | Content |
 |---|---|
 | 1 | version, `0x02` |
-| 1 | flags: bit 0 = remote work is fine |
+| 1 | flags: bit 0 = remote work is fine; bits 1-2 = posted within (0 any time, 1 = 7 days, 2 = 30 days) |
 | 8 | families (ISCO-08 unit groups), one bit per position in `catalogues/families.json` |
 | 1 | level (2 bits: any, junior, mid, senior) · years cap index (3 bits: none, 1, 2, 3, 5, 7, 10, 15) · highest degree (2 bits: none, bachelor, master, phd) |
 | 2 | languages, one bit per position in `catalogues/languages.json` |

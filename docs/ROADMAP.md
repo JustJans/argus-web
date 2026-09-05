@@ -57,5 +57,5 @@ The structure is built for the changes already known. Each item names the seam.
 
 ## Money and law (when, and only when, wanted)
 - Ads: a certified consent tool before the first ad, the legal notice with the owner's
-  identity, and the fiscal registrations. `app/index.html` has room for a slot; the code
-  page must never carry a third-party script. See the plan's legal section.
+  identity, and the fiscal registrations. `app/index.html` has room for a slot; no page may carry a
+  third-party script. See the plan's legal section.

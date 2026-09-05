@@ -6,9 +6,8 @@ Everything a designer needs to restyle Argus Web without breaking it.
 
 | Page | File | What it does |
 |---|---|---|
-| Home / list | `app/index.html` + `app/main.js` | Filters on the left as fold-outs (`details`/`summary`): country; one fold-out per occupation group — engineers, architects and surveyors, technicians, supervisors, plant operators, crews — with plain checkboxes and counts, the tick on the left; posted date. One form with the search words, a "Read my CV" button (a PDF or text file read on the device; its job titles tick the occupations they belong to and unfold their groups), the code line (paste a code, or make one) and a single Search button that serves both; what the pile holds; a link to the sources. On a phone the filters are a panel the "☰ Filters" button opens and the "Done" button closes. State in the address: `#q=…&c=es,se&f=2144,3115&d=30` for a search, `#p=<code>` for the visitor's list; the filters narrow either. A notice appears when the pile is older than two days. |
+| Home / list | `app/index.html` + `app/main.js` | One page. The filters on the left are the visitor's whole profile, each a fold-out (`details`/`summary`): Country (ticks with counts, Spain first, in the order ticked; "Remote is fine too"); Occupations, which holds one fold-out per ISCO group — Engineers, Architects/planners/surveyors, Technicians, Supervisors, Plant operators, Ship and aircraft crews — with ticks and counts; Posted; Level (radios and a years cap); Languages; Degrees (ticks and the highest degree); Title words; Deal-breakers (ticks and words to avoid). Country and Posted open by default; a fold-out with something set stays open. The card on the right has the search words, a "Read my CV" button (a PDF or text file read on the device: its job titles, degree lines and language lines tick the filters), the code line (the filters packed into a short code, appearing as they change; paste another and Search loads it; Copy) and one Search button. Below: what the pile holds today and a link to the sources. On a phone the filters are a panel the "☰ Filters" button opens and the "Done" button closes. State in the address: `#p=<code>&q=<words>`. A notice appears when the pile is older than two days. |
 | Not found | `app/404.html` | GitHub Pages serves it for any missing address. |
-| Code page | `app/intake/index.html` + `app/intake/intake.js` | Seven steps (occupations by group, title words, level and years, languages, degrees, countries in order, deal-breakers) that end in the code. It opens filled in from the address: `#p=<code>` to edit a code, or `#f=…&dg=…&lg=…` with what the home page ticked and read from the CV (the "make a code" link carries them). |
 | Privacy, Sources, About | `app/legal/*.html` | Plain pages. Sources lists today's sources from the pile's index. |
 
 One stylesheet, `app/style.css`, holds the tokens (colours, radius, measure) at the top and
@@ -19,30 +18,31 @@ Source code); there is no footer.
 ## The contract with the scripts
 
 - **Ids** are used by the scripts; keep them (`#filters`, `#filters-form`, `#filters-toggle`,
-  `#filters-close`, `#filters-clear`, `#countries-pick`, `#families-pick`, `#search`, `#q`,
-  `#cv-file`, `#cv-status`, `#code-input`, `#make-code`, `#stale`, `#results`, `#results-title`,
-  `#list`, `#debug`, `#generated`, `#countries`, `#profile-summary`, `#results-status`,
-  `#edit-link`; on the code page every `#…` in the HTML). The occupation fold-outs are
-  `details.filter-group[data-group]` inside `#families-pick`.
+  `#filters-close`, `#filters-clear`, `#countries-pick`, `#remote`, `#families-pick`,
+  `#levels-pick`, `#max-years`, `#languages-pick`, `#degrees-pick`, `#highest`, `#roles`,
+  `#vetoes-pick`, `#no-words`, `#search`, `#q`, `#cv-file`, `#cv-status`, `#code-input`,
+  `#copy-code`, `#stale`, `#results`, `#results-status`, `#list`, `#debug`, `#generated`,
+  `#countries`). The fold-outs are `details.filter-group[data-group]`; the occupation groups
+  inside `#families-pick` carry `data-group="families:<group id>"`.
 - **Class names** are the styling hooks; the scripts add elements with these classes:
-  `offers`, `offer`, `offer__title`, `offer__meta`, `offer__snippet`, `offer__tags`, `tag`,
-  `tag--source`, `empty`, `debug`, `chip`, `chips`, `button`, `button--primary`.
-- **Chips** are real checkboxes and radios inside a `label.chip`; the input is visually
-  hidden but keyboard-reachable. `data-order` on a country chip carries its rank (1, 2, 3…).
-- **No inline scripts or styles** on the code page: its Content Security Policy allows only
-  same-origin files. No third-party fonts, scripts or images anywhere (privacy promise).
+  `check-row`, `check-row__count`, `filter-group`, `offers`, `offer`, `offer__title`,
+  `offer__original`, `offer__meta`, `offer__snippet`, `offer__tags`, `tag`, `tag--source`,
+  `empty`, `debug`, `button`, `button--primary`.
+- **Ticks** are real checkboxes and radios inside a `label.check-row`, the input on the left.
+- **No third-party fonts, scripts or images** anywhere (privacy promise). pdf.js is served
+  from this site and loaded only when a PDF is chosen.
 - **No cookies, no storage.** The visitor's state lives in the URL fragment only.
 - Text is inserted with `textContent`; markup in data is never rendered.
 
 ## States to design
 
-- Home with nothing chosen, a plain search with results, a code with results, a code with
-  zero results (the empty state lists how many offers fell at each stage and how to loosen
-  the profile), an unreadable code, parts of the pile downloading, and the stale-pile notice.
-  The CV line: idle, reading, ticked N occupations, none found, file could not be read.
-- Code page: each step empty and filled; the final code box with Copy, Open my list, Share
-  (only where the browser offers sharing).
-- Small screens first: three in four job seekers use a phone.
+- Home with nothing chosen, a search with results, filters with results, filters with zero
+  results (the empty state lists how many offers fell at each stage and how to loosen them),
+  an unreadable code pasted, parts of the pile downloading, and the stale-pile notice.
+- The CV line: idle, reading, what was ticked, nothing found, file could not be read.
+- The code line: empty (placeholder), showing the current code, "Copied".
+- Small screens first: three in four job seekers use a phone. The filters panel scrolls; the
+  fold-outs keep it short.
 
 ## Preview locally
 

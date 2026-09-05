@@ -32,7 +32,7 @@ export function hashTree(dir, keep = () => true) {
 const ASSET = /\.(css|m?js)$/i;
 
 // ➤ Points a page's stylesheet and script addresses into v/<version>/. `pageRel` is the page's
-// ➤ path inside the app (index.html, intake/index.html); `isAsset` says whether an app path is
+// ➤ path inside the app (index.html, legal/about.html); `isAsset` says whether an app path is
 // ➤ a file the build ships. Relative addresses stay relative; an absolute one keeps its prefix
 // ➤ (the 404 page needs /argus-web/… because Pages serves it from any depth).
 export function rewriteAssetLinks(html, pageRel, version, isAsset) {

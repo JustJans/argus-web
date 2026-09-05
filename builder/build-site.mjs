@@ -26,7 +26,7 @@ for (const name of readdirSync(SITE)) if (name !== 'v') rmSync(join(SITE, name),
 const stage = join(SITE, '.stage');
 cpSync(join(ROOT, 'app'), stage, { recursive: true });
 writeEngine(join(stage, 'lib'));
-// ➤ The PDF reader the intake page loads when a PDF is chosen: pdf.js, under a .js name so
+// ➤ The PDF reader the first page loads when a PDF is chosen: pdf.js, under a .js name so
 // ➤ every host sends it as a script.
 const require = createRequire(import.meta.url);
 const pdfDir = join(dirname(require.resolve('pdfjs-dist/package.json')), 'build');
@@ -53,7 +53,7 @@ const kept = recordVersion(vDir, version, KEEP_VERSIONS);
 // ➤ The catalogues, as the app fetches them.
 mkdirSync(join(SITE, 'catalogues'), { recursive: true });
 for (const f of readdirSync(join(ROOT, 'catalogues'))) if (f.endsWith('.json')) cpSync(join(ROOT, 'catalogues', f), join(SITE, 'catalogues', f));
-// ➤ The job titles the intake page reads a CV with: ESCO's per family and language (from
+// ➤ The job titles the first page reads a CV with: ESCO's per family and language (from
 // ➤ codes/isco.json) plus the catalogue's extra terms, built by the gate's own rule. Fetched
 // ➤ only when a CV is read.
 const catalogue = JSON.parse(readFileSync(join(ROOT, 'catalogues', 'families.json'), 'utf8'));

@@ -4,7 +4,7 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { harness } from 'argus/server-bot/test-harness.mjs';
-import { encodeProfile, decodeProfile, normaliseProfile, catalogueIds, crc16, toBase64url, fromBase64url, VERSION } from '../app/lib/codec.js';
+import { encodeProfile, decodeProfile, normaliseProfile, isEmptyProfile, catalogueIds, crc16, toBase64url, fromBase64url, VERSION } from '../app/lib/codec.js';
 
 const { ok, eq, done } = harness('codec');
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -18,7 +18,7 @@ eq([...fromBase64url(toBase64url(Uint8Array.from([1, 2])))], [1, 2], 'two bytes,
 eq(crc16(new TextEncoder().encode('123456789')), 0x29b1, 'CRC-16/CCITT-FALSE check value');
 
 // ➤ Families are ISCO-08 unit groups: 2144 mechanical engineers, 3151 ships' engineers.
-const typical = { families: ['2144', '3151'], countries: ['es', 'nl', 'no'], languages: ['en', 'es'], degrees: ['naval', 'mechanical'], level: 'junior', maxYears: 3, highest: 'master', remote: true, roles: ['mooring engineer', 'naval architect'], vetoes: ['sales', 'internships'], noWords: ['dredging'] };
+const typical = { families: ['2144', '3151'], countries: ['es', 'nl', 'no'], languages: ['en', 'es'], degrees: ['naval', 'mechanical'], level: 'junior', maxYears: 3, highest: 'master', remote: true, posted: 7, roles: ['mooring engineer', 'naval architect'], vetoes: ['sales', 'internships'], noWords: ['dredging'] };
 {
   const code = encodeProfile(typical, cats);
   ok(/^[A-Za-z0-9_-]+$/.test(code), 'the code is URL-safe');
@@ -73,8 +73,10 @@ const typical = { families: ['2144', '3151'], countries: ['es', 'nl', 'no'], lan
   ok(/earlier version/.test(msg), `a version-1 code is refused with the message to make a new one ("${msg}")`);
 }
 {
-  const p = decodeProfile(encodeProfile({ maxYears: 4, level: 'boss' }, cats), cats);
-  eq([p.maxYears, p.level], [null, 'any'], 'values outside the steps fall back to none and any');
+  const p = decodeProfile(encodeProfile({ maxYears: 4, level: 'boss', posted: 12 }, cats), cats);
+  eq([p.maxYears, p.level, p.posted], [null, 'any', 0], 'values outside the steps fall back to none, any and any time');
+  eq(decodeProfile(encodeProfile({ posted: 30 }, cats), cats).posted, 30, 'the posted window rides in the flags byte');
+  ok(isEmptyProfile({}) && isEmptyProfile({ level: 'any', posted: 0, remote: false }) && !isEmptyProfile({ posted: 7 }) && !isEmptyProfile({ remote: true }), 'an empty profile is one with nothing set, whatever the defaults are spelled like');
 }
 {
   // ➤ Unknown ids in a profile (a future catalogue) simply drop out of the code.
