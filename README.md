@@ -1,9 +1,11 @@
 # Argus Web
 
-A free, public job portal for engineers and technicians in Europe. You paste your CV, it is
-read **in your browser** and never uploaded, and you get a short profile code — your
-"plate" — that lives after the `#` of the address. Paste the code and the public list of
-offers is filtered for you, on your device. No account, no email, nothing stored anywhere.
+A free, public job portal for engineers and technicians in Europe. Search the public list of
+offers, or hand it your CV: it is read **in your browser**, never uploaded, and it ticks the
+occupations your job titles belong to. A short profile code — your "plate" — that lives
+after the `#` of the address carries the rest (languages, degrees, level, countries,
+deal-breakers) and filters the list for you, on your device. No account, no email, nothing
+stored anywhere.
 
 It is the web companion of [Argus](https://github.com/JustJans/argus), the Telegram job-search
 bot, and reuses its matching engine: the same title, location, years-of-experience, degree
@@ -11,12 +13,12 @@ and language rules, run client-side.
 
 ## Status
 
-**Working, Spain first.** Live at <https://justjans.github.io/argus-web/>: search the pile
-by words and country with no code at all, or make a code from your CV and get the list
-your profile deserves. Every advert past its deadline is hidden; the page says when the
-pile was last rebuilt. The pile is rebuilt and published with the three commands below
-(the six-hourly GitHub Actions workflow waits in `ops/workflows/` until the repository's
-token can create it).
+**Working, Spain and Sweden.** Live at <https://justjans.github.io/argus-web/>: search the
+pile by words and filters (country, occupations by ISCO group, date), let your CV tick the
+occupations, or make a code and get the list your whole profile deserves. Every advert past
+its deadline is hidden; the page says when the pile was last rebuilt. A home server rebuilds
+and publishes the pile every six hours with `ops/server-refresh.sh` (the GitHub Actions
+workflows wait in `ops/workflows/` until the repository's token can create them).
 
 Sources read today: Lanbide (Basque Country), Feina Activa (Catalonia), the Junta de
 Castilla y León, Arbetsförmedlingen (Sweden, by occupation code) and the company boards
@@ -48,9 +50,10 @@ per dropped advert with the reason to `builder/out/explain.txt`.
   Sweden's JobTech, Norway's NAV, Czechia, Lithuania, Latvia, Spanish regions), documented
   public applicant-tracking APIs (Lever, Greenhouse, Ashby, Recruitee, Personio), and,
   later, licensed aggregator feeds. LinkedIn and undocumented endpoints are out.
-- **Privacy by construction:** the CV is parsed in a Web Worker on a page that loads no
-  third-party script; the profile code never leaves the browser (URL fragments are not sent
-  to servers); no cookies, no local storage, no analytics in the first version.
+- **Privacy by construction:** the CV is read by the site's own scripts on the device and
+  goes nowhere; no page loads a third-party script; the profile code never leaves the
+  browser (URL fragments are not sent to servers); no cookies, no local storage, no
+  analytics in the first version.
 - **Architecture:** a static site (Cloudflare Pages) plus a pile of offers rebuilt on a
   schedule and published as static JSON, split by family and country so the code decides
   which parts to download. No servers holding user data.
@@ -64,8 +67,8 @@ catalogues/   families (ISCO-08 unit groups by minor group), countries, language
               builder/isco-esco.mjs)
 builder/      adapters (one per source) → normalise → gate → dedupe → shards and an index
 app/          the static site GitHub Pages serves
-test/         the builder's pure parts and the adapters' parsers on recorded answers
-.github/      tests on every push; the pile and the site rebuilt every six hours
+test/         the builder's pure parts, the code, the CV reader and the adapters' parsers
+ops/          the home server's refresh script, a preview server, the workflows to come
 ```
 
 The matching engine (title rules, years, degrees, languages) is Argus's own, installed as a

@@ -23,19 +23,19 @@
         <button id="filters-close" class="button" type="button">Done</button>
       </div>
       <form id="filters-form" autocomplete="off">
-        <fieldset class="filter-group">
-          <legend>Country</legend>
+        <details class="filter-group" open>
+          <summary>Country</summary>
           <div id="countries-pick" class="checks"></div>
-        </fieldset>
+        </details>
         <div id="families-pick"></div>
-        <fieldset class="filter-group">
-          <legend>Posted</legend>
+        <details class="filter-group" open>
+          <summary>Posted</summary>
           <div class="checks">
             <label class="check-row"><input type="radio" name="d" value="" checked><span>Any time</span></label>
             <label class="check-row"><input type="radio" name="d" value="7"><span>Last 7 days</span></label>
             <label class="check-row"><input type="radio" name="d" value="30"><span>Last 30 days</span></label>
           </div>
-        </fieldset>
+        </details>
         <button id="filters-clear" class="button" type="button">Clear</button>
       </form>
     </aside>
@@ -47,11 +47,15 @@
             <button id="filters-toggle" class="button filters-toggle" type="button" aria-expanded="false" aria-controls="filters">☰ Filters</button>
             <input id="q" name="q" type="search" placeholder="Title, company, city" aria-label="Search words">
           </div>
+          <div class="cv-line">
+            <label class="button">Read my CV <input id="cv-file" type="file" accept=".pdf,.txt,.md,text/plain,application/pdf" hidden></label>
+            <span id="cv-status" class="muted small" aria-live="polite">A PDF or text file, read on this device: it ticks your occupations.</span>
+          </div>
           <div class="code-line">
             <label for="code-input">Have a code?</label>
             <input id="code-input" name="code" type="text" spellcheck="false" placeholder="paste it here" aria-label="Your code">
             <span class="muted">or</span>
-            <a href="intake/">make one from your CV</a>
+            <a id="make-code" href="intake/">make a code</a>
           </div>
           <div class="search__row">
             <button class="button button--primary" type="submit">Search</button>
