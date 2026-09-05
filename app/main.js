@@ -1,14 +1,16 @@
 // ➤ The first page. Two ways in and one Search button: words (with the filters on the left:
-// ➤ country, occupation group, date) or a code, which decodes into a profile and judges every
-// ➤ advert on the device; the filters narrow either list. Everything downloads only the parts
-// ➤ of the pile it needs, hides adverts past their deadline, and draws the same list. The
-// ➤ state lives in the address after the #, so a search or a list can be bookmarked and
-// ➤ shared; nothing about the visitor leaves the browser.
+// ➤ country, occupations by group, date, each group a fold-out) or a code, which decodes into a
+// ➤ profile and judges every advert on the device; the filters narrow either list. A CV read
+// ➤ on the device ticks the occupations its job titles belong to. Everything downloads only
+// ➤ the parts of the pile it needs, hides adverts past their deadline, and draws the same
+// ➤ list. The state lives in the address after the #, so a search or a list can be
+// ➤ bookmarked and shared; nothing about the visitor leaves the browser.
 import { decodeProfile, normaliseProfile, catalogueIds } from './lib/codec.js';
 import { makeJudge, sortOffers } from './lib/gates.js';
 import { shardFiles, loadShards } from './lib/shards.js';
 import { renderList, renderEmpty, renderDebug } from './lib/render.js';
 import { wordsOf, matchesWords, isExpired, newestFirst } from './lib/search.js';
+import { readCv } from './lib/cv.js';
 import * as engine from './lib/engine.js';
 
 const $ = s => document.querySelector(s);
@@ -19,6 +21,9 @@ const STALE_HOURS = 48;
 
 let index, cats, ids, ctx;
 let loaded = null;   // ➤ the last set downloaded and judged, so filters and typing redraw without a download
+const openGroups = new Set();   // ➤ the occupation groups the visitor unfolded, kept across redraws
+let familyTerms = null;         // ➤ ESCO's job titles, fetched the first time a CV is read
+let cvHints = { degrees: [], languages: [] };   // ➤ what the last CV said, for the code page
 
 // ➤ The state in the address: p = code, q = words, c = countries, f = families, d = days.
 function readHash() {
@@ -67,8 +72,9 @@ function drawFilters() {
   drawFamilyCounts();
 }
 
-// ➤ One block per occupation group (Engineers, Technicians, crews…) with the families that have
-// ➤ adverts in the countries ticked, so the numbers always mean "in what you chose".
+// ➤ One fold-out per occupation group (Engineers, Technicians, crews…) with the families that
+// ➤ have adverts in the countries ticked, so the numbers always mean "in what you chose". A
+// ➤ group stays open while the visitor has it open or has a tick inside.
 function drawFamilyCounts() {
   const chosen = new Set($$('#countries-pick input:checked').map(i => i.value));
   const count = id => Object.entries(index.families?.[id]?.countries || {}).filter(([cc]) => !chosen.size || chosen.has(cc)).reduce((s, [, e]) => s + (e.n || 0), 0);
@@ -78,13 +84,20 @@ function drawFamilyCounts() {
   for (const g of cats.families.groups) {
     const rows = cats.families.families.filter(f => f.group === g.id).map(f => [f, count(f.id)]).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
     if (!rows.length) continue;
-    const set = document.createElement('fieldset'); set.className = 'filter-group';
-    const legend = document.createElement('legend'); legend.textContent = g.label;
-    const box = document.createElement('div'); box.className = 'checks';
-    set.append(legend, box);
-    for (const [f, n] of rows) checkRow(box, { name: 'f', value: f.id, label: f.label, count: n }).checked = ticked.has(f.id);
-    pick.append(set);
+    const fold = document.createElement('details'); fold.className = 'filter-group'; fold.dataset.group = g.id;
+    fold.open = openGroups.has(g.id) || rows.some(([f]) => ticked.has(f.id));
+    fold.addEventListener('toggle', () => { if (fold.open) openGroups.add(g.id); else openGroups.delete(g.id); });
+    const summary = document.createElement('summary'); summary.textContent = g.label;
+    const checks = document.createElement('div'); checks.className = 'checks';
+    fold.append(summary, checks);
+    for (const [f, n] of rows) checkRow(checks, { name: 'f', value: f.id, label: f.label, count: n }).checked = ticked.has(f.id);
+    pick.append(fold);
   }
+}
+// ➤ Ticks the families the address names and unfolds their groups.
+function tickFamilies(f) {
+  for (const i of $$('#families-pick input')) i.checked = f.includes(i.value);
+  for (const fold of $$('#families-pick details')) if (fold.querySelector('input:checked')) fold.open = true;
 }
 
 function drawPile() {
@@ -125,6 +138,18 @@ function draw() {
   text('#filters-toggle', active ? `☰ Filters · ${active}` : '☰ Filters');
 }
 
+// ➤ The "make a code" link carries the ticked occupations and what the CV said, so the code
+// ➤ page starts filled in.
+function pointMakeCodeLink() {
+  const p = new URLSearchParams();
+  const { f } = readHash();
+  if (f.length) p.set('f', f.join(','));
+  if (cvHints.degrees.length) p.set('dg', cvHints.degrees.join(','));
+  if (cvHints.languages.length) p.set('lg', cvHints.languages.join(','));
+  const s = p.toString();
+  $('#make-code').href = s ? `intake/#${s}` : 'intake/';
+}
+
 // ➤ Puts the address into the controls, downloads what the scope needs, judges, draws.
 async function run() {
   const { code, q, c, f, d } = readHash();
@@ -132,10 +157,11 @@ async function run() {
   $('#code-input').value = code;
   for (const i of $$('#countries-pick input')) i.checked = c.includes(i.value);
   drawFamilyCounts();
-  for (const i of $$('#families-pick input')) i.checked = f.includes(i.value);
+  tickFamilies(f);
   for (const i of $$('#filters-form input[name="d"]')) i.checked = String(d || '') === i.value;
   const active = c.length + f.length + (d ? 1 : 0);
   text('#filters-toggle', active ? `☰ Filters · ${active}` : '☰ Filters');
+  pointMakeCodeLink();
   if (!code && !q && !active) { $('#results').hidden = true; loaded = null; return; }
 
   let profile = null;
@@ -178,6 +204,35 @@ async function run() {
   draw();
 }
 
+// ➤ The CV: a text file is read as it is; a PDF through pdf.js, loaded from this site only
+// ➤ then. Its job titles tick the occupations they belong to; degrees and languages wait for
+// ➤ the code page. Nothing of it is kept or sent.
+async function fileText(file) {
+  if (/\.(txt|md)$/i.test(file.name) || file.type.startsWith('text/')) return file.text();
+  const pdfjs = await import('./vendor/pdf.min.js');
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL('./vendor/pdf.worker.min.js', import.meta.url).href;
+  const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+  const pages = [];
+  for (let i = 1; i <= doc.numPages; i++) pages.push((await (await doc.getPage(i)).getTextContent()).items.map(it => it.str).join(' '));
+  return pages.join('\n');
+}
+async function readCvFile(file) {
+  text('#cv-status', `Reading ${file.name}…`);
+  try {
+    const t = await fileText(file);
+    if (t.trim().length < 200) { text('#cv-status', 'That file is too short to be a CV.'); return; }
+    familyTerms ||= await getJson('catalogues/family-terms.json');
+    const s = readCv(t, { ...cats, familyTerms });
+    cvHints = { degrees: s.degrees, languages: s.languages };
+    const fams = [...new Set([...readHash().f, ...s.families])];
+    text('#cv-status', s.families.length ? `Ticked from your CV: ${familiesSummary(s.families)}.` : 'No occupation of ours in that CV; tick them by hand.');
+    writeHash({ ...stateFromForm(), f: fams.join(',') });
+    pointMakeCodeLink();
+  } catch (e) {
+    text('#cv-status', `Could not read that file (${e.message}).`);
+  }
+}
+
 // ➤ On a phone the filters are a panel the button opens and closes; on a desk they sit on the left.
 function wireFilters() {
   const panel = $('#filters');
@@ -204,6 +259,7 @@ async function main() {
   wireFilters();
 
   $('#search').addEventListener('submit', e => { e.preventDefault(); writeHash(stateFromForm()); });
+  $('#cv-file').addEventListener('change', e => { const file = e.target.files[0]; if (file) readCvFile(file); e.target.value = ''; });
   // ➤ Typing redraws at once; the address follows once the typing pauses.
   let timer;
   $('#q').addEventListener('input', () => { writeHash(stateFromForm(), true); draw(); clearTimeout(timer); timer = setTimeout(() => writeHash(stateFromForm(), true), 600); });

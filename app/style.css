@@ -41,7 +41,7 @@ p { margin: 0 0 8px; }
 .filters__head h2 { margin: 0; }
 #filters-close { display: none; }
 .filter-group { border: 0; padding: 0; margin: 0 0 14px; }
-.filter-group legend { font-weight: 600; font-size: 14px; padding: 0; margin: 0 0 6px; }
+.filter-group > summary { font-weight: 600; font-size: 14px; cursor: pointer; margin: 0 0 6px; }
 .checks { display: flex; flex-direction: column; gap: 4px; }
 .check-row { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; padding: 2px 0; }
 .check-row input { margin: 0; width: 16px; height: 16px; accent-color: var(--accent); flex: 0 0 auto; }
@@ -58,6 +58,7 @@ p { margin: 0 0 8px; }
   .filters.is-open #filters-close { display: inline-block; }
   body.filters-open { overflow: hidden; }
 }
+.cv-line { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 8px 0; }
 .code-line { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 0 0 8px; }
 .code-line input { flex: 1 1 160px; max-width: 320px; font-family: ui-monospace, Consolas, monospace; }
 .small { font-size: 13px; margin: 0; }

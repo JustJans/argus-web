@@ -1,9 +1,8 @@
-// ➤ The intake page: chips from the catalogues, the CV reader, and the code at the end.
-// ➤ Everything happens in this document; the only network calls are the catalogues (same
-// ➤ origin, at load), the occupation titles when a CV is read, and, when a PDF is chosen,
-// ➤ the PDF reader script (same origin).
+// ➤ The code page: chips from the catalogues and the code at the end. Everything happens in
+// ➤ this document; the only network calls are the catalogues (same origin, at load). It
+// ➤ starts filled in from the address: a code to edit (#p=), or what the first page ticked and
+// ➤ read from a CV (#f= occupations, #dg= degrees, #lg= languages).
 import { encodeProfile, decodeProfile, normaliseProfile, catalogueIds } from '../lib/codec.js';
-import { readCv } from '../lib/cv.js';
 
 const $ = s => document.querySelector(s);
 const getJson = async url => { const r = await fetch(url, { cache: 'no-cache' }); if (!r.ok) throw new Error(`${r.status} for ${url}`); return r.json(); };
@@ -79,44 +78,14 @@ function fillForm(p) {
   $('#no-words').value = p.noWords.join(', ');
 }
 
-// ➤ Editing: a code after the # pre-fills every step.
+// ➤ The start: a code to edit, or the first page's ticks and CV findings.
 {
-  const code = new URLSearchParams(location.hash.replace(/^#/, '')).get('p');
-  if (code) { try { fillForm(decodeProfile(code.trim(), ids)); } catch { /* a bad code: start fresh */ } }
+  const h = new URLSearchParams(location.hash.replace(/^#/, ''));
+  const list = k => (h.get(k) || '').split(',').map(s => s.trim()).filter(Boolean);
+  const code = (h.get('p') || '').trim();
+  if (code) { try { fillForm(decodeProfile(code, ids)); } catch { /* a bad code: start fresh */ } }
+  else if (h.has('f') || h.has('dg') || h.has('lg')) fillForm(normaliseProfile({ families: list('f'), degrees: list('dg'), languages: list('lg') }));
 }
-
-// ➤ The CV: text pasted, or a file read here. A PDF loads the reader from this site.
-async function fileText(file) {
-  if (/\.(txt|md)$/i.test(file.name) || file.type.startsWith('text/')) return file.text();
-  const pdfjs = await import('../vendor/pdf.min.js');
-  // ➤ Resolved from this module, not from the page: the assets live under v/<hash>/.
-  pdfjs.GlobalWorkerOptions.workerSrc = new URL('../vendor/pdf.worker.min.js', import.meta.url).href;
-  const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
-  const pages = [];
-  for (let i = 1; i <= doc.numPages; i++) {
-    const content = await (await doc.getPage(i)).getTextContent();
-    pages.push(content.items.map(it => it.str).join(' '));
-  }
-  return pages.join('\n');
-}
-$('#cv-file').addEventListener('change', async e => {
-  const file = e.target.files[0]; if (!file) return;
-  $('#cv-status').textContent = `Reading ${file.name}…`;
-  try { $('#cv-text').value = await fileText(file); $('#cv-status').textContent = `${file.name} read (${$('#cv-text').value.length} characters). Now press "Read my CV".`; }
-  catch (err) { $('#cv-status').textContent = `Could not read that file (${err.message}). Paste the text instead.`; }
-});
-// ➤ The occupation titles (ESCO's, per language) are fetched once, the first time a CV is read.
-let familyTerms = null;
-$('#cv-read').addEventListener('click', async () => {
-  const t = $('#cv-text').value;
-  if (t.trim().length < 200) { $('#cv-status').textContent = 'That is too short to be a CV. Paste the whole text, or choose the file.'; return; }
-  try { familyTerms ||= await getJson('../catalogues/family-terms.json'); } catch { familyTerms = {}; }
-  const s = readCv(t, { ...cats, familyTerms });
-  const current = readForm();
-  fillForm(normaliseProfile({ ...current, degrees: [...new Set([...current.degrees, ...s.degrees])], languages: [...new Set([...current.languages, ...s.languages])], families: [...new Set([...current.families, ...s.families])], roles: current.roles.length ? current.roles : s.roles }));
-  const parts = [`${s.degrees.length} degree${s.degrees.length === 1 ? '' : 's'}`, `${s.languages.length} language${s.languages.length === 1 ? '' : 's'}`, `${s.families.length} occupation${s.families.length === 1 ? '' : 's'}`, s.roles.length ? `${s.roles.length} title words` : null].filter(Boolean);
-  $('#cv-status').textContent = `Read: ${parts.join(', ')}. Check the steps below and correct what is wrong.`;
-});
 
 // ➤ The code.
 $('#intake').addEventListener('submit', e => {
