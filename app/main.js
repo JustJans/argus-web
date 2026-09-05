@@ -27,16 +27,21 @@ const foldState = new Map();    // ➤ fold-outs the visitor opened or closed, k
 const countryOrder = [];        // ➤ the order countries were ticked in: the first comes first in the list
 let familyTerms = null;         // ➤ ESCO's job titles, fetched the first time a CV is read
 
-// ➤ The state in the address: p = the code (every filter), q = the search words.
+// ➤ The state in the address: p = the code (every filter), q = the search words, all = the
+// ➤ whole pile was asked for with nothing set.
 function readHash() {
   const p = new URLSearchParams(location.hash.replace(/^#/, ''));
-  return { code: (p.get('p') || '').trim(), q: (p.get('q') || '').trim(), debug: p.has('dbg') };
+  return { code: (p.get('p') || '').trim(), q: (p.get('q') || '').trim(), all: p.has('all'), debug: p.has('dbg') };
 }
+const hashOf = parts => { const p = new URLSearchParams(); for (const [k, v] of Object.entries(parts)) if (v) p.set(k, v); return p.toString() ? `#${p}` : ''; };
 function writeHash(parts, replace = false) {
-  const p = new URLSearchParams();
-  for (const [k, v] of Object.entries(parts)) if (v) p.set(k, v);
-  const h = '#' + p.toString();
-  if (replace) history.replaceState(null, '', h); else location.hash = h;
+  if (replace) history.replaceState(null, '', hashOf(parts) || location.pathname + location.search); else location.hash = hashOf(parts);
+}
+// ➤ Search: the address changes and the browser calls run(); when it would not change (the
+// ➤ words were already written while typing), run() is called here, so Search always answers.
+function search(parts) {
+  const h = hashOf(parts);
+  if (h === location.hash) run().catch(e => text('#results-status', `Something went wrong: ${e.message}`)); else location.hash = h;
 }
 
 const countryName = cc => cc === 'xx' ? 'Remote' : cc === 'zz' || !cc ? 'Country not stated' : (cats.countries.countries.find(c => c.iso === cc)?.name || cc.toUpperCase());
@@ -173,14 +178,16 @@ function draw() {
   const since = loaded.profile.posted ? new Date(Date.now() - loaded.profile.posted * 864e5).toISOString().slice(0, 10) : '';
   const shown = loaded.offers.filter(o => (!since || (o.d && o.d >= since)) && matchesWords(o, words, countryName));
   const failed = loaded.failed.length ? ` (${loaded.failed.length} part${loaded.failed.length === 1 ? '' : 's'} failed to download)` : '';
-  text('#results-status', `${shown.length.toLocaleString('en')} of ${loaded.total.toLocaleString('en')} offers match your filters${failed}.`);
+  const narrowed = words.length || !isEmptyProfile(loaded.profile);
+  text('#results-status', narrowed ? `${shown.length.toLocaleString('en')} of ${loaded.total.toLocaleString('en')} offers match your filters${failed}.` : `${shown.length.toLocaleString('en')} offers, newest first${failed}.`);
   if (shown.length) renderList($('#list'), shown, ctx); else renderEmpty($('#list'), loaded.stages, loaded.total);
   if (debug && loaded.dropped) renderDebug($('#debug'), loaded.dropped); else $('#debug').hidden = true;
 }
 
 // ➤ Reads the address, puts it into the controls, downloads what the scope needs, judges, draws.
+// ➤ Nothing set and nothing asked: the front. Nothing set but Search pressed: the whole pile.
 async function run() {
-  const { code, q } = readHash();
+  const { code, q, all } = readHash();
   $('#q').value = q;
   $('#code-input').value = code;
   let profile = normaliseProfile({});
@@ -190,7 +197,7 @@ async function run() {
   fillFilters(profile);
   const active = activeGroups(profile).size;
   text('#filters-toggle', active ? `☰ Filters · ${active}` : '☰ Filters');
-  if (isEmptyProfile(profile) && !q) { $('#results').hidden = true; loaded = null; return; }
+  if (isEmptyProfile(profile) && !q && !all) { $('#results').hidden = true; loaded = null; return; }
 
   // ➤ The same scope already downloaded? Then only redraw.
   const scope = { ...profile, remote: profile.remote || !profile.countries.length };
@@ -257,7 +264,8 @@ function wireControls() {
     writeHash(stateFromForm());
   });
   $('#filters-clear').addEventListener('click', () => { countryOrder.length = 0; writeHash({ q: $('#q').value.trim() }); });
-  // ➤ Search: a code pasted over the current one loads it; otherwise the filters as they are.
+  // ➤ Search: a code pasted over the current one loads it; otherwise the filters and words as
+  // ➤ they are; with nothing at all, the whole pile.
   $('#search').addEventListener('submit', e => {
     e.preventDefault();
     const state = stateFromForm();
@@ -265,7 +273,8 @@ function wireControls() {
     if (typed && typed !== state.p) {
       try { decodeProfile(typed, ids); state.p = typed; } catch (err) { $('#results').hidden = false; text('#results-status', `That code cannot be read: ${err.message}.`); return; }
     }
-    writeHash(state);
+    if (!state.p && !state.q) state.all = '1';
+    search(state);
   });
   $('#copy-code').addEventListener('click', async () => {
     const code = $('#code-input').value.trim();
