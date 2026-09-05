@@ -32,7 +32,11 @@ The structure is built for the changes already known. Each item names the seam.
 
 ## Growth
 - **Countries**: append to `catalogues/countries.json`; shards appear by themselves.
-- **Families**: append to `catalogues/families.json` (ISCO groups, SSYK ids, title terms).
+- **Families**: a family is an ISCO-08 unit group. To add one, append an entry to
+  `catalogues/families.json` (id = the code, its group, a short label) and rerun
+  `builder/isco-esco.mjs` so `catalogues/codes/isco.json` carries its ESCO titles; job titles
+  ESCO lacks (Catalan) go in the entry's `extra_terms`. Never reorder: the position is the bit
+  in the profile code.
 - **Languages, degrees, vetoes, levels**: append to their catalogue; never reorder.
 - **Deploy**: today `builder/publish.mjs` pushes `site/` to `gh-pages`; the workflows in
   `ops/workflows/` move to `.github/workflows/` once the token can create them, and Pages

@@ -40,7 +40,9 @@ per dropped advert with the reason to `builder/out/explain.txt`.
 ## What it will be
 
 - **Scope:** classic engineering and technical occupations (ISCO-08 groups 214, 215, 216,
-  311, 312, 313, 315), all of Europe. Marine and offshore roles are one family among them.
+  311, 312, 313, 315), all of Europe. The families are those ISCO unit groups themselves, shown
+  by minor group: engineers, architects/planners/surveyors, technicians, supervisors, plant
+  operators, ship and aircraft crews. Their job titles in twelve languages come from ESCO.
 - **Sources:** only job data whose written terms allow republishing, each offer linking to
   the page it lives on — public employment services with open licences (France Travail,
   Sweden's JobTech, Norway's NAV, Czechia, Lithuania, Latvia, Spanish regions), documented
@@ -57,7 +59,9 @@ per dropped advert with the reason to `builder/out/explain.txt`.
 ## Repository layout
 
 ```
-catalogues/   families (ISCO and SSYK codes, title terms in seven languages) and countries
+catalogues/   families (ISCO-08 unit groups by minor group), countries, languages, degrees, vetoes;
+              codes/ holds ESCO's job titles per group and JobTech's SSYK→ISCO table (built by
+              builder/isco-esco.mjs)
 builder/      adapters (one per source) → normalise → gate → dedupe → shards and an index
 app/          the static site GitHub Pages serves
 test/         the builder's pure parts and the adapters' parsers on recorded answers

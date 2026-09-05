@@ -1,9 +1,9 @@
-// ➤ The first page. Two ways in: a plain search (words, and the filters on the left: country,
-// ➤ family, date) and a code, which decodes into a profile and judges every advert on the
-// ➤ device; the filters narrow either list. Everything downloads only the parts of the pile
-// ➤ it needs, hides adverts past their deadline, and draws the same list. The state lives in
-// ➤ the address after the #, so a search or a list can be bookmarked and shared; nothing
-// ➤ about the visitor leaves the browser.
+// ➤ The first page. Two ways in and one Search button: words (with the filters on the left:
+// ➤ country, occupation group, date) or a code, which decodes into a profile and judges every
+// ➤ advert on the device; the filters narrow either list. Everything downloads only the parts
+// ➤ of the pile it needs, hides adverts past their deadline, and draws the same list. The
+// ➤ state lives in the address after the #, so a search or a list can be bookmarked and
+// ➤ shared; nothing about the visitor leaves the browser.
 import { decodeProfile, normaliseProfile, catalogueIds } from './lib/codec.js';
 import { makeJudge, sortOffers } from './lib/gates.js';
 import { shardFiles, loadShards } from './lib/shards.js';
@@ -26,9 +26,10 @@ function readHash() {
   const list = k => (p.get(k) || '').split(',').map(s => s.trim()).filter(Boolean);
   return { code: (p.get('p') || '').trim(), q: (p.get('q') || '').trim(), c: list('c'), f: list('f'), d: Number(p.get('d')) || 0, debug: p.has('dbg') };
 }
+// ➤ The one form: the code field and the words travel together, so Search serves both.
 function stateFromForm() {
-  const { code, debug } = readHash();
-  return { p: code, q: $('#q').value.trim(), c: $$('#countries-pick input:checked').map(i => i.value).join(','), f: $$('#families-pick input:checked').map(i => i.value).join(','), d: $('#filters-form input[name="d"]:checked')?.value || '', dbg: debug ? '1' : '' };
+  const { debug } = readHash();
+  return { p: $('#code-input').value.trim(), q: $('#q').value.trim(), c: $$('#countries-pick input:checked').map(i => i.value).join(','), f: $$('#families-pick input:checked').map(i => i.value).join(','), d: $('#filters-form input[name="d"]:checked')?.value || '', dbg: debug ? '1' : '' };
 }
 function writeHash(parts, replace = false) {
   const p = new URLSearchParams();
@@ -38,7 +39,14 @@ function writeHash(parts, replace = false) {
 }
 
 const countryName = cc => cc === 'xx' ? 'Remote' : cc === 'zz' || !cc ? 'Country not stated' : (cats.countries.countries.find(c => c.iso === cc)?.name || cc.toUpperCase());
-const familyLabel = id => cats.families.families.find(f => f.id === id)?.label || id;
+const familyOf = id => cats.families.families.find(f => f.id === id);
+const groupLabel = id => cats.families.groups.find(g => g.id === id)?.label || id;
+// ➤ "Engineers: Mechanical, Civil · Technicians: Mechanical": the group gives a label its meaning.
+function familiesSummary(fams) {
+  const byGroup = new Map();
+  for (const id of fams) { const f = familyOf(id); const g = f?.group || ''; byGroup.set(g, [...(byGroup.get(g) || []), f?.label || id]); }
+  return [...byGroup].map(([g, labels]) => `${groupLabel(g)}: ${labels.join(', ')}`).join(' · ');
+}
 
 // ➤ One row per choice: the tick on the left, the label, today's count on the right.
 function checkRow(container, { name, value, label, count }) {
@@ -59,14 +67,24 @@ function drawFilters() {
   drawFamilyCounts();
 }
 
-// ➤ Family counts follow the countries ticked, so the numbers always mean "in what you chose".
+// ➤ One block per occupation group (Engineers, Technicians, crews…) with the families that have
+// ➤ adverts in the countries ticked, so the numbers always mean "in what you chose".
 function drawFamilyCounts() {
   const chosen = new Set($$('#countries-pick input:checked').map(i => i.value));
-  const counts = Object.entries(index.families || {}).map(([id, f]) => [id, Object.entries(f.countries || {}).filter(([cc]) => !chosen.size || chosen.has(cc)).reduce((s, [, e]) => s + (e.n || 0), 0)]).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+  const count = id => Object.entries(index.families?.[id]?.countries || {}).filter(([cc]) => !chosen.size || chosen.has(cc)).reduce((s, [, e]) => s + (e.n || 0), 0);
   const pick = $('#families-pick');
   const ticked = new Set($$('#families-pick input:checked').map(i => i.value));
   pick.replaceChildren();
-  for (const [id, n] of counts) checkRow(pick, { name: 'f', value: id, label: familyLabel(id), count: n }).checked = ticked.has(id);
+  for (const g of cats.families.groups) {
+    const rows = cats.families.families.filter(f => f.group === g.id).map(f => [f, count(f.id)]).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+    if (!rows.length) continue;
+    const set = document.createElement('fieldset'); set.className = 'filter-group';
+    const legend = document.createElement('legend'); legend.textContent = g.label;
+    const box = document.createElement('div'); box.className = 'checks';
+    set.append(legend, box);
+    for (const [f, n] of rows) checkRow(box, { name: 'f', value: f.id, label: f.label, count: n }).checked = ticked.has(f.id);
+    pick.append(set);
+  }
 }
 
 function drawPile() {
@@ -111,6 +129,7 @@ function draw() {
 async function run() {
   const { code, q, c, f, d } = readHash();
   $('#q').value = q;
+  $('#code-input').value = code;
   for (const i of $$('#countries-pick input')) i.checked = c.includes(i.value);
   drawFamilyCounts();
   for (const i of $$('#families-pick input')) i.checked = f.includes(i.value);
@@ -136,7 +155,7 @@ async function run() {
   summary.hidden = !profile;
   if (profile) {
     summary.textContent = [
-      profile.families.map(familyLabel).join(', ') || 'every family',
+      familiesSummary(profile.families) || 'every occupation',
       profile.countries.map(countryName).join(', ') || 'every country',
       profile.level !== 'any' ? profile.level : null,
       profile.maxYears ? `up to ${profile.maxYears} years asked` : null,
@@ -185,7 +204,6 @@ async function main() {
   wireFilters();
 
   $('#search').addEventListener('submit', e => { e.preventDefault(); writeHash(stateFromForm()); });
-  $('#code-form').addEventListener('submit', e => { e.preventDefault(); const v = $('#code-input').value.trim(); if (v) writeHash({ ...stateFromForm(), p: v }); });
   // ➤ Typing redraws at once; the address follows once the typing pauses.
   let timer;
   $('#q').addEventListener('input', () => { writeHash(stateFromForm(), true); draw(); clearTimeout(timer); timer = setTimeout(() => writeHash(stateFromForm(), true), 600); });

@@ -26,6 +26,7 @@ p { margin: 0 0 8px; }
 .site-header { padding-top: 28px; }
 .brand { display: inline-block; font-size: 26px; font-weight: 700; color: var(--ink); text-decoration: none; margin-bottom: 2px; }
 .tagline { color: var(--muted); margin: 0 0 18px; }
+.site-nav { display: flex; flex-wrap: wrap; gap: 14px; margin: 2px 0 10px; font-size: 14px; }
 .site-footer { color: var(--muted); font-size: 13px; padding: 12px 16px 40px; }
 
 /* Cards */
@@ -81,6 +82,7 @@ textarea { resize: vertical; }
 
 /* Chips: checkboxes and radios dressed as pills; the input stays for the keyboard */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0; }
+.chips__group { font-size: 14px; font-weight: 600; margin: 10px 0 0; }
 .chip { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--chip); border: 1px solid transparent; cursor: pointer; font-size: 14px; }
 .chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .chip:has(input:checked) { background: var(--chip-on); border-color: var(--accent); }

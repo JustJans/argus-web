@@ -4,7 +4,11 @@
 // ➤ free words travel as short UTF-8 strings. A checksum rejects a mistyped code. Pure:
 // ➤ the same file runs in the browser and under Node's tests.
 
-export const VERSION = 1;
+// ➤ Version 2 (2026-09-05): families became ISCO-08 unit groups, more than 32 of them, so
+// ➤ their field grew to 8 bytes; a version-1 code named families that no longer exist and is
+// ➤ refused with a message that says to make a new one.
+export const VERSION = 2;
+const FAMILY_BYTES = 8, LANGUAGE_BYTES = 2, DEGREE_BYTES = 4;
 export const MAX_YEARS_STEPS = [null, 1, 2, 3, 5, 7, 10, 15];   // ➤ 3 bits
 export const LEVELS = ['any', 'junior', 'mid', 'senior'];         // ➤ 2 bits
 export const HIGHEST = ['none', 'bachelor', 'master', 'phd'];     // ➤ 2 bits
@@ -48,21 +52,20 @@ class Writer {
   constructor() { this.bytes = []; }
   byte(b) { this.bytes.push(b & 255); }
   varint(n) { let v = Math.max(0, Math.floor(n)); do { let b = v & 127; v >>>= 7; if (v) b |= 128; this.byte(b); } while (v); }
-  bits32(mask) { this.byte(mask >>> 24); this.byte(mask >>> 16); this.byte(mask >>> 8); this.byte(mask); }
-  bits16(mask) { this.byte(mask >>> 8); this.byte(mask); }
+  // ➤ A set of catalogue choices as a bitfield of n bytes: position p of the catalogue is
+  // ➤ bit (p mod 8) of byte (p div 8). Positions beyond the field are left out.
+  bits(ids, catalogue, n) { const b = new Array(n).fill(0); for (const id of ids || []) { const p = catalogue.indexOf(id); if (p >= 0 && p < n * 8) b[p >> 3] |= 1 << (p & 7); } for (const x of b) this.byte(x); }
   string(s) { let b = enc.encode(String(s).trim()); if (b.length > MAX_TERM_BYTES) b = b.slice(0, MAX_TERM_BYTES); this.varint(b.length); for (const x of b) this.byte(x); }
 }
 class Reader {
   constructor(bytes) { this.b = bytes; this.i = 0; }
   byte() { if (this.i >= this.b.length) throw new Error('code too short'); return this.b[this.i++]; }
   varint() { let v = 0, shift = 0, b; do { b = this.byte(); v |= (b & 127) << shift; shift += 7; if (shift > 28) throw new Error('bad number'); } while (b & 128); return v >>> 0; }
-  bits32() { return ((this.byte() << 24) | (this.byte() << 16) | (this.byte() << 8) | this.byte()) >>> 0; }
-  bits16() { return (this.byte() << 8) | this.byte(); }
+  // ➤ The ids whose bit is set; a bit for a position the catalogue does not have yet is ignored.
+  bits(catalogue, n) { const b = []; for (let i = 0; i < n; i++) b.push(this.byte()); return catalogue.filter((_, p) => p < n * 8 && (b[p >> 3] & (1 << (p & 7)))); }
   string() { const n = this.varint(); if (n > MAX_TERM_BYTES) throw new Error('bad word'); const s = this.b.slice(this.i, this.i + n); if (s.length < n) throw new Error('code too short'); this.i += n; return dec.decode(s); }
 }
 
-const maskOf = (ids, catalogue) => { let m = 0; for (const id of ids || []) { const i = catalogue.indexOf(id); if (i >= 0 && i < 32) m |= (1 << i); } return m >>> 0; };
-const idsOf = (mask, catalogue) => catalogue.filter((_, i) => i < 32 && (mask & (1 << i)));
 const cleanTerms = list => [...new Set((list || []).map(s => String(s).trim()).filter(Boolean))].slice(0, MAX_FREE);
 
 // ➤ A complete, tidy profile from whatever object came in. Sets (families, languages,
@@ -93,10 +96,10 @@ export function encodeProfile(profile, cats) {
   const w = new Writer();
   w.byte(VERSION);
   w.byte(p.remote ? 1 : 0);
-  w.bits32(maskOf(p.families, cats.families));
+  w.bits(p.families, cats.families, FAMILY_BYTES);
   w.byte((LEVELS.indexOf(p.level) << 6) | (MAX_YEARS_STEPS.indexOf(p.maxYears) << 3) | HIGHEST.indexOf(p.highest));
-  w.bits16(maskOf(p.languages, cats.languages));
-  w.bits32(maskOf(p.degrees, cats.degrees));
+  w.bits(p.languages, cats.languages, LANGUAGE_BYTES);
+  w.bits(p.degrees, cats.degrees, DEGREE_BYTES);
   const countries = p.countries.map(c => cats.countries.indexOf(c)).filter(i => i >= 0);
   w.varint(countries.length); for (const i of countries) w.varint(i);
   w.varint(p.roles.length); for (const r of p.roles) w.string(r);
@@ -116,15 +119,15 @@ export function decodeProfile(code, cats) {
   if (crc16(body) !== given) throw new Error('code does not check out (a character is wrong or missing)');
   const r = new Reader(body);
   const version = r.byte();
-  if (version !== VERSION) throw new Error(`code made by version ${version}; this page reads version ${VERSION}`);
+  if (version !== VERSION) throw new Error(version < VERSION ? 'this code is from an earlier version of the page; make a new one' : `this code is from a newer version of the page (${version}) than this one reads (${VERSION})`);
   const flags = r.byte();
-  const families = idsOf(r.bits32(), cats.families);
+  const families = r.bits(cats.families, FAMILY_BYTES);
   const packed = r.byte();
   const level = LEVELS[packed >> 6];
   const maxYears = MAX_YEARS_STEPS[(packed >> 3) & 7];
   const highest = HIGHEST[packed & 3];
-  const languages = idsOf(r.bits16(), cats.languages);
-  const degrees = idsOf(r.bits32(), cats.degrees);
+  const languages = r.bits(cats.languages, LANGUAGE_BYTES);
+  const degrees = r.bits(cats.degrees, DEGREE_BYTES);
   const nc = r.varint(); const countries = []; for (let i = 0; i < nc; i++) { const idx = r.varint(); if (cats.countries[idx]) countries.push(cats.countries[idx]); }
   const nr = r.varint(); const roles = []; for (let i = 0; i < nr; i++) roles.push(r.string());
   const nv = r.varint(); const vetoes = []; for (let i = 0; i < nv; i++) { const idx = r.varint(); if (cats.vetoes[idx]) vetoes.push(cats.vetoes[idx]); }

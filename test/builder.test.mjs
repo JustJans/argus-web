@@ -1,10 +1,12 @@
 // ➤ The builder's pure parts, without a network: the gate, the place reader, the excerpts,
 // ➤ the record, the dedupe and the shards. The sources' parsers are fed recorded answers.
+// ➤ The gate runs on the real tables: the catalogue (ISCO-08 unit groups), ESCO's job titles
+// ➤ (catalogues/codes/isco.json) and JobTech's SSYK→ISCO correspondence.
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { harness } from 'argus/server-bot/test-harness.mjs';
-import { compileFamilies, familiesOf, hygieneReason } from '../builder/gate.mjs';
+import { compileFamilies, familiesOf, hygieneReason, cleanTitle } from '../builder/gate.mjs';
 import { compileCountries, placeOf, normUrl, idFor, toRecord } from '../builder/normalise.mjs';
 import { snippet, requirements } from '../builder/excerpt.mjs';
 import { dedupe, roleKey } from '../builder/dedupe.mjs';
@@ -16,25 +18,60 @@ import { ATS } from '../builder/adapters/boards.mjs';
 
 const { ok, eq, done } = harness('builder');
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const families = JSON.parse(readFileSync(join(ROOT, 'catalogues', 'families.json'), 'utf-8')).families;
-const countries = JSON.parse(readFileSync(join(ROOT, 'catalogues', 'countries.json'), 'utf-8')).countries;
-const gate = compileFamilies(families);
+const read = p => JSON.parse(readFileSync(join(ROOT, ...p.split('/')), 'utf-8'));
+const catalogue = read('catalogues/families.json');
+const families = catalogue.families;
+const codes = { isco: read('catalogues/codes/isco.json'), ssyk: read('catalogues/codes/ssyk-isco.json') };
+const countries = read('catalogues/countries.json').countries;
+const gate = compileFamilies(catalogue, codes);
 const cc = compileCountries(countries);
+const ssykOf = code => Object.entries(codes.ssyk.concepts).find(([, c]) => c.ssyk === code)[0];
 
-// ── The gate ────────────────────────────────────────────────────────────
-eq(familiesOf({ title: 'Säkerhetskontrollant', codes: { ssyk: 'PRQn_9yw_NJA' } }, gate), ['mechanical'], 'a Swedish SSYK code decides, whatever the title says');
-ok(familiesOf({ title: 'Anything', codes: { isco: '2142' } }, gate).includes('civil-structural'), 'an ISCO code decides too');
-eq(familiesOf({ title: 'Mechanical Design Engineer', codes: {} }, gate), ['mechanical'], 'no code: the English title');
-ok(familiesOf({ title: 'INGENIERO/A TÉCNICO/A O INDUSTRIAL JUNIOR', codes: {} }, gate).includes('engineering-other'), 'a Spanish title with gender marks still reads as an engineer');
-ok(familiesOf({ title: "Enginyer/a d'automatització", codes: {} }, gate).includes('automation-instrumentation'), 'a Catalan title with an apostrophe');
-eq(familiesOf({ title: 'Ingénieur études et conception mécanique H/F', codes: {} }, gate), ['mechanical'], 'accents do not get in the way, and a specific family silences the catch-all');
-eq(familiesOf({ title: 'Fisioterapeuta', codes: {} }, gate), [], 'a physiotherapist is outside the vertical');
-eq(familiesOf({ title: 'Software Engineer', codes: {} }, gate), ['engineering-other'], 'a software engineer only matches the generic word — the visitor\'s roles refine it');
-ok(!familiesOf({ title: 'Ingeniería del software - Comercial', codes: {} }, gate).includes('mechanical'), 'a word inside another word does not match');
-eq(familiesOf({ title: 'Naval Architect', codes: {} }, gate), ['marine-offshore'], 'a naval architect is not an architect');
-eq(familiesOf({ title: 'Senior Solution Architect', codes: {} }, gate), [], 'nor is a solution architect');
-eq(familiesOf({ title: 'Arquitecto/a técnico', codes: {} }, gate), ['architecture-planning'], 'a real architect is');
-eq(hygieneReason({ title: 'Sales Engineer' }), 'title names a sales, recruiting or trainee role', 'a sales engineer is hygiene');
+// ── The catalogue ───────────────────────────────────────────────────────
+eq(catalogue.groups.map(g => g.id), ['engineers', 'architects-surveyors', 'technicians', 'supervisors', 'plant-operators', 'crews'], 'six groups, by ISCO minor group');
+eq(families.length, 37, 'thirty-seven families: the unit groups of 214-216 and 311-315 minus the two designer groups');
+ok(families.every(f => /^\d{4}$/.test(f.id) && f.isco[0] === f.id && catalogue.groups.some(g => g.id === f.group) && f.label && f.isco_title), 'every family is an ISCO code with its group, a label and ISCO\'s own title');
+ok(families.every(f => codes.isco.units[f.id]?.labels?.en?.length), 'every family has ESCO job titles in English');
+eq(new Set(families.map(f => f.id)).size, families.length, 'ids are unique');
+
+// ── The gate: codes ─────────────────────────────────────────────────────
+ok(gate.bySsyk.size >= 30, `JobTech's SSYK groups that fall in the vertical (${gate.bySsyk.size})`);
+eq(familiesOf({ title: 'Säkerhetskontrollant', codes: { ssyk: 'PRQn_9yw_NJA' }, lang: 'sv' }, gate), ['2144'], 'a Swedish SSYK code decides through the official correspondence, whatever the title says');
+eq(familiesOf({ title: 'Telekomingenjör', codes: { ssyk: ssykOf('2143') }, lang: 'sv' }, gate), ['2153'], 'a code that spans several groups: the title picks the one it names');
+eq(familiesOf({ title: 'Ingenjör', codes: { ssyk: ssykOf('2143') }, lang: 'sv' }, gate).sort(), ['2151', '2152', '2153'], 'and keeps them all when it names none');
+eq(familiesOf({ title: 'Mechanical Engineer', codes: { ssyk: ssykOf('3323') }, lang: 'sv' }, gate), [], 'a code outside the vertical is the source\'s word: out, whatever the title');
+eq(familiesOf({ title: 'Anything', codes: { isco: '2142' } }, gate), ['2142'], 'an ISCO code decides too');
+eq(familiesOf({ title: 'Mechanical Engineer', codes: { isco: '2512' } }, gate), [], 'an ISCO code outside the vertical is out');
+
+// ── The gate: titles, by ESCO's names ───────────────────────────────────
+eq(familiesOf({ title: 'Mechanical Engineer', codes: {}, lang: 'en' }, gate), ['2144'], 'no code: the title; the group that names it beats the groups that list it as an alternative');
+eq(familiesOf({ title: 'Naval Architect', codes: {}, lang: 'en' }, gate), ['2144'], 'a naval architect is a mechanical engineer in ISCO, not an architect: the longest title wins');
+eq(familiesOf({ title: 'Chief Engineer', codes: {}, lang: 'en' }, gate), ['3151'], 'a chief engineer is a ship\'s engineer');
+eq(familiesOf({ title: 'Senior Solution Architect', codes: {}, lang: 'en' }, gate), [], 'a solution architect is ICT: blocked');
+eq(familiesOf({ title: 'Software Engineer', codes: {}, lang: 'en' }, gate), [], 'so is a software engineer, whatever the word engineer says');
+eq(familiesOf({ title: 'Project Engineer', codes: {}, lang: 'en' }, gate), ['2149'], 'only the word engineer: engineers not elsewhere classified');
+eq(familiesOf({ title: 'Draughtsman', codes: {}, lang: 'en' }, gate), ['3118'], 'a British spelling ESCO lacks comes from the extra terms');
+eq(familiesOf({ title: 'INGENIERO/A MECÁNICO/A', codes: {}, lang: 'es' }, gate), ['2144'], 'Spanish, with gender marks');
+eq(familiesOf({ title: 'INGENIERO/A TÉCNICO/A O INDUSTRIAL JUNIOR', codes: {}, lang: 'es' }, gate), ['2149'], 'a Spanish title with only the word ingeniero falls into 2149');
+eq(familiesOf({ title: 'Ingeniero de procesos para Burgos', codes: {}, lang: 'es' }, gate), ['2141'], 'a Spanish process engineer');
+eq(familiesOf({ title: 'Técnico comercial', codes: {}, lang: 'es' }, gate), [], 'the bare word técnico names no occupation');
+eq(familiesOf({ title: 'Arquitecto/a para Ayto. de Medina del Campo (Valladolid)', codes: {}, lang: 'es' }, gate), ['2161'], 'an architect is an architect');
+eq(familiesOf({ title: 'Encargado/a de obra', codes: {}, lang: 'es' }, gate), ['3123'], 'a construction supervisor');
+eq(familiesOf({ title: 'ENGINYER/A INDUSTRIAL', codes: {}, lang: 'ca' }, gate), ['2141'], 'Catalan, from the catalogue\'s extra terms (ESCO has no Catalan)');
+eq(familiesOf({ title: "Enginyer/a d'automatització", codes: {}, lang: 'ca' }, gate), ['2141'], 'a Catalan title with an apostrophe');
+eq(familiesOf({ title: 'Ingénieur études et conception mécanique H/F', codes: {}, lang: 'fr' }, gate), ['2149'], 'French: the bare ingénieur alone falls into 2149');
+eq(familiesOf({ title: 'Fisioterapeuta', codes: {}, lang: 'es' }, gate), [], 'a physiotherapist is outside the vertical');
+eq(familiesOf({ title: "CAP D'OBRA - APARELLADOR/A - ARQUITECTE/A TÈCNIC/A", codes: {}, lang: 'ca' }, gate).sort(), ['2149', '3112', '3123'], 'a Catalan site manager and building surveyor: the longer "arquitecte tècnic" beats "arquitecte"');
+eq(familiesOf({ title: 'Ingeniero/a Informático/a para AUVASA (Valladolid)', codes: {}, lang: 'es' }, gate), [], 'a computing engineer is not ours, so the bare ingeniero does not rescue it');
+eq(familiesOf({ title: 'COORDINADOR/A DE LLEURE', codes: {}, lang: 'ca' }, gate), [], 'a bare "coordinador" names no occupation of ours');
+eq(familiesOf({ title: 'TALLYMAN, SUPERVISOR/RA', codes: {}, lang: 'es' }, gate), [], 'nor does a bare "supervisor"');
+eq(familiesOf({ title: 'ARQUITECTO/TA TECNICO/CA - JEFE/FA DE OBRA', codes: {}, lang: 'es' }, gate).includes('3112') && !familiesOf({ title: 'ARQUITECTO/TA TECNICO/CA - JEFE/FA DE OBRA', codes: {}, lang: 'es' }, gate).includes('2161'), true, 'the /TA /CA /FA gender marks go too, so the building surveyor is read whole');
+eq(familiesOf({ title: 'TECNICO/A DE INFRAESTRUCTURAS IT', codes: {}, lang: 'es' }, gate), [], 'IT puts a title outside the vertical whatever else it says');
+ok(familiesOf({ title: "ENGINYER/A DE PONTS I CAMINS O D'OBRA CIVIL", codes: {}, lang: 'ca' }, gate).includes('2142'), 'the Catalan civil engineer');
+eq(cleanTitle("Enginyer/a d'automatització (m/f)"), 'enginyer d automatitzacio', 'gender marks and apostrophes go before the words are read');
+eq(hygieneReason({ title: 'Sales Engineer' }), 'title names a sales, recruiting, trainee or labourer role', 'a sales engineer is hygiene');
+eq(hygieneReason({ title: 'VENDEDOR/A, INTERIORISTA, DISEÑADOR/A' }), 'title names a sales, recruiting, trainee or labourer role', 'so is a Spanish shop assistant, whatever else the title says');
+eq(hygieneReason({ title: 'PEONES DE LA INDUSTRIA METALÚRGICA' }), 'title names a sales, recruiting, trainee or labourer role', 'and a labourer');
 eq(hygieneReason({ title: 'Ingeniero/a de procesos' }), null, 'an engineer is not');
 
 // ── Places ──────────────────────────────────────────────────────────────
@@ -65,11 +102,11 @@ eq(snippet('A'.repeat(300), 50).length, 50, 'a single overlong sentence is cut')
 // ── The record ──────────────────────────────────────────────────────────
 {
   const raw = { source: 'lever', title: '  Marine   Engineer ', company: 'Damen', location: 'Gorinchem, Netherlands', url: 'https://jobs.lever.co/damen/1?utm_source=adzuna', description: 'Minimum 3 years of experience with ship design. You speak Dutch.', posted: '2026-09-01', codes: {}, lang: 'en' };
-  const rec = toRecord(raw, ['marine-offshore'], cc);
-  eq([rec.t, rec.c, rec.cc, rec.ci, rec.u, rec.s, rec.f, rec.y, rec.tl], ['Marine Engineer', 'Damen', 'nl', 'Gorinchem', 'https://jobs.lever.co/damen/1', 'lever', ['marine-offshore'], 3, 'en'], 'the fields, cleaned');
+  const rec = toRecord(raw, ['2144'], cc);
+  eq([rec.t, rec.c, rec.cc, rec.ci, rec.u, rec.s, rec.f, rec.y, rec.tl], ['Marine Engineer', 'Damen', 'nl', 'Gorinchem', 'https://jobs.lever.co/damen/1', 'lever', ['2144'], 3, 'en'], 'the fields, cleaned');
   ok(rec.rq.includes('3 years'), 'the years sentence is in the requirements excerpt');
   ok(!('k' in rec), 'no code when the source had none');
-  const sv = toRecord({ source: 'jobtech', title: 'Maskiningenjör', company: 'AB', location: 'Göteborg, Sweden', country: 'se', city: 'Göteborg', url: 'https://arbetsformedlingen.se/platsbanken/annonser/1', description: '', posted: '2026-09-02', expires: '2026-10-01', codes: { ssyk: 'PRQn_9yw_NJA' }, lang: 'sv' }, ['mechanical'], cc);
+  const sv = toRecord({ source: 'jobtech', title: 'Maskiningenjör', company: 'AB', location: 'Göteborg, Sweden', country: 'se', city: 'Göteborg', url: 'https://arbetsformedlingen.se/platsbanken/annonser/1', description: '', posted: '2026-09-02', expires: '2026-10-01', codes: { ssyk: 'PRQn_9yw_NJA' }, lang: 'sv' }, ['2144'], cc);
   eq([sv.cc, sv.ci, sv.k, sv.x], ['se', 'Göteborg', 'ssyk:PRQn_9yw_NJA', '2026-10-01'], 'a feed that states the country keeps it, with its code and deadline');
 }
 
@@ -92,15 +129,15 @@ eq(snippet('A'.repeat(300), 50).length, 50, 'a single overlong sentence is cut')
 // ── Shards ──────────────────────────────────────────────────────────────
 {
   const recs = [
-    { id: 'a', f: ['mechanical'], cc: 'es', d: '2026-09-01' },
-    { id: 'b', f: ['mechanical', 'marine-offshore'], cc: 'es', d: '2026-09-02' },
-    { id: 'c', f: ['mechanical'], cc: '', d: '2026-09-03' },
+    { id: 'a', f: ['2144'], cc: 'es', d: '2026-09-01' },
+    { id: 'b', f: ['2144', '3151'], cc: 'es', d: '2026-09-02' },
+    { id: 'c', f: ['2144'], cc: '', d: '2026-09-03' },
   ];
   const { files, families: idx } = buildShards(recs, families, '2026-09-03T00:00:00Z');
-  eq(Object.keys(files).sort(), ['offers/marine-offshore-es.json', 'offers/mechanical-es.json', 'offers/mechanical-zz.json'], 'one file per family and country, unknown country as zz');
-  eq(JSON.parse(files['offers/mechanical-es.json']).offers.map(o => o.id), ['b', 'a'], 'newest first');
-  eq(idx.mechanical.countries.es.n, 2, 'the index counts');
-  eq(idx['marine-offshore'].countries.es.files, ['offers/marine-offshore-es.json'], 'and names the files');
+  eq(Object.keys(files).sort(), ['offers/2144-es.json', 'offers/2144-zz.json', 'offers/3151-es.json'], 'one file per family and country, unknown country as zz');
+  eq(JSON.parse(files['offers/2144-es.json']).offers.map(o => o.id), ['b', 'a'], 'newest first');
+  eq(idx['2144'].countries.es.n, 2, 'the index counts');
+  eq([idx['3151'].countries.es.files, idx['3151'].group], [['offers/3151-es.json'], 'crews'], 'and names the files and the group');
 }
 
 // ── The sources' parsers, on recorded answers ───────────────────────────
@@ -120,7 +157,7 @@ eq(snippet('A'.repeat(300), 50).length, 50, 'a single overlong sentence is cut')
   ok(rows[0].description.includes('Projectes & legalitzacions.') && rows[0].description.includes('enginyeria - industrial'), 'content, experience, requirements and studies make the body');
 }
 {
-  const json = '{"document": {"date": "x", "list": [{"element": {"attribute": [{"name": "Identificador", "valor": "9"}, {"name": "Titulo_es", "text": "Ingeniero de procesos para Burgos"}, {"name": "Provincia", "valor": [{"string": "Burgos"}]}, {"name": "FechaPublicacion", "date": "20260902"}, {"name": "Descripcion_es", "text": "<p>Se requieren <strong>3 a&ntilde;os</strong> de experiencia.</p>"}, {"name": "LocalidadAsset_NombreLocalidad", "valor": "Miranda de Ebro"}, {"name": "FuenteContenido", "valor": "Infoempleo"}, {"name": "Enlace al contenido", "valor": "https://empleo.jcyl.es/oferta/9"}]}}]}}';
+  const json = '{"document": {"date": "x", "list": [{"element": {"attribute": [{"name": "Identificador", "valor": "9"}, {"name": "Titulo_es", "text": "Ingeniero de procesos para Burgos"}, {"name": "Provincia", "valor": [{"string": "Burgos"}]}, {"name": "FechaPublicacion", "date": "20260902"}, {"name": "Descripcion_es", "text": "<p>Se requieren <strong>3 a&ntilde;os</strong> de experiencia.</p>"}, {"name": "LocalidadAsset_NombreLocalidad", "valor": "Miranda de Ebro"}, {"name": "FuenteContenido", "valor": "Infoempleo"}, {"name": "Enlace al contenido", "valor": "https://empleo.jcyl.es/oferta/9"}]}}]}}';
   const rows = parseJcyl(json);
   eq(rows.length, 1, 'the control character does not break the parse');
   eq([rows[0].title, rows[0].location, rows[0].posted, rows[0].origin, rows[0].url], ['Ingeniero de procesos para Burgos', 'Miranda de Ebro, Burgos, Spain', '2026-09-02', 'Infoempleo', 'https://empleo.jcyl.es/oferta/9'], 'attributes flattened into fields');

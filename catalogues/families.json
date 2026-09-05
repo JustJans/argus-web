@@ -1,44 +1,580 @@
 {
-  "_about": "One entry per engineering family. isco: ISCO-08 unit groups (the codes NAV and ESCO use). ssyk: Sweden's SSYK-2012 groups as JobTech concept ids, matched by their labels because SSYK only follows ISCO to three digits. terms: title words in EN/ES/FR/DE/NL/SV/NO for sources that carry no code. APPEND ONLY: the position of an entry is its bit in the profile code.",
+  "_about": "Version 2 (2026-09-05). One family per ISCO-08 unit group of the vertical (minor groups 214-216 and 311-315, minus product/garment and graphic designers), grouped by minor group. id = the ISCO code; label = what the screen shows under the group heading; isco_title = ISCO/ESCO's own title; extra_terms = job titles ESCO lacks, per language (all of Catalan; a few British spellings). The gate reads the job titles per language from codes/isco.json (ESCO) and the SSYK correspondence from codes/ssyk-isco.json (JobTech). APPEND ONLY: the position of a family is its bit in the profile code.",
+  "groups": [
+    {
+      "id": "engineers",
+      "label": "Engineers",
+      "isco": [
+        "214",
+        "215"
+      ]
+    },
+    {
+      "id": "architects-surveyors",
+      "label": "Architects, planners and surveyors",
+      "isco": [
+        "216"
+      ]
+    },
+    {
+      "id": "technicians",
+      "label": "Technicians",
+      "isco": [
+        "311"
+      ]
+    },
+    {
+      "id": "supervisors",
+      "label": "Supervisors",
+      "isco": [
+        "312"
+      ]
+    },
+    {
+      "id": "plant-operators",
+      "label": "Plant operators",
+      "isco": [
+        "313"
+      ]
+    },
+    {
+      "id": "crews",
+      "label": "Ship and aircraft crews",
+      "isco": [
+        "315"
+      ]
+    }
+  ],
   "families": [
-    { "id": "mechanical", "label": "Mechanical", "isco": ["2144", "3115"], "ssyk": ["PRQn_9yw_NJA", "K8yg_U4C_gkY"],
-      "terms": ["mechanical engineer", "mechanical design engineer", "mechanical technician", "hvac engineer", "piping engineer", "ingeniero mecanico", "ingeniera mecanica", "tecnico mecanico", "ingenieur mecanique", "ingenieur mecanicien", "technicien mecanique", "conception mecanique", "bureau d etudes mecanique", "chargé d affaires mecanique", "maschinenbauingenieur", "maschinenbau", "konstruktionsingenieur", "werktuigbouwkundig ingenieur", "werktuigbouwkundige", "maskiningenjor", "maskinkonstruktor", "maskiningenior", "maskinteknikk", "enginyer mecanic", "enginyera mecanica"] },
-    { "id": "industrial-production", "label": "Industrial", "isco": ["2141", "3122", "3139"], "ssyk": ["xm5G_vGn_iyk", "33Nt_DSs_YYA", "dMVD_VYy_kgg"],
-      "terms": ["industrial engineer", "production engineer", "manufacturing engineer", "process improvement engineer", "lean engineer", "production supervisor", "manufacturing supervisor", "ingeniero industrial", "ingeniera industrial", "ingeniero de produccion", "ingeniero de procesos industriales", "ingenieur production", "ingenieur industrialisation", "ingenieur methodes", "responsable production", "produktionsingenieur", "fertigungsingenieur", "wirtschaftsingenieur", "productie engineer", "productieleider", "produktionsingenjor", "produktionstekniker", "produksjonsingenior", "enginyer industrial", "enginyera industrial", "enginyer de produccio", "responsable de produccion", "cap de produccio"] },
-    { "id": "civil-structural", "label": "Civil", "isco": ["2142", "3112", "3123"], "ssyk": ["XeBP_nMe_pXx", "thZP_oR7_WrY", "w6ud_quG_dgh"],
-      "terms": ["civil engineer", "structural engineer", "geotechnical engineer", "site engineer", "construction engineer", "construction supervisor", "site manager", "ingeniero civil", "ingeniero de caminos", "ingeniero de estructuras", "ingeniero de obra", "jefe de obra", "ingenieur genie civil", "ingenieur structure", "ingenieur travaux", "conducteur de travaux", "bauingenieur", "bauleiter", "tragwerksplaner", "civiel ingenieur", "constructeur bouw", "werkvoorbereider", "uitvoerder", "byggingenjor", "byggnadsingenjor", "konstruktor bygg", "byggingenior", "anleggsingenior", "enginyer civil", "enginyer de camins", "cap d obra", "ingeniero de edificacion", "ingeniero geotecnico"] },
-    { "id": "environmental", "label": "Environmental", "isco": ["2143"], "ssyk": [],
-      "terms": ["environmental engineer", "water engineer", "wastewater engineer", "ingeniero ambiental", "ingeniera ambiental", "ingenieur environnement", "umweltingenieur", "milieu ingenieur", "miljoingenjor", "miljoingenior", "tecnico de medio ambiente", "tecnica de medio ambiente", "tecnic de medi ambient", "ingeniero de aguas"] },
-    { "id": "chemical-process", "label": "Chemical", "isco": ["2145", "3116", "3133"], "ssyk": ["qn2U_dB9_Cmh", "v9nU_6Fw_4Qg"],
-      "terms": ["chemical engineer", "process engineer", "process technician", "ingeniero quimico", "ingeniera quimica", "ingeniero de procesos", "ingenieur procedes", "ingenieur chimiste", "verfahrensingenieur", "chemieingenieur", "verfahrenstechnik", "procestechnoloog", "chemisch technoloog", "kemiingenjor", "processingenjor", "kjemiingenior", "prosessingenior", "enginyer quimic", "enginyera quimica", "tecnico de procesos"] },
-    { "id": "mining-metallurgy", "label": "Mining", "isco": ["2146", "3117", "3121", "3135"], "ssyk": ["rwpH_6RA_XTT", "3jEy_yuT_aVo"],
-      "terms": ["mining engineer", "drilling engineer", "petroleum engineer", "reservoir engineer", "metallurgist", "metallurgical engineer", "ingeniero de minas", "ingeniero metalurgico", "ingenieur mines", "ingenieur forage", "metallurgiste", "bergbauingenieur", "huttenwesen", "mijnbouwkundige", "gruvingenjor", "metallurg", "boreingenior", "petroleumsingenior", "bergingenior"] },
-    { "id": "electrical", "label": "Electrical", "isco": ["2151", "3113"], "ssyk": ["SPYW_7Z1_ShT", "nDaB_vdy_eAy"],
-      "terms": ["electrical engineer", "electrical design engineer", "electrical technician", "power engineer", "high voltage engineer", "ingeniero electrico", "ingeniera electrica", "tecnico electrico", "ingenieur electricien", "ingenieur electrotechnique", "ingenieur electrique", "elektroingenieur", "elektrotechniker", "elektrokonstrukteur", "elektrotechnisch ingenieur", "elektrotechnicus", "elektroingenjor", "elkraftingenjor", "elektroingenior", "elkraftingenior", "enginyer electric", "enginyera electrica", "tecnico electricista", "ingeniero de instalaciones electricas"] },
-    { "id": "electronics-telecom", "label": "Electronics", "isco": ["2152", "2153", "3114"], "ssyk": ["SPYW_7Z1_ShT", "nDaB_vdy_eAy"],
-      "terms": ["electronics engineer", "electronic engineer", "hardware engineer", "rf engineer", "telecom engineer", "telecommunications engineer", "embedded engineer", "ingeniero electronico", "ingeniero de telecomunicaciones", "ingenieur electronique", "ingenieur telecom", "elektronikingenieur", "hardwareentwickler", "nachrichtentechnik", "elektronica ingenieur", "elektronikingenjor", "elektronikkingenior", "enginyer electronic", "enginyer de telecomunicacions", "tecnico de telecomunicaciones"] },
-    { "id": "automation-instrumentation", "label": "Automation", "isco": ["2151", "2152", "3113", "3114"], "ssyk": ["SPYW_7Z1_ShT", "nDaB_vdy_eAy"],
-      "terms": ["automation engineer", "control engineer", "controls engineer", "instrumentation engineer", "plc engineer", "plc programmer", "scada engineer", "mechatronics engineer", "robotics engineer", "ingeniero de automatizacion", "ingeniero de control", "ingeniero de instrumentacion", "ingenieur automatisme", "automaticien", "ingenieur instrumentation", "automatisierungsingenieur", "automatisierungstechniker", "sps programmierer", "mechatroniker", "automatiseringsingenieur", "automation engineer", "besturingstechnicus", "automationsingenjor", "styr och regler", "automasjonsingenior", "automasjonstekniker", "enginyer d automatitzacio", "tecnico de automatizacion", "programador plc", "tecnico en automatizacion"] },
-    { "id": "energy-power", "label": "Energy", "isco": ["2149", "3131", "3132", "3134"], "ssyk": ["mp2Y_vyC_RFV"],
-      "terms": ["energy engineer", "renewable energy engineer", "wind engineer", "wind turbine engineer", "solar engineer", "power plant engineer", "power systems engineer", "grid engineer", "ingeniero energetico", "ingeniero de energias renovables", "ingenieur energie", "ingenieur energies renouvelables", "energieingenieur", "energietechniker", "energie ingenieur", "energiingenjor", "energiingenior"] },
-    { "id": "marine-offshore", "label": "Marine", "isco": ["2144", "3115", "3151", "2146"], "ssyk": ["Rsoy_sS6_6c4"],
-      "terms": ["naval architect", "marine engineer", "marine engineering", "offshore engineer", "subsea engineer", "mooring engineer", "ship engineer", "ship design engineer", "shipbuilding engineer", "chief engineer", "second engineer", "ingeniero naval", "ingeniera naval", "ingeniero maritimo", "arquitecto naval", "ingenieur naval", "architecte naval", "ingenieur maritime", "schiffbauingenieur", "schiffsingenieur", "scheepsbouwkundig ingenieur", "maritiem ingenieur", "scheepswerktuigkundige", "skeppsbyggnadsingenjor", "marin ingenjor", "maskinbefal", "skipsingenior", "maritim ingenior", "maskinsjef"] },
-    { "id": "aerospace", "label": "Aerospace", "isco": ["2144", "3155"], "ssyk": ["eRkT_cTv_H9v"],
-      "terms": ["aerospace engineer", "aeronautical engineer", "avionics engineer", "aircraft engineer", "aircraft maintenance engineer", "ingeniero aeronautico", "ingeniero aeroespacial", "ingenieur aeronautique", "ingenieur aerospatial", "luftfahrtingenieur", "luft und raumfahrt", "luchtvaart ingenieur", "vliegtuigtechnicus", "flygingenjor", "flygtekniker", "flyingenior", "flytekniker"] },
-    { "id": "architecture-planning", "label": "Architecture", "isco": ["2161", "2162", "2164"], "ssyk": ["41KB_bfk_5jR", "ETAR_ggZ_Wuw", "Pd51_xnr_KCY"],
-      "unless": ["naval", "software", "solution", "solutions", "cloud", "data", "enterprise", "system", "systems", "it", "ict", "technical", "security", "network", "platform", "integration", "salesforce", "sap"],
-      "terms": ["architect", "landscape architect", "urban planner", "town planner", "arquitecto", "arquitecta", "urbanista", "architecte", "urbaniste", "architekt", "stadtplaner", "landschaftsarchitekt", "stedenbouwkundige", "landschapsarchitect", "arkitekt", "stadsplanerare", "landskapsarkitekt", "byplanlegger", "arquitecte", "arquitecta tecnica", "arquitecto tecnico", "aparejador"] },
-    { "id": "surveying-geomatics", "label": "Surveying", "isco": ["2165"], "ssyk": ["GMDo_DVo_Yzh", "ketV_G9W_GeR"],
-      "terms": ["surveyor", "land surveyor", "geomatics engineer", "gis engineer", "cartographer", "topografo", "ingeniero geomatico", "geometre", "ingenieur geomatique", "vermessungsingenieur", "geodat", "landmeter", "geodeet", "lantmatare", "matningsingenjor", "gis ingenjor", "landmaler", "geomatikk"] },
-    { "id": "drafting-cad", "label": "Drafting", "isco": ["3118"], "ssyk": [],
-      "terms": ["draughtsperson", "draughtsman", "cad technician", "cad designer", "cad engineer", "design draughtsman", "delineante", "proyectista", "dessinateur projeteur", "dessinateur industriel", "technischer zeichner", "technischer systemplaner", "tekenaar", "cad tekenaar", "cad konstruktor", "ritare", "teknisk tegner", "dak konstruktor", "delineant", "projectista", "delineante proyectista", "diseñador cad"] },
-    { "id": "quality-hse", "label": "Quality / HSE", "isco": ["2149", "3119"], "ssyk": ["mp2Y_vyC_RFV", "mis4_feV_uex"],
-      "terms": ["quality engineer", "quality technician", "hse engineer", "hse advisor", "safety engineer", "qhse", "ehs engineer", "ingeniero de calidad", "tecnico de calidad", "tecnico de prevencion", "ingenieur qualite", "ingenieur hse", "qualitatsingenieur", "sicherheitsingenieur", "kwaliteitsingenieur", "veiligheidskundige", "kvalitetsingenjor", "kvalitetstekniker", "kvalitetsingenior", "hms ingenior", "tecnic de qualitat", "enginyer de qualitat", "tecnico prl", "tecnico de prevencion de riesgos", "tecnico de metrologia", "inspector tecnico", "inspectora tecnica"] },
-    { "id": "laboratory-technicians", "label": "Laboratory", "isco": ["3111"], "ssyk": [],
-      "terms": ["laboratory technician", "lab technician", "materials technician", "test engineer", "test technician", "tecnico de laboratorio", "technicien de laboratoire", "technicien essais", "laborant", "prufingenieur", "laboratoriumtechnicus", "laboratorietekniker", "provningsingenjor", "laboratorieingenior"] },
-    { "id": "maritime-aviation-operations", "label": "Ship and air officers", "isco": ["3152", "3153", "3154"], "ssyk": ["kDnq_Q98_sD3", "7n3y_FTE_qSe", "yct8_Pun_DWd"],
-      "terms": ["deck officer", "chief officer", "ship master", "captain", "pilot", "air traffic controller", "oficial de puente", "capitan", "piloto", "controlador aereo", "officier pont", "capitaine", "pilote", "controleur aerien", "nautischer offizier", "kapitan", "stuurman", "gezagvoerder", "verkeersleider", "styrman", "befalhavare", "flygledare", "styrmann", "skipsforer", "flygeleder"] },
-    { "id": "engineering-other", "label": "Other", "isco": ["2149", "3119"], "ssyk": ["mp2Y_vyC_RFV", "mis4_feV_uex"],
-      "terms": ["engineer", "project engineer", "field engineer", "service engineer", "commissioning engineer", "maintenance engineer", "r&d engineer", "development engineer", "design engineer", "application engineer", "engineering technician", "ingeniero", "ingeniera", "ingeniero de proyectos", "ingeniero de mantenimiento", "ingenieur", "ingenieur projet", "ingenieur maintenance", "ingenieur etudes", "ingenieurin", "projektingenieur", "entwicklungsingenieur", "serviceingenieur", "inbedrijfsteller", "projectingenieur", "ontwikkelingsingenieur", "ingenjor", "civilingenjor", "projektingenjor", "utvecklingsingenjor", "ingenior", "sivilingenior", "prosjektingenior", "enginyer", "enginyera", "enginyer tecnic", "enginyer superior", "ingeniero tecnico", "ingeniera tecnica", "ingeniero superior", "tecnico de mantenimiento industrial", "ingeniero de puesta en marcha"] }
+    {
+      "id": "2141",
+      "group": "engineers",
+      "label": "Industrial and production",
+      "isco_title": "Industrial and production engineers",
+      "isco": [
+        "2141"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer industrial",
+          "enginyera industrial",
+          "enginyer de producció",
+          "enginyera de producció",
+          "enginyer d'organització industrial",
+          "enginyer d'automatització",
+          "enginyera d'automatització",
+          "enginyer de manteniment",
+          "enginyera de manteniment"
+        ]
+      }
+    },
+    {
+      "id": "2142",
+      "group": "engineers",
+      "label": "Civil",
+      "isco_title": "Civil engineers",
+      "isco": [
+        "2142"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer civil",
+          "enginyera civil",
+          "enginyer de camins",
+          "enginyera de camins",
+          "enginyer de ponts i camins",
+          "enginyera de ponts i camins",
+          "enginyer d'obra civil",
+          "enginyera d'obra civil"
+        ]
+      }
+    },
+    {
+      "id": "2143",
+      "group": "engineers",
+      "label": "Environmental",
+      "isco_title": "Environmental engineers",
+      "isco": [
+        "2143"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer ambiental",
+          "enginyera ambiental"
+        ]
+      }
+    },
+    {
+      "id": "2144",
+      "group": "engineers",
+      "label": "Mechanical",
+      "isco_title": "Mechanical engineers",
+      "isco": [
+        "2144"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer mecànic",
+          "enginyera mecànica"
+        ]
+      }
+    },
+    {
+      "id": "2145",
+      "group": "engineers",
+      "label": "Chemical",
+      "isco_title": "Chemical engineers",
+      "isco": [
+        "2145"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer químic",
+          "enginyera química"
+        ]
+      }
+    },
+    {
+      "id": "2146",
+      "group": "engineers",
+      "label": "Mining and metallurgy",
+      "isco_title": "Mining engineers, metallurgists and related professionals",
+      "isco": [
+        "2146"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer de mines",
+          "enginyera de mines"
+        ]
+      }
+    },
+    {
+      "id": "2149",
+      "group": "engineers",
+      "label": "Other engineers",
+      "isco_title": "Engineering professionals not elsewhere classified",
+      "isco": [
+        "2149"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer de qualitat",
+          "enginyera de qualitat",
+          "enginyer de projectes",
+          "enginyera de projectes",
+          "arquitecte tècnic",
+          "arquitecta tècnica",
+          "aparellador",
+          "aparelladora"
+        ]
+      }
+    },
+    {
+      "id": "2151",
+      "group": "engineers",
+      "label": "Electrical",
+      "isco_title": "Electrical engineers",
+      "isco": [
+        "2151"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer elèctric",
+          "enginyera elèctrica"
+        ]
+      }
+    },
+    {
+      "id": "2152",
+      "group": "engineers",
+      "label": "Electronics",
+      "isco_title": "Electronics engineers",
+      "isco": [
+        "2152"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer electrònic",
+          "enginyera electrònica"
+        ]
+      }
+    },
+    {
+      "id": "2153",
+      "group": "engineers",
+      "label": "Telecommunications",
+      "isco_title": "Telecommunications engineers",
+      "isco": [
+        "2153"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer de telecomunicacions",
+          "enginyera de telecomunicacions"
+        ]
+      }
+    },
+    {
+      "id": "2161",
+      "group": "architects-surveyors",
+      "label": "Building architects",
+      "isco_title": "Building architects",
+      "isco": [
+        "2161"
+      ],
+      "extra_terms": {
+        "ca": [
+          "arquitecte",
+          "arquitecta"
+        ]
+      }
+    },
+    {
+      "id": "2162",
+      "group": "architects-surveyors",
+      "label": "Landscape architects",
+      "isco_title": "Landscape architects",
+      "isco": [
+        "2162"
+      ],
+      "extra_terms": {
+        "ca": [
+          "arquitecte paisatgista",
+          "arquitecta paisatgista"
+        ]
+      }
+    },
+    {
+      "id": "2164",
+      "group": "architects-surveyors",
+      "label": "Town and traffic planners",
+      "isco_title": "Town and traffic planners",
+      "isco": [
+        "2164"
+      ],
+      "extra_terms": {
+        "ca": [
+          "urbanista"
+        ]
+      }
+    },
+    {
+      "id": "2165",
+      "group": "architects-surveyors",
+      "label": "Surveyors and cartographers",
+      "isco_title": "Cartographers and surveyors",
+      "isco": [
+        "2165"
+      ],
+      "extra_terms": {
+        "ca": [
+          "topògraf",
+          "topògrafa",
+          "enginyer geomàtic",
+          "enginyera geomàtica"
+        ]
+      }
+    },
+    {
+      "id": "3111",
+      "group": "technicians",
+      "label": "Chemical and physical science",
+      "isco_title": "Chemical and physical science technicians",
+      "isco": [
+        "3111"
+      ]
+    },
+    {
+      "id": "3112",
+      "group": "technicians",
+      "label": "Civil engineering",
+      "isco_title": "Civil engineering technicians",
+      "isco": [
+        "3112"
+      ],
+      "extra_terms": {
+        "ca": [
+          "tècnic d'obra",
+          "tècnica d'obra",
+          "arquitecte tècnic",
+          "arquitecta tècnica",
+          "aparellador",
+          "aparelladora"
+        ]
+      }
+    },
+    {
+      "id": "3113",
+      "group": "technicians",
+      "label": "Electrical engineering",
+      "isco_title": "Electrical engineering technicians",
+      "isco": [
+        "3113"
+      ],
+      "extra_terms": {
+        "ca": [
+          "tècnic elèctric",
+          "tècnica elèctrica"
+        ]
+      }
+    },
+    {
+      "id": "3114",
+      "group": "technicians",
+      "label": "Electronics engineering",
+      "isco_title": "Electronics engineering technicians",
+      "isco": [
+        "3114"
+      ],
+      "extra_terms": {
+        "ca": [
+          "tècnic electrònic",
+          "tècnica electrònica"
+        ]
+      }
+    },
+    {
+      "id": "3115",
+      "group": "technicians",
+      "label": "Mechanical engineering",
+      "isco_title": "Mechanical engineering technicians",
+      "isco": [
+        "3115"
+      ],
+      "extra_terms": {
+        "ca": [
+          "tècnic mecànic",
+          "tècnica mecànica"
+        ]
+      }
+    },
+    {
+      "id": "3116",
+      "group": "technicians",
+      "label": "Chemical engineering",
+      "isco_title": "Chemical engineering technicians",
+      "isco": [
+        "3116"
+      ],
+      "extra_terms": {
+        "ca": [
+          "tècnic químic",
+          "tècnica química"
+        ]
+      }
+    },
+    {
+      "id": "3117",
+      "group": "technicians",
+      "label": "Mining and metallurgy",
+      "isco_title": "Mining and metallurgical technicians",
+      "isco": [
+        "3117"
+      ]
+    },
+    {
+      "id": "3118",
+      "group": "technicians",
+      "label": "Draughtspersons",
+      "isco_title": "Draughtspersons",
+      "isco": [
+        "3118"
+      ],
+      "extra_terms": {
+        "en": [
+          "draughtsman",
+          "draftsman",
+          "cad technician",
+          "cad drafter",
+          "cad draughtsman"
+        ],
+        "ca": [
+          "delineant",
+          "delineant projectista",
+          "projectista"
+        ]
+      }
+    },
+    {
+      "id": "3119",
+      "group": "technicians",
+      "label": "Other technicians",
+      "isco_title": "Physical and engineering science technicians not elsewhere classified",
+      "isco": [
+        "3119"
+      ],
+      "extra_terms": {
+        "ca": [
+          "tècnic industrial",
+          "tècnica industrial"
+        ]
+      }
+    },
+    {
+      "id": "3121",
+      "group": "supervisors",
+      "label": "Mining",
+      "isco_title": "Mining supervisors",
+      "isco": [
+        "3121"
+      ]
+    },
+    {
+      "id": "3122",
+      "group": "supervisors",
+      "label": "Manufacturing",
+      "isco_title": "Manufacturing supervisors",
+      "isco": [
+        "3122"
+      ],
+      "extra_terms": {
+        "ca": [
+          "encarregat de producció",
+          "encarregada de producció",
+          "cap de producció"
+        ]
+      }
+    },
+    {
+      "id": "3123",
+      "group": "supervisors",
+      "label": "Construction",
+      "isco_title": "Construction supervisors",
+      "isco": [
+        "3123"
+      ],
+      "extra_terms": {
+        "ca": [
+          "cap d'obra",
+          "encarregat d'obra",
+          "encarregada d'obra"
+        ]
+      }
+    },
+    {
+      "id": "3131",
+      "group": "plant-operators",
+      "label": "Power plants",
+      "isco_title": "Power production plant operators",
+      "isco": [
+        "3131"
+      ]
+    },
+    {
+      "id": "3132",
+      "group": "plant-operators",
+      "label": "Water and waste plants",
+      "isco_title": "Incinerator and water treatment plant operators",
+      "isco": [
+        "3132"
+      ]
+    },
+    {
+      "id": "3133",
+      "group": "plant-operators",
+      "label": "Chemical plants",
+      "isco_title": "Chemical processing plant controllers",
+      "isco": [
+        "3133"
+      ]
+    },
+    {
+      "id": "3134",
+      "group": "plant-operators",
+      "label": "Oil and gas refineries",
+      "isco_title": "Petroleum and natural gas refining plant operators",
+      "isco": [
+        "3134"
+      ]
+    },
+    {
+      "id": "3135",
+      "group": "plant-operators",
+      "label": "Metal production",
+      "isco_title": "Metal production process controllers",
+      "isco": [
+        "3135"
+      ]
+    },
+    {
+      "id": "3139",
+      "group": "plant-operators",
+      "label": "Other plants",
+      "isco_title": "Process control technicians not elsewhere classified",
+      "isco": [
+        "3139"
+      ]
+    },
+    {
+      "id": "3151",
+      "group": "crews",
+      "label": "Ships' engineers",
+      "isco_title": "Ships’ engineers",
+      "isco": [
+        "3151"
+      ],
+      "extra_terms": {
+        "ca": [
+          "oficial de màquines",
+          "cap de màquines"
+        ]
+      }
+    },
+    {
+      "id": "3152",
+      "group": "crews",
+      "label": "Deck officers and pilots",
+      "isco_title": "Ships' deck officers and pilots",
+      "isco": [
+        "3152"
+      ],
+      "extra_terms": {
+        "ca": [
+          "oficial de pont",
+          "capità de vaixell",
+          "patró de vaixell"
+        ]
+      }
+    },
+    {
+      "id": "3153",
+      "group": "crews",
+      "label": "Aircraft pilots",
+      "isco_title": "Aircraft pilots and related associate professionals",
+      "isco": [
+        "3153"
+      ],
+      "extra_terms": {
+        "ca": [
+          "pilot d'aviació",
+          "pilot comercial"
+        ]
+      }
+    },
+    {
+      "id": "3154",
+      "group": "crews",
+      "label": "Air traffic controllers",
+      "isco_title": "Air traffic controllers",
+      "isco": [
+        "3154"
+      ],
+      "extra_terms": {
+        "ca": [
+          "controlador aeri",
+          "controladora aèria"
+        ]
+      }
+    },
+    {
+      "id": "3155",
+      "group": "crews",
+      "label": "Air traffic safety electronics",
+      "isco_title": "Air traffic safety electronics technicians",
+      "isco": [
+        "3155"
+      ]
+    }
   ]
 }

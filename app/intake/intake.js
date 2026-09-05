@@ -1,6 +1,7 @@
 // ➤ The intake page: chips from the catalogues, the CV reader, and the code at the end.
 // ➤ Everything happens in this document; the only network calls are the catalogues (same
-// ➤ origin, at load) and, when a PDF is chosen, the PDF reader script (same origin).
+// ➤ origin, at load), the occupation titles when a CV is read, and, when a PDF is chosen,
+// ➤ the PDF reader script (same origin).
 import { encodeProfile, decodeProfile, normaliseProfile, catalogueIds } from '../lib/codec.js';
 import { readCv } from '../lib/cv.js';
 
@@ -23,7 +24,13 @@ function chip(container, { name, value, label, radio = false }) {
   container.append(l);
   return i;
 }
-for (const f of cats.families.families) chip($('#families'), { name: 'family', value: f.id, label: f.label });
+// ➤ Occupations by group: a heading per group (Engineers, Technicians, crews…), its families as chips.
+for (const g of cats.families.groups) {
+  const h = document.createElement('h3'); h.className = 'chips__group'; h.textContent = g.label;
+  const box = document.createElement('div'); box.className = 'chips';
+  $('#families').append(h, box);
+  for (const f of cats.families.families.filter(f => f.group === g.id)) chip(box, { name: 'family', value: f.id, label: f.label });
+}
 for (const l of cats.seniority.levels) chip($('#levels'), { name: 'level', value: l.id, label: l.label, radio: true });
 $('#levels input[value="any"]').checked = true;
 for (const l of cats.languages.languages) chip($('#languages'), { name: 'language', value: l.code, label: l.label });
@@ -98,13 +105,16 @@ $('#cv-file').addEventListener('change', async e => {
   try { $('#cv-text').value = await fileText(file); $('#cv-status').textContent = `${file.name} read (${$('#cv-text').value.length} characters). Now press "Read my CV".`; }
   catch (err) { $('#cv-status').textContent = `Could not read that file (${err.message}). Paste the text instead.`; }
 });
-$('#cv-read').addEventListener('click', () => {
+// ➤ The occupation titles (ESCO's, per language) are fetched once, the first time a CV is read.
+let familyTerms = null;
+$('#cv-read').addEventListener('click', async () => {
   const t = $('#cv-text').value;
   if (t.trim().length < 200) { $('#cv-status').textContent = 'That is too short to be a CV. Paste the whole text, or choose the file.'; return; }
-  const s = readCv(t, cats);
+  try { familyTerms ||= await getJson('../catalogues/family-terms.json'); } catch { familyTerms = {}; }
+  const s = readCv(t, { ...cats, familyTerms });
   const current = readForm();
   fillForm(normaliseProfile({ ...current, degrees: [...new Set([...current.degrees, ...s.degrees])], languages: [...new Set([...current.languages, ...s.languages])], families: [...new Set([...current.families, ...s.families])], roles: current.roles.length ? current.roles : s.roles }));
-  const parts = [`${s.degrees.length} degree${s.degrees.length === 1 ? '' : 's'}`, `${s.languages.length} language${s.languages.length === 1 ? '' : 's'}`, `${s.families.length} famil${s.families.length === 1 ? 'y' : 'ies'}`, s.roles.length ? `${s.roles.length} role words` : null].filter(Boolean);
+  const parts = [`${s.degrees.length} degree${s.degrees.length === 1 ? '' : 's'}`, `${s.languages.length} language${s.languages.length === 1 ? '' : 's'}`, `${s.families.length} occupation${s.families.length === 1 ? '' : 's'}`, s.roles.length ? `${s.roles.length} title words` : null].filter(Boolean);
   $('#cv-status').textContent = `Read: ${parts.join(', ')}. Check the steps below and correct what is wrong.`;
 });
 

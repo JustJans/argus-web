@@ -1,6 +1,6 @@
 // ➤ Sweden: Arbetsförmedlingen's JobSearch API (JobTech Dev), CC0, no key. Adverts are asked
-// ➤ per occupation group (SSYK-2012 concept ids listed in the families catalogue), so
-// ➤ the gate is the source's own classification, not a keyword guess. The API pages 100
+// ➤ per occupation group (the SSYK-2012 concepts whose ISCO codes fall in the vertical,
+// ➤ ctx.ssykGroups), so the gate is the source's own classification. The API pages 100
 // ➤ at a time up to an offset of 2000: a group with more adverts than that is cut at the
 // ➤ newest 2100 and the cut is reported.
 import { getJson } from '../http.mjs';
@@ -36,10 +36,10 @@ function toRaw(hit) {
   };
 }
 
-// ➤ Yields RawOffers for every SSYK group the families name; `ctx.log` receives one line
+// ➤ Yields RawOffers for every SSYK group in ctx.ssykGroups; `ctx.log` receives one line
 // ➤ per group with the count, and a warning when a group was cut at the paging ceiling.
 export async function* fetchAll(ctx) {
-  const groups = [...new Set(ctx.families.flatMap(f => f.ssyk || []))];
+  const groups = [...new Set(ctx.ssykGroups || [])];
   for (const group of groups) {
     let offset = 0, total = null, got = 0;
     while (offset <= MAX_OFFSET) {

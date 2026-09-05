@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { writeEngine } from './engine-bundle.mjs';
 import { filesUnder, hashTree, rewriteAssetLinks, recordVersion } from './fingerprint.mjs';
+import { familyTerms } from './gate.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const args = process.argv.slice(2);
@@ -52,6 +53,12 @@ const kept = recordVersion(vDir, version, KEEP_VERSIONS);
 // ➤ The catalogues, as the app fetches them.
 mkdirSync(join(SITE, 'catalogues'), { recursive: true });
 for (const f of readdirSync(join(ROOT, 'catalogues'))) if (f.endsWith('.json')) cpSync(join(ROOT, 'catalogues', f), join(SITE, 'catalogues', f));
+// ➤ The job titles the intake page reads a CV with: ESCO's per family and language (from
+// ➤ codes/isco.json) plus the catalogue's extra terms, built by the gate's own rule. Fetched
+// ➤ only when a CV is read.
+const catalogue = JSON.parse(readFileSync(join(ROOT, 'catalogues', 'families.json'), 'utf8'));
+const iscoTable = JSON.parse(readFileSync(join(ROOT, 'catalogues', 'codes', 'isco.json'), 'utf8'));
+writeFileSync(join(SITE, 'catalogues', 'family-terms.json'), JSON.stringify(familyTerms(catalogue, { isco: iscoTable })));
 
 // ➤ The pile.
 if (existsSync(join(DATA, 'index.json'))) {

@@ -20,7 +20,7 @@ export function buildShards(records, families, generatedAt) {
   }
   const files = {};
   const index = {};
-  for (const f of families) index[f.id] = { label: f.label, countries: {} };
+  for (const f of families) index[f.id] = { label: f.label, group: f.group, countries: {} };
   for (const [key, g] of groups) {
     g.offers.sort((a, b) => (b.d || '').localeCompare(a.d || ''));
     const parts = [];
