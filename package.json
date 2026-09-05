@@ -7,6 +7,7 @@
   "type": "module",
   "engines": { "node": ">=20" },
   "scripts": {
+    "pretest": "node builder/engine-bundle.mjs app/lib",
     "test": "node --test test/*.test.mjs",
     "pile": "node builder/build-pile.mjs",
     "site": "node builder/build-site.mjs"

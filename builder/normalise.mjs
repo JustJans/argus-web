@@ -4,11 +4,15 @@
 import { createHash } from 'crypto';
 import { fold } from 'argus/server-bot/text.mjs';
 import { extractRequiredYears } from 'argus/server-bot/requirements.mjs';
+import { normalizeLocation } from 'argus/server-bot/scan.mjs';
+import { cleanTitle } from 'argus/server-bot/notify.mjs';
 import { snippet, requirements } from './excerpt.mjs';
 import { requiredDegrees, requiredLanguages } from './screens.mjs';
 
 // ➤ The address without its campaign tail, trailing slash or fragment: what makes two
-// ➤ sightings of the same advert compare equal.
+// ➤ sightings of the same advert compare equal. Not Argus's normUrl, on purpose: that one
+// ➤ drops the whole query, and Lanbide's adverts are told apart ONLY by a query parameter
+// ➤ (IDRG=…), so here only the known tracking parameters go.
 const TRACKING = /^(utm_.*|gclid|fbclid|msclkid|clickid|click_id|campaign_id|source|ref)$/i;
 export function normUrl(u) {
   let url;
@@ -62,11 +66,12 @@ export function toRecord(raw, families, compiledCountries, screens = null) {
   if (raw.remote && !place.cc) place.cc = 'xx';
   const text = String(raw.description || '');
   const years = extractRequiredYears(`${raw.title || ''}. ${text}`);
+  // ➤ The title and the location cleaned the way the bot cleans them before showing them.
   const rec = {
     id: idFor(raw.url),
-    t: String(raw.title || '').replace(/\s+/g, ' ').trim().slice(0, 140),
+    t: cleanTitle(String(raw.title || '').replace(/\s+/g, ' ').trim()).slice(0, 140),
     c: String(raw.company || '').replace(/\s+/g, ' ').trim().slice(0, 80),
-    l: String(raw.location || '').replace(/\s+/g, ' ').trim().slice(0, 120),
+    l: normalizeLocation(String(raw.location || '').replace(/\s+/g, ' ').trim()).slice(0, 120),
     cc: place.cc, ci: place.city,
     d: raw.posted || '',
     u: normUrl(raw.url),
