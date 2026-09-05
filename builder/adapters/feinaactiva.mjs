@@ -7,7 +7,7 @@ import { isoDay } from './lanbide.mjs';
 export const id = 'feinaactiva';
 export const kind = 'feed';
 export const licence = {
-  name: 'Feina Activa, Generalitat de Catalunya', url: 'https://datos.gob.es/en/catalogo/a09002970-portal-feina-activa-ofertas-de-empleo',
+  name: 'Feina Activa, Generalitat de Catalunya', short: 'Feina Activa', url: 'https://datos.gob.es/en/catalogo/a09002970-portal-feina-activa-ofertas-de-empleo',
   licence: 'Open data of the Generalitat de Catalunya (attribution)', credit: 'Font: Feina Activa, Generalitat de Catalunya', needsKey: false,
 };
 

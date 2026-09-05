@@ -6,7 +6,7 @@ import { get } from '../http.mjs';
 export const id = 'lanbide';
 export const kind = 'feed';
 export const licence = {
-  name: 'Lanbide, Servicio Vasco de Empleo', url: 'https://datos.gob.es/en/catalogo/a16003011-ofertas-de-empleo-de-lanbide1',
+  name: 'Lanbide, Servicio Vasco de Empleo', short: 'Lanbide', url: 'https://datos.gob.es/en/catalogo/a16003011-ofertas-de-empleo-de-lanbide1',
   licence: 'CC BY 4.0', credit: 'Fuente: Lanbide - Servicio Vasco de Empleo', needsKey: false,
 };
 
