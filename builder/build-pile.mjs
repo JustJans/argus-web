@@ -12,6 +12,7 @@ import { compileCountries, toRecord } from './normalise.mjs';
 import { compileScreens } from './screens.mjs';
 import { dedupe } from './dedupe.mjs';
 import { buildShards, writePile } from './shard.mjs';
+import { loadCache, saveCache, translateTitles } from './translate.mjs';
 import * as jobtech from './adapters/jobtech.mjs';
 import * as lanbide from './adapters/lanbide.mjs';
 import * as feinaactiva from './adapters/feinaactiva.mjs';
@@ -70,6 +71,15 @@ for (const adapter of adapters) {
 }
 
 const { kept, sameUrl, sameRole } = dedupe(items);
+
+// ➤ Titles in English, as the bot shows them; the cache on disk means only new titles are asked.
+if (!args.includes('--no-translate')) {
+  const cachePath = join(ROOT, 'builder', 'state', 'translations.json');
+  const cache = loadCache(cachePath);
+  const t = await translateTitles(kept, { cache, log });
+  saveCache(cachePath, cache);
+  log(`titles: ${t.translated} in English (${t.asked} asked, ${t.fromCache} from the cache${t.limited ? ', translator rate-limited' : ''})`);
+}
 const generatedAt = new Date().toISOString();
 const { files, families: familiesIndex } = buildShards(kept, families, generatedAt);
 

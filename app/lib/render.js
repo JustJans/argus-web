@@ -17,10 +17,13 @@ export function relativeDay(iso) {
 
 export function card(o, ctx) {
   const li = el('li', 'offer');
+  // ➤ The English title leads; the original follows in small print when they differ.
   const h = el('h3', 'offer__title');
   const href = safeUrl(o.u);
-  if (href) { const a = el('a', null, o.t); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; h.append(a); } else h.textContent = o.t;
+  const shown = o.te || o.t;
+  if (href) { const a = el('a', null, shown); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; h.append(a); } else h.textContent = shown;
   li.append(h);
+  if (o.te) li.append(el('p', 'offer__original', o.t));
   const meta = el('p', 'offer__meta');
   const bits = [o.c, [o.ci, ctx.countryName(o.cc)].filter(Boolean).join(', '), relativeDay(o.d)].filter(Boolean);
   meta.textContent = bits.join(' · ');
