@@ -7,17 +7,17 @@ import { harness } from 'argus/server-bot/test-harness.mjs';
 import { filesUnder, hashTree, rewriteAssetLinks, recordVersion } from '../builder/fingerprint.mjs';
 
 const { ok, eq, done } = harness('fingerprint');
-const shipped = new Set(['style.css', 'main.js', 'intake/intake.js', 'lib/codec.js', 'vendor/pdf.min.js']);
+const shipped = new Set(['style.css', 'main.js', 'legal/notes.js', 'lib/codec.js', 'vendor/pdf.min.js']);
 const isAsset = p => shipped.has(p);
 const V = 'abc123def0';
 
 eq(rewriteAssetLinks('<link rel="stylesheet" href="style.css"><script type="module" src="main.js"></script>', 'index.html', V, isAsset),
   `<link rel="stylesheet" href="v/${V}/style.css"><script type="module" src="v/${V}/main.js"></script>`, 'the first page points into the version folder');
-eq(rewriteAssetLinks('<link href="../style.css"><script src="intake.js"></script>', 'intake/index.html', V, isAsset),
-  `<link href="../v/${V}/style.css"><script src="../v/${V}/intake/intake.js"></script>`, 'a page in a folder climbs out to the version folder');
+eq(rewriteAssetLinks('<link href="../style.css"><script src="notes.js"></script>', 'legal/about.html', V, isAsset),
+  `<link href="../v/${V}/style.css"><script src="../v/${V}/legal/notes.js"></script>`, 'a page in a folder climbs out to the version folder');
 eq(rewriteAssetLinks('<link href="/argus-web/style.css">', '404.html', V, isAsset),
   `<link href="/argus-web/v/${V}/style.css">`, 'an absolute address keeps its prefix (the 404 page is served from any depth)');
-const untouched = '<a href="intake/">go</a> <a href="../#p=x">back</a> <link rel="icon" href="favicon.svg"> <a href="https://x.org/a.js">ext</a> <script src="vendor/missing.js"></script>';
+const untouched = '<a href="legal/">go</a> <a href="../#p=x">back</a> <link rel="icon" href="favicon.svg"> <a href="https://x.org/a.js">ext</a> <script src="vendor/missing.js"></script>';
 eq(rewriteAssetLinks(untouched, 'index.html', V, isAsset), untouched, 'page links, icons, outside addresses and files the build does not ship stay as they are');
 
 {

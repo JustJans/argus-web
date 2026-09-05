@@ -23,18 +23,49 @@
         <button id="filters-close" class="button" type="button">Done</button>
       </div>
       <form id="filters-form" autocomplete="off">
-        <details class="filter-group" open>
+        <details class="filter-group" data-group="country">
           <summary>Country</summary>
           <div id="countries-pick" class="checks"></div>
+          <label class="check-row"><input type="checkbox" id="remote" name="remote"><span>Remote is fine too</span></label>
         </details>
-        <div id="families-pick"></div>
-        <details class="filter-group" open>
+        <details class="filter-group" data-group="occupations">
+          <summary>Occupations</summary>
+          <div id="families-pick"></div>
+        </details>
+        <details class="filter-group" data-group="posted">
           <summary>Posted</summary>
           <div class="checks">
             <label class="check-row"><input type="radio" name="d" value="" checked><span>Any time</span></label>
             <label class="check-row"><input type="radio" name="d" value="7"><span>Last 7 days</span></label>
             <label class="check-row"><input type="radio" name="d" value="30"><span>Last 30 days</span></label>
           </div>
+        </details>
+        <details class="filter-group" data-group="level">
+          <summary>Level</summary>
+          <div id="levels-pick" class="checks"></div>
+          <label class="field field--inline"><span>Offers may ask up to</span>
+            <select id="max-years"><option value="">any years</option><option value="1">1 year</option><option value="2">2 years</option><option value="3">3 years</option><option value="5">5 years</option><option value="7">7 years</option><option value="10">10 years</option><option value="15">15 years</option></select>
+          </label>
+        </details>
+        <details class="filter-group" data-group="languages">
+          <summary>Languages</summary>
+          <div id="languages-pick" class="checks"></div>
+        </details>
+        <details class="filter-group" data-group="degrees">
+          <summary>Degrees</summary>
+          <div id="degrees-pick" class="checks"></div>
+          <label class="field field--inline"><span>Highest degree</span>
+            <select id="highest"><option value="none">not stated</option><option value="bachelor">bachelor</option><option value="master">master</option><option value="phd">doctorate</option></select>
+          </label>
+        </details>
+        <details class="filter-group" data-group="roles">
+          <summary>Title words</summary>
+          <label class="field"><span>Words the title must contain, comma-separated, up to eight</span><input id="roles" type="text" placeholder="e.g. mooring, naval architect, PLC"></label>
+        </details>
+        <details class="filter-group" data-group="vetoes">
+          <summary>Deal-breakers</summary>
+          <div id="vetoes-pick" class="checks"></div>
+          <label class="field"><span>Title words to avoid</span><input id="no-words" type="text" placeholder="e.g. dredging, cruise"></label>
         </details>
         <button id="filters-clear" class="button" type="button">Clear</button>
       </form>
@@ -49,29 +80,24 @@
           </div>
           <div class="cv-line">
             <label class="button">Read my CV <input id="cv-file" type="file" accept=".pdf,.txt,.md,text/plain,application/pdf" hidden></label>
-            <span id="cv-status" class="muted small" aria-live="polite">A PDF or text file, read on this device: it ticks your occupations.</span>
+            <span id="cv-status" class="muted small" aria-live="polite">A PDF or text file, read on this device: it ticks your occupations, degrees and languages.</span>
           </div>
           <div class="code-line">
-            <label for="code-input">Have a code?</label>
-            <input id="code-input" name="code" type="text" spellcheck="false" placeholder="paste it here" aria-label="Your code">
-            <span class="muted">or</span>
-            <a id="make-code" href="intake/">make a code</a>
+            <label for="code-input">Your code</label>
+            <input id="code-input" name="code" type="text" spellcheck="false" placeholder="appears as you filter; paste one to load it" aria-label="Your code">
+            <button id="copy-code" class="button" type="button">Copy</button>
           </div>
           <div class="search__row">
             <button class="button button--primary" type="submit">Search</button>
           </div>
         </form>
-        <p class="muted small">A code is your search profile, nothing personal. It never leaves the address bar.</p>
+        <p class="muted small">The code is your filters, packed. It never leaves the address bar.</p>
       </section>
 
       <p id="stale" class="notice" hidden></p>
 
       <section id="results" class="card" hidden>
-        <div class="results-head">
-          <h2 id="results-title">Results</h2>
-          <a id="edit-link" class="button" href="intake/" hidden>Edit my profile</a>
-        </div>
-        <p id="profile-summary" class="muted" hidden></p>
+        <h2>Results</h2>
         <p id="results-status" aria-live="polite"></p>
         <div id="list"></div>
         <div id="debug" hidden></div>

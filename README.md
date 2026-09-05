@@ -1,11 +1,10 @@
 # Argus Web
 
 A free, public job portal for engineers and technicians in Europe. Search the public list of
-offers, or hand it your CV: it is read **in your browser**, never uploaded, and it ticks the
-occupations your job titles belong to. A short profile code — your "plate" — that lives
-after the `#` of the address carries the rest (languages, degrees, level, countries,
-deal-breakers) and filters the list for you, on your device. No account, no email, nothing
-stored anywhere.
+offers with filters that are your whole profile, or hand it your CV: it is read **in your
+browser**, never uploaded, and it ticks the occupations, degrees and languages it names. Your
+filters pack into a short code — your "plate" — that lives after the `#` of the address, to
+copy, paste or bookmark. No account, no email, nothing stored anywhere.
 
 It is the web companion of [Argus](https://github.com/JustJans/argus), the Telegram job-search
 bot, and reuses its matching engine: the same title, location, years-of-experience, degree
@@ -14,8 +13,8 @@ and language rules, run client-side.
 ## Status
 
 **Working, Spain and Sweden.** Live at <https://justjans.github.io/argus-web/>: search the
-pile by words and filters (country, occupations by ISCO group, date), let your CV tick the
-occupations, or make a code and get the list your whole profile deserves. Every advert past
+pile by words and filters — country, occupations by ISCO group, date, level, languages,
+degrees, title words, deal-breakers — let your CV tick them, and carry them as a short code. Every advert past
 its deadline is hidden; the page says when the pile was last rebuilt. A home server rebuilds
 and publishes the pile every six hours with `ops/server-refresh.sh` (the GitHub Actions
 workflows wait in `ops/workflows/` until the repository's token can create them).
