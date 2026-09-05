@@ -5,7 +5,7 @@ import { encodeProfile, decodeProfile, normaliseProfile, catalogueIds } from '..
 import { readCv } from '../lib/cv.js';
 
 const $ = s => document.querySelector(s);
-const getJson = async url => { const r = await fetch(url); if (!r.ok) throw new Error(`${r.status} for ${url}`); return r.json(); };
+const getJson = async url => { const r = await fetch(url, { cache: 'no-cache' }); if (!r.ok) throw new Error(`${r.status} for ${url}`); return r.json(); };
 
 const names = ['families', 'countries', 'languages', 'degrees', 'seniority', 'vetoes'];
 const cats = Object.fromEntries(names.map((n, i) => [n, null]));
@@ -82,7 +82,8 @@ function fillForm(p) {
 async function fileText(file) {
   if (/\.(txt|md)$/i.test(file.name) || file.type.startsWith('text/')) return file.text();
   const pdfjs = await import('../vendor/pdf.min.js');
-  pdfjs.GlobalWorkerOptions.workerSrc = '../vendor/pdf.worker.min.js';
+  // ➤ Resolved from this module, not from the page: the assets live under v/<hash>/.
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL('../vendor/pdf.worker.min.js', import.meta.url).href;
   const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
   const pages = [];
   for (let i = 1; i <= doc.numPages; i++) {

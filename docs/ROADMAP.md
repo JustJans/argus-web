@@ -19,7 +19,7 @@ The structure is built for the changes already known. Each item names the seam.
 
 ## The engine in the browser
 - Today the title rules run in the browser from Argus's own `text.mjs` and `filters.mjs`
-  (copied by `builder/build-site.mjs` into `lib/engine.js`). Years, degree and language
+  (bundled by `builder/build-site.mjs` into `v/<hash>/lib/engine.js`). Years, degree and language
   demands are read at build time (`builder/screens.mjs`) and travel as `y`, `dg`, `lg`.
 - When Argus ships a browser-safe engine entry (its `requirements.mjs` reads a file at
   import today), `app/lib/gates.js` is the single place to swap the precomputed facts for
@@ -37,6 +37,11 @@ The structure is built for the changes already known. Each item names the seam.
 - **Deploy**: today `builder/publish.mjs` pushes `site/` to `gh-pages`; the workflows in
   `ops/workflows/` move to `.github/workflows/` once the token can create them, and Pages
   switches back to "GitHub Actions" as the source. Then no commits carry data.
+- **Cache**: scripts and styles are published under `v/<content hash>/` and the pages point
+  there; the last three versions stay published. GitHub Pages caches every file for ten
+  minutes and a reload revalidates only the page, so this is what keeps a fresh page from
+  running yesterday's script (`builder/fingerprint.mjs`). The pile and the catalogues keep
+  their addresses and are fetched with `cache: no-cache`.
 
 ## Decided
 - **No memory of what you have seen.** Without accounts there is nothing to tie it to, and
