@@ -84,15 +84,6 @@ function drawPile() {
     tr.append(td1, td2); tbody.append(tr);
   }
   $('#countries').hidden = rows.length === 0;
-  const list = $('#source-list');
-  list.replaceChildren();
-  for (const s of Object.values(index.sources || {})) {
-    const li = document.createElement('li');
-    const a = document.createElement('a'); a.href = s.url; a.rel = 'noopener noreferrer'; a.target = '_blank'; a.textContent = s.name;
-    li.append(a, document.createTextNode(` — ${s.licence}${s.credit ? `. ${s.credit}` : ''}, extracted ${String(s.extracted_at || '').slice(0, 10)}`));
-    list.append(li);
-  }
-  $('#sources').hidden = list.children.length === 0;
 }
 
 // ➤ The filters and the words, applied to what is already downloaded. No network here.
@@ -188,7 +179,7 @@ async function main() {
   const all = await Promise.all(names.map(n => getJson(`catalogues/${n}.json`)));
   cats = Object.fromEntries(names.map((n, i) => [n, all[i]]));
   ids = catalogueIds(cats);
-  ctx = { countryName, sourceName: s => index.sources?.[s]?.name || s, languageName: code => cats.languages.languages.find(l => l.code === code)?.label || code, degreeName: id => cats.degrees.degrees.find(d => d.id === id)?.label || id };
+  ctx = { countryName, sourceName: s => index.sources?.[s]?.short || index.sources?.[s]?.name || s, languageName: code => cats.languages.languages.find(l => l.code === code)?.label || code, degreeName: id => cats.degrees.degrees.find(d => d.id === id)?.label || id };
   drawPile();
   drawFilters();
   wireFilters();

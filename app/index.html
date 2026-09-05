@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="no-referrer">
-  <meta name="description" content="Engineering and technical jobs in Europe, searched and filtered on your own device. No account, nothing stored.">
+  <meta name="description" content="Engineering jobs in Europe, filtered on your own device. No account, nothing stored.">
   <title>Argus Web</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231a4d8f'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='sans-serif' font-size='18' font-weight='700' fill='white'%3EA%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
@@ -12,7 +12,7 @@
 <body>
   <header class="site-header site-header--wide">
     <a class="brand" href="./">Argus Web</a>
-    <p class="tagline">Engineering and technical jobs in Europe, filtered on your device. No account, nothing stored.</p>
+    <p class="tagline">Engineering jobs in Europe, filtered on your device. No account, nothing stored.</p>
   </header>
 
   <main class="layout">
@@ -27,7 +27,7 @@
           <div id="countries-pick" class="checks"></div>
         </fieldset>
         <fieldset class="filter-group">
-          <legend>Family</legend>
+          <legend>Engineering</legend>
           <div id="families-pick" class="checks"></div>
         </fieldset>
         <fieldset class="filter-group">
@@ -38,7 +38,7 @@
             <label class="check-row"><input type="radio" name="d" value="30"><span>Last 30 days</span></label>
           </div>
         </fieldset>
-        <button id="filters-clear" class="button" type="button">Clear filters</button>
+        <button id="filters-clear" class="button" type="button">Clear</button>
       </form>
     </aside>
 
@@ -47,7 +47,7 @@
         <form id="search" class="search" autocomplete="off">
           <div class="search__row">
             <button id="filters-toggle" class="button filters-toggle" type="button" aria-expanded="false" aria-controls="filters">☰ Filters</button>
-            <input id="q" name="q" type="search" placeholder="Words in the title, company or city" aria-label="Search words">
+            <input id="q" name="q" type="search" placeholder="Title, company or city" aria-label="Search words">
             <button class="button button--primary" type="submit">Search</button>
           </div>
         </form>
@@ -58,7 +58,7 @@
           <span class="muted">or</span>
           <a href="intake/">make one from your CV</a>
         </form>
-        <p class="muted small">A code is your search profile (families, countries, languages, degrees, deal-breakers), nothing personal. It stays in the address bar; no server ever receives it.</p>
+        <p class="muted small">A code is your search profile, nothing personal. It never leaves the address bar.</p>
       </section>
 
       <p id="stale" class="notice" hidden></p>
@@ -75,21 +75,17 @@
       </section>
 
       <section id="status" class="card">
-        <h2>What the pile holds today</h2>
+        <h2>Today</h2>
         <p id="generated">Loading the pile…</p>
         <table id="countries" hidden><thead><tr><th>Country</th><th class="num">Offers</th></tr></thead><tbody></tbody></table>
       </section>
 
-      <section id="sources" class="card" hidden>
-        <h2>Sources and credits</h2>
-        <ul id="source-list"></ul>
-        <p class="muted small">Every offer links to the page it lives on. Spanish supply comes from public employment services only, until a licensed feed covers the private market.</p>
-      </section>
+      <p class="muted small">Every offer links to its source. <a href="legal/sources.html">Sources and credits</a></p>
     </section>
   </main>
 
   <footer class="site-footer site-footer--wide">
-    <p>This site stores nothing about you and sets no cookies. Hosted on GitHub Pages, whose own access logs apply. <a href="legal/privacy.html">Privacy</a> · <a href="legal/sources.html">Sources</a> · <a href="legal/about.html">About</a> · <a href="https://github.com/JustJans/argus-web">Source code</a></p>
+    <p><a href="legal/privacy.html">Privacy</a> · <a href="legal/sources.html">Sources</a> · <a href="legal/about.html">About</a> · <a href="https://github.com/JustJans/argus-web">Source code</a></p>
   </footer>
   <script type="module" src="main.js"></script>
 </body>

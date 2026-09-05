@@ -6,7 +6,7 @@ Everything a designer needs to restyle Argus Web without breaking it.
 
 | Page | File | What it does |
 |---|---|---|
-| Home / list | `app/index.html` + `app/main.js` | Filters on the left (country, family, posted date: plain checkboxes with counts, the tick on the left), a search line, a code line (paste a code, or make one), what the pile holds, the sources. On a phone the filters are a panel the "☰ Filters" button opens and the "Done" button closes. State in the address: `#q=…&c=es,se&f=mechanical&d=30` for a search, `#p=<code>` for the visitor's list; the filters narrow either. A notice appears when the pile is older than two days. |
+| Home / list | `app/index.html` + `app/main.js` | Filters on the left (country, engineering discipline, posted date: plain checkboxes with counts, the tick on the left), a search line, a code line (paste a code, or make one), what the pile holds, the sources. On a phone the filters are a panel the "☰ Filters" button opens and the "Done" button closes. State in the address: `#q=…&c=es,se&f=mechanical&d=30` for a search, `#p=<code>` for the visitor's list; the filters narrow either. A notice appears when the pile is older than two days. |
 | Not found | `app/404.html` | GitHub Pages serves it for any missing address. |
 | Intake | `app/intake/index.html` + `app/intake/intake.js` | Eight steps (CV, families, role words, level and years, languages, degrees, countries in order, deal-breakers) that end in the code. |
 | Privacy, Sources, About | `app/legal/*.html` | Plain pages. Sources lists today's sources from the pile's index. |

@@ -8,7 +8,7 @@ import { getJson } from '../http.mjs';
 export const id = 'jobtech';
 export const kind = 'feed';
 export const licence = {
-  name: 'Arbetsförmedlingen JobSearch (JobTech Dev)', url: 'https://data.jobtechdev.se/dataset/job-ads/',
+  name: 'Arbetsförmedlingen JobSearch (JobTech Dev)', short: 'JobTech', url: 'https://data.jobtechdev.se/dataset/job-ads/',
   licence: 'CC0 1.0', credit: 'Source: Arbetsförmedlingen, JobTech Dev', needsKey: false,
 };
 

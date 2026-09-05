@@ -26,7 +26,7 @@ const remoteWord = s => /remote/i.test(String(s || ''));
 
 export const ATS = {
   greenhouse: {
-    licence: { name: 'Greenhouse Job Board API', url: 'https://docs.greenhouse.io/job-board.html', licence: 'Public job board API', credit: '', needsKey: false },
+    licence: { name: 'Greenhouse Job Board API', short: 'Greenhouse', url: 'https://docs.greenhouse.io/job-board.html', licence: 'Public job board API', credit: '', needsKey: false },
     url: slug => `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(slug)}/jobs?content=true`,
     parse: (j, slug, company = slug) => parseGreenhouse(j, company).map((p, i) => ({
       sourceId: String(j.jobs[i]?.id || ''), title: p.title, location: p.location, url: p.url,
@@ -34,7 +34,7 @@ export const ATS = {
     })),
   },
   ashby: {
-    licence: { name: 'Ashby Job Board API', url: 'https://developers.ashbyhq.com/docs/public-job-posting-api', licence: 'Public job board API', credit: '', needsKey: false },
+    licence: { name: 'Ashby Job Board API', short: 'Ashby', url: 'https://developers.ashbyhq.com/docs/public-job-posting-api', licence: 'Public job board API', credit: '', needsKey: false },
     url: slug => `https://api.ashbyhq.com/posting-api/job-board/${encodeURIComponent(slug)}`,
     parse: (j, slug, company = slug) => parseAshby(j, company).map((p, i) => ({
       sourceId: String(j.jobs[i]?.id || ''), title: p.title, location: p.location, url: p.url,
@@ -42,7 +42,7 @@ export const ATS = {
     })),
   },
   lever: {
-    licence: { name: 'Lever Postings API', url: 'https://github.com/lever/postings-api', licence: 'Public postings API', credit: '', needsKey: false },
+    licence: { name: 'Lever Postings API', short: 'Lever', url: 'https://github.com/lever/postings-api', licence: 'Public postings API', credit: '', needsKey: false },
     url: slug => `https://api.lever.co/v0/postings/${encodeURIComponent(slug)}?mode=json`,
     parse: (arr, slug, company = slug) => parseLever(arr, company).map((p, i) => ({
       sourceId: String(arr[i]?.id || ''), title: p.title, location: p.location, url: p.url,
@@ -50,7 +50,7 @@ export const ATS = {
     })),
   },
   smartrecruiters: {
-    licence: { name: 'SmartRecruiters Posting API', url: 'https://developers.smartrecruiters.com/docs/posting-api', licence: 'Public posting API, where the company enables it', credit: '', needsKey: false },
+    licence: { name: 'SmartRecruiters Posting API', short: 'SmartRecruiters', url: 'https://developers.smartrecruiters.com/docs/posting-api', licence: 'Public posting API, where the company enables it', credit: '', needsKey: false },
     url: slug => `https://api.smartrecruiters.com/v1/companies/${encodeURIComponent(slug)}/postings?limit=100`,
     // ➤ The list carries no advert text (that is a second call per posting the pile does not make).
     parse: (j, slug, company = slug) => parseSmartRecruiters(j, company).map((p, i) => ({
@@ -59,7 +59,7 @@ export const ATS = {
     })).filter(p => p.url),
   },
   recruitee: {
-    licence: { name: 'Recruitee Careers Site API', url: 'https://docs.recruitee.com/reference/intro-to-careers-site-api', licence: 'Public careers site API', credit: '', needsKey: false },
+    licence: { name: 'Recruitee Careers Site API', short: 'Recruitee', url: 'https://docs.recruitee.com/reference/intro-to-careers-site-api', licence: 'Public careers site API', credit: '', needsKey: false },
     url: slug => `https://${encodeURIComponent(slug)}.recruitee.com/api/offers/`,
     parse: j => (j?.offers || []).map(p => ({
       sourceId: String(p.id || ''), title: p.title || '', location: [p.city, p.country].filter(Boolean).join(', '), url: p.careers_url || '',
@@ -67,7 +67,7 @@ export const ATS = {
     })),
   },
   personio: {
-    licence: { name: 'Personio XML feed', url: 'https://developer.personio.de/v1.0/reference/get_xml', licence: 'Public XML feed', credit: '', needsKey: false },
+    licence: { name: 'Personio XML feed', short: 'Personio', url: 'https://developer.personio.de/v1.0/reference/get_xml', licence: 'Public XML feed', credit: '', needsKey: false },
     url: slug => `https://${encodeURIComponent(slug)}.jobs.personio.de/xml`,
     xml: true,
     parse: (xml, slug) => {

@@ -12,32 +12,32 @@
 <body>
   <header class="site-header">
     <a class="brand" href="../">Argus Web</a>
-    <p class="tagline">Make your code. Your CV is read here, in your browser, and never sent anywhere.</p>
+    <p class="tagline">Make your code. Your CV never leaves this browser.</p>
   </header>
 
   <main>
     <form id="intake" class="intake" autocomplete="off">
       <section class="card step" data-step="cv">
         <h2>1. Your CV <span class="muted">(optional)</span></h2>
-        <p>Paste the text or choose a PDF. It is read on this device to pre-fill the steps below; it is not uploaded and not kept.</p>
-        <label class="field"><span>Paste your CV</span><textarea id="cv-text" rows="6" placeholder="Paste the text of your CV here…"></textarea></label>
+        <p>Paste it or choose a PDF. It pre-fills the steps below and is not kept.</p>
+        <label class="field"><span>Your CV</span><textarea id="cv-text" rows="6" placeholder="Paste it here"></textarea></label>
         <div class="row">
-          <label class="button">Choose a PDF or text file <input id="cv-file" type="file" accept=".pdf,.txt,.md,text/plain,application/pdf" hidden></label>
+          <label class="button">Choose a file <input id="cv-file" type="file" accept=".pdf,.txt,.md,text/plain,application/pdf" hidden></label>
           <button id="cv-read" class="button button--primary" type="button">Read my CV</button>
         </div>
         <p id="cv-status" class="muted" aria-live="polite"></p>
       </section>
 
       <section class="card step" data-step="families">
-        <h2>2. Engineering families</h2>
-        <p>Tick the families your work belongs to. Leave all empty to see every family.</p>
+        <h2>2. Engineering</h2>
+        <p>Tick yours. None ticked means all.</p>
         <div id="families" class="chips"></div>
       </section>
 
       <section class="card step" data-step="roles">
-        <h2>3. Role words <span class="muted">(optional)</span></h2>
-        <p>Words the job title should contain, separated by commas. Up to eight, any language.</p>
-        <label class="field"><span>Role words</span><input id="roles" type="text" placeholder="e.g. mooring, naval architect, PLC"></label>
+        <h2>3. Title words <span class="muted">(optional)</span></h2>
+        <p>Comma-separated, up to eight, any language.</p>
+        <label class="field"><span>Words</span><input id="roles" type="text" placeholder="e.g. mooring, naval architect, PLC"></label>
       </section>
 
       <section class="card step" data-step="level">
@@ -49,12 +49,12 @@
       </section>
 
       <section class="card step" data-step="languages">
-        <h2>5. Languages you work in</h2>
+        <h2>5. Your languages</h2>
         <div id="languages" class="chips"></div>
       </section>
 
       <section class="card step" data-step="degrees">
-        <h2>6. Degrees you hold</h2>
+        <h2>6. Your degrees</h2>
         <div id="degrees" class="chips"></div>
         <label class="field field--inline"><span>Highest degree</span>
           <select id="highest"><option value="none">not stated</option><option value="bachelor">bachelor</option><option value="master">master</option><option value="phd">doctorate</option></select>
@@ -62,23 +62,23 @@
       </section>
 
       <section class="card step" data-step="countries">
-        <h2>7. Countries, in your order of preference</h2>
-        <p>The first you tick comes first in the list. Leave all empty to see every country.</p>
+        <h2>7. Countries</h2>
+        <p>In order of preference: the first ticked comes first. None ticked means all.</p>
         <div id="countries" class="chips"></div>
-        <label class="check"><input id="remote" type="checkbox"> Remote work is fine too</label>
+        <label class="check"><input id="remote" type="checkbox"> Remote is fine too</label>
       </section>
 
       <section class="card step" data-step="vetoes">
         <h2>8. Deal-breakers <span class="muted">(optional)</span></h2>
         <div id="vetoes" class="chips"></div>
-        <label class="field"><span>Words that rule a title out</span><input id="no-words" type="text" placeholder="e.g. dredging, cruise"></label>
+        <label class="field"><span>Title words to avoid</span><input id="no-words" type="text" placeholder="e.g. dredging, cruise"></label>
       </section>
 
       <section class="card step step--final">
         <button id="make" class="button button--primary button--big" type="submit">Make my code</button>
         <div id="result" class="code-box" hidden>
           <h2>Your code</h2>
-          <p class="muted">Keep it: it is your profile. Paste it on the first page, bookmark the link, or share it. Nothing is stored anywhere.</p>
+          <p class="muted">Your profile as a code. Paste it on the first page or bookmark the link; nothing is stored.</p>
           <div class="code-form__row"><input id="code-out" type="text" readonly><button id="copy" class="button" type="button">Copy</button></div>
           <p><a id="open" class="button button--primary" href="../">Open my list</a> <a id="share" class="button" href="#" hidden>Share</a></p>
         </div>
@@ -87,7 +87,7 @@
   </main>
 
   <footer class="site-footer">
-    <p>This page makes no network request after loading and stores nothing. <a href="../legal/privacy.html">Privacy</a> · <a href="../">Home</a></p>
+    <p><a href="../legal/privacy.html">Privacy</a> · <a href="../">Home</a></p>
   </footer>
   <script type="module" src="intake.js"></script>
 </body>
