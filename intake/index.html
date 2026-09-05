@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; worker-src 'self' blob:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+  <title>Your code · Argus Web</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231a4d8f'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='sans-serif' font-size='18' font-weight='700' fill='white'%3EA%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../v/ae3261e2d6/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="../">Argus Web</a>
+    <p class="tagline">Make your code. Your CV never leaves this browser.</p>
+  </header>
+
+  <main>
+    <form id="intake" class="intake" autocomplete="off">
+      <section class="card step" data-step="cv">
+        <h2>1. Your CV <span class="muted">(optional)</span></h2>
+        <p>Paste it or choose a PDF. It pre-fills the steps below and is not kept.</p>
+        <label class="field"><span>Your CV</span><textarea id="cv-text" rows="6" placeholder="Paste it here"></textarea></label>
+        <div class="row">
+          <label class="button">Choose a file <input id="cv-file" type="file" accept=".pdf,.txt,.md,text/plain,application/pdf" hidden></label>
+          <button id="cv-read" class="button button--primary" type="button">Read my CV</button>
+        </div>
+        <p id="cv-status" class="muted" aria-live="polite"></p>
+      </section>
+
+      <section class="card step" data-step="families">
+        <h2>2. Engineering</h2>
+        <p>Tick yours. None ticked means all.</p>
+        <div id="families" class="chips"></div>
+      </section>
+
+      <section class="card step" data-step="roles">
+        <h2>3. Title words <span class="muted">(optional)</span></h2>
+        <p>Comma-separated, up to eight, any language.</p>
+        <label class="field"><span>Words</span><input id="roles" type="text" placeholder="e.g. mooring, naval architect, PLC"></label>
+      </section>
+
+      <section class="card step" data-step="level">
+        <h2>4. Level and experience</h2>
+        <div id="levels" class="chips chips--radio"></div>
+        <label class="field field--inline"><span>Offers may ask up to</span>
+          <select id="max-years"><option value="">any years of experience</option><option value="1">1 year</option><option value="2">2 years</option><option value="3">3 years</option><option value="5">5 years</option><option value="7">7 years</option><option value="10">10 years</option><option value="15">15 years</option></select>
+        </label>
+      </section>
+
+      <section class="card step" data-step="languages">
+        <h2>5. Your languages</h2>
+        <div id="languages" class="chips"></div>
+      </section>
+
+      <section class="card step" data-step="degrees">
+        <h2>6. Your degrees</h2>
+        <div id="degrees" class="chips"></div>
+        <label class="field field--inline"><span>Highest degree</span>
+          <select id="highest"><option value="none">not stated</option><option value="bachelor">bachelor</option><option value="master">master</option><option value="phd">doctorate</option></select>
+        </label>
+      </section>
+
+      <section class="card step" data-step="countries">
+        <h2>7. Countries</h2>
+        <p>In order of preference: the first ticked comes first. None ticked means all.</p>
+        <div id="countries" class="chips"></div>
+        <label class="check"><input id="remote" type="checkbox"> Remote is fine too</label>
+      </section>
+
+      <section class="card step" data-step="vetoes">
+        <h2>8. Deal-breakers <span class="muted">(optional)</span></h2>
+        <div id="vetoes" class="chips"></div>
+        <label class="field"><span>Title words to avoid</span><input id="no-words" type="text" placeholder="e.g. dredging, cruise"></label>
+      </section>
+
+      <section class="card step step--final">
+        <button id="make" class="button button--primary button--big" type="submit">Make my code</button>
+        <div id="result" class="code-box" hidden>
+          <h2>Your code</h2>
+          <p class="muted">Your profile as a code. Paste it on the first page or bookmark the link; nothing is stored.</p>
+          <div class="code-form__row"><input id="code-out" type="text" readonly><button id="copy" class="button" type="button">Copy</button></div>
+          <p><a id="open" class="button button--primary" href="../">Open my list</a> <a id="share" class="button" href="#" hidden>Share</a></p>
+        </div>
+      </section>
+    </form>
+  </main>
+
+  <footer class="site-footer">
+    <p><a href="../legal/privacy.html">Privacy</a> · <a href="../">Home</a></p>
+  </footer>
+  <script type="module" src="../v/ae3261e2d6/intake/intake.js"></script>
+</body>
+</html>

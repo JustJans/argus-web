@@ -1,0 +1,21 @@
+{
+  "generated_at": "2026-09-05T16:45:47.545Z",
+  "offers": 2820,
+  "found": 9705,
+  "dropped": {
+    "found": 9705,
+    "outsideVertical": 6086,
+    "outsideEurope": 0,
+    "hygiene": 12,
+    "noLink": 0
+  },
+  "duplicates": {
+    "sameUrl": 544,
+    "sameRole": 243
+  },
+  "sources_failed": [],
+  "by_country": {
+    "es": 90,
+    "se": 2730
+  }
+}

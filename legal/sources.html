@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Sources · Argus Web</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231a4d8f'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='sans-serif' font-size='18' font-weight='700' fill='white'%3EA%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../v/ae3261e2d6/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="../">Argus Web</a>
+    <p class="tagline">Where the offers come from, and under which terms</p>
+  </header>
+  <main>
+    <section class="card">
+      <h2>Sources in today's pile</h2>
+      <p id="generated" class="muted">Loading…</p>
+      <ul id="source-list"></ul>
+    </section>
+    <section class="card">
+      <h2>The rule</h2>
+      <p>Only sources whose written terms allow a third party to republish their listings are read: public employment services with open-data licences, and company boards on applicant-tracking systems with a documented public API. Every offer links to the page it lives on, with only a short excerpt shown here. Nothing is taken from sites whose terms forbid it. Spanish offers come from public employment services only, until a licensed feed covers the private market.</p>
+      <p>A source that no longer wants to be listed, or an employer who wants an advert removed: <a href="https://github.com/JustJans/argus-web/issues" rel="noopener noreferrer" target="_blank">open an issue</a>; it is acted on within 72 hours.</p>
+    </section>
+  </main>
+  <footer class="site-footer"><p><a href="../">Home</a> · <a href="privacy.html">Privacy</a> · <a href="about.html">About</a></p></footer>
+  <script type="module">
+    const r = await fetch('../data/index.json', { cache: 'no-cache' }).catch(() => null);
+    const g = document.getElementById('generated'), ul = document.getElementById('source-list');
+    if (!r || !r.ok) { g.textContent = 'The pile is not published yet.'; } else {
+      const index = await r.json();
+      g.textContent = `Pile rebuilt ${String(index.generated_at).slice(0, 16).replace('T', ' ')} UTC · ${index.counts.offers.toLocaleString('en')} offers.`;
+      for (const s of Object.values(index.sources || {})) {
+        const li = document.createElement('li');
+        const a = document.createElement('a'); a.href = s.url; a.rel = 'noopener noreferrer'; a.target = '_blank'; a.textContent = s.name;
+        li.append(a, document.createTextNode(` — ${s.licence}${s.credit ? `. ${s.credit}` : ''}. Extracted ${String(s.extracted_at || '').slice(0, 10)}.`));
+        ul.append(li);
+      }
+    }
+  </script>
+</body>
+</html>
