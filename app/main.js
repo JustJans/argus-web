@@ -49,6 +49,7 @@ const familyOf = id => cats.families.families.find(f => f.id === id);
 const groupLabel = id => cats.families.groups.find(g => g.id === id)?.label || id;
 const degreeName = id => cats.degrees.degrees.find(d => d.id === id)?.label || id;
 const languageName = code => cats.languages.languages.find(l => l.code === code)?.label || code;
+const n = x => Number(x || 0).toLocaleString('en');
 // ➤ "Engineers: Mechanical, Civil · Technicians: Mechanical": the group gives a label its meaning.
 function familiesSummary(fams) {
   const byGroup = new Map();
@@ -78,9 +79,18 @@ function row(container, { name, value, label, count, radio = false }) {
   const i = document.createElement('input'); i.type = radio ? 'radio' : 'checkbox'; i.name = name; i.value = value;
   const s = document.createElement('span'); s.textContent = label;
   l.append(i, s);
-  if (count !== undefined) { const n = document.createElement('span'); n.className = 'check-row__count'; n.textContent = count.toLocaleString('en'); l.append(n); }
+  if (count !== undefined) { const c = document.createElement('span'); c.className = 'check-row__count'; c.textContent = n(count); l.append(c); }
   container.append(l);
   return i;
+}
+// ➤ The chevron every fold-out summary starts with (it turns when the fold-out opens).
+function chevron() {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'chev'); svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('fill', 'none'); svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.5'); svg.setAttribute('stroke-linecap', 'round'); svg.setAttribute('stroke-linejoin', 'round'); svg.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', 'm9 18 6-6-6-6');
+  svg.append(path);
+  return svg;
 }
 const remember = (fold, key) => fold.addEventListener('toggle', () => foldState.set(key, fold.open));
 
@@ -91,7 +101,7 @@ function drawCountries(profile) {
   for (const cc of profile.countries) if (!counts[cc]) rows.push([cc, 0]);
   const pick = $('#countries-pick');
   pick.replaceChildren();
-  for (const [cc, n] of rows) row(pick, { name: 'c', value: cc, label: countryName(cc), count: n });
+  for (const [cc, c] of rows) row(pick, { name: 'c', value: cc, label: countryName(cc), count: c });
 }
 
 // ➤ Inside "Occupations", one fold-out per group (Engineers, Technicians, crews…) with the families
@@ -103,15 +113,15 @@ function drawFamilyCounts(profile) {
   const pick = $('#families-pick');
   pick.replaceChildren();
   for (const g of cats.families.groups) {
-    const rows = cats.families.families.filter(f => f.group === g.id).map(f => [f, count(f.id)]).filter(([f, n]) => n > 0 || profile.families.includes(f.id)).sort((a, b) => b[1] - a[1]);
+    const rows = cats.families.families.filter(f => f.group === g.id).map(f => [f, count(f.id)]).filter(([f, c]) => c > 0 || profile.families.includes(f.id)).sort((a, b) => b[1] - a[1]);
     if (!rows.length) continue;
     const fold = document.createElement('details'); fold.className = 'filter-group'; fold.dataset.group = `families:${g.id}`;
     fold.open = foldState.has(fold.dataset.group) ? foldState.get(fold.dataset.group) : rows.some(([f]) => profile.families.includes(f.id));
     remember(fold, fold.dataset.group);
-    const summary = document.createElement('summary'); summary.textContent = g.label;
+    const summary = document.createElement('summary'); summary.append(chevron(), document.createTextNode(g.label));
     const checks = document.createElement('div'); checks.className = 'checks';
     fold.append(summary, checks);
-    for (const [f, n] of rows) row(checks, { name: 'f', value: f.id, label: f.label, count: n });
+    for (const [f, c] of rows) row(checks, { name: 'f', value: f.id, label: f.label, count: c });
     pick.append(fold);
   }
 }
@@ -125,7 +135,8 @@ function drawStaticLists() {
 }
 
 // ➤ Puts a profile into the controls. A fold-out is open when the visitor left it open, when it
-// ➤ is open by default, or when something inside is set; it never closes on its own.
+// ➤ is open by default, or when something inside is set; it never closes on its own. A group
+// ➤ with something set carries a mark, and the panel's head counts them.
 function fillFilters(p) {
   countryOrder.length = 0; countryOrder.push(...p.countries);
   drawCountries(p);
@@ -145,26 +156,38 @@ function fillFilters(p) {
   const active = activeGroups(p);
   for (const fold of $$('#filters-form > details')) {
     const g = fold.dataset.group;
+    fold.classList.toggle('is-active', active.has(g));
     fold.open = foldState.has(g) ? foldState.get(g) || active.has(g) : OPEN_BY_DEFAULT.has(g) || active.has(g);
   }
+  const label = active.size ? `Filters · ${active.size}` : 'Filters';
+  text('#filters-count', label);
+  text('#filters-toggle-label', label);
 }
 function activeGroups(p) {
   const on = { country: p.countries.length || p.remote, occupations: p.families.length, posted: p.posted, level: p.level !== 'any' || p.maxYears, languages: p.languages.length, degrees: p.degrees.length || p.highest !== 'none', roles: p.roles.length, vetoes: p.vetoes.length || p.noWords.length };
   return new Set(Object.keys(on).filter(k => on[k]));
 }
 
+// ➤ The pile's numbers: the big count on the front, the one-line stats once there are results,
+// ➤ the Today table, and the notice when the pile is old.
 function drawPile() {
   const hours = Math.round((Date.now() - new Date(index.generated_at).getTime()) / 36e5);
-  text('#generated', `${index.counts.offers.toLocaleString('en')} offers, rebuilt ${hours <= 0 ? 'just now' : `${hours} h ago`}${index.status?.ok ? '' : ' (some sources failed this time)'}.`);
-  const stale = $('#stale');
-  if (hours > STALE_HOURS) { stale.textContent = `The pile was last rebuilt ${Math.round(hours / 24)} days ago; some offers may have closed since.`; stale.hidden = false; }
+  const rebuilt = hours <= 0 ? 'rebuilt just now' : hours < 48 ? `rebuilt ${hours} h ago` : `rebuilt ${Math.round(hours / 24)} days ago`;
+  const failed = index.status?.ok ? '' : ' (some sources failed this time)';
   const rows = Object.entries(index.counts?.by_country || {}).filter(([cc]) => cc !== 'zz').sort((a, b) => (a[0] === 'es' ? -1 : b[0] === 'es' ? 1 : b[1] - a[1]));
+  text('#hero-count', n(index.counts.offers));
+  const stats = $('#hero-stats');
+  stats.replaceChildren();
+  const b = document.createElement('b'); b.textContent = n(index.counts.offers);
+  stats.append(b, document.createTextNode(` offers · ${rows.map(([cc, c]) => `${countryName(cc)} ${n(c)}`).join(' · ')} · ${rebuilt}${failed}`));
+  text('#generated', `${n(index.counts.offers)} offers, ${rebuilt}${failed}.`);
+  if (hours > STALE_HOURS) { text('#stale-text', `The pile was last rebuilt ${Math.round(hours / 24)} days ago; some offers may have closed since.`); $('#stale').hidden = false; }
   const tbody = $('#countries tbody');
   tbody.replaceChildren();
-  for (const [cc, n] of rows) {
+  for (const [cc, c] of rows) {
     const tr = document.createElement('tr');
     const td1 = document.createElement('td'); td1.textContent = countryName(cc);
-    const td2 = document.createElement('td'); td2.className = 'num'; td2.textContent = n.toLocaleString('en');
+    const td2 = document.createElement('td'); td2.className = 'num'; td2.textContent = n(c);
     tr.append(td1, td2); tbody.append(tr);
   }
   $('#countries').hidden = rows.length === 0;
@@ -176,12 +199,27 @@ function draw() {
   const { q, debug } = readHash();
   const words = wordsOf(q);
   const since = loaded.profile.posted ? new Date(Date.now() - loaded.profile.posted * 864e5).toISOString().slice(0, 10) : '';
-  const shown = loaded.offers.filter(o => (!since || (o.d && o.d >= since)) && matchesWords(o, words, countryName));
+  const inDate = loaded.offers.filter(o => !since || (o.d && o.d >= since));
+  const shown = inDate.filter(o => matchesWords(o, words, countryName));
   const failed = loaded.failed.length ? ` (${loaded.failed.length} part${loaded.failed.length === 1 ? '' : 's'} failed to download)` : '';
   const narrowed = words.length || !isEmptyProfile(loaded.profile);
-  text('#results-status', narrowed ? `${shown.length.toLocaleString('en')} of ${loaded.total.toLocaleString('en')} offers match your filters${failed}.` : `${shown.length.toLocaleString('en')} offers, newest first${failed}.`);
-  if (shown.length) renderList($('#list'), shown, ctx); else renderEmpty($('#list'), loaded.stages, loaded.total);
+  text('#results-status', narrowed ? `${n(shown.length)} of ${n(loaded.total)} offers match your filters${failed}.` : `${n(shown.length)} offers, newest first${failed}.`);
+  // ➤ Zero results: every stage that dropped something, the date and the words included.
+  const stages = { ...loaded.stages, 'posted date': loaded.offers.length - inDate.length, 'search words': inDate.length - shown.length };
+  if (shown.length) renderList($('#list'), shown, ctx); else renderEmpty($('#list'), stages, loaded.total);
   if (debug && loaded.dropped) renderDebug($('#debug'), loaded.dropped); else $('#debug').hidden = true;
+}
+
+// ➤ Results shown or hidden: the page changes shape with them (the hero shrinks to a line,
+// ➤ How it works and Today make room).
+function showResults(on) {
+  $('#results').hidden = !on;
+  document.body.classList.toggle('has-results', on);
+}
+function downloading(done, total) {
+  const on = done < total;
+  $('#progress').hidden = !on; $('#skeleton').hidden = !on;
+  $('#progress > i').style.width = total ? `${Math.round((done / total) * 100)}%` : '0%';
 }
 
 // ➤ Reads the address, puts it into the controls, downloads what the scope needs, judges, draws.
@@ -192,23 +230,23 @@ async function run() {
   $('#code-input').value = code;
   let profile = normaliseProfile({});
   if (code) {
-    try { profile = decodeProfile(code, ids); } catch (e) { $('#results').hidden = false; text('#results-status', `That code cannot be read: ${e.message}.`); $('#list').replaceChildren(); loaded = null; return; }
+    try { profile = decodeProfile(code, ids); } catch (e) { showResults(true); text('#results-status', `That code cannot be read: ${e.message}. Check it was pasted whole, or clear it and tick the filters by hand.`); $('#list').replaceChildren(); loaded = null; return; }
   }
   fillFilters(profile);
-  const active = activeGroups(profile).size;
-  text('#filters-toggle', active ? `☰ Filters · ${active}` : '☰ Filters');
-  if (isEmptyProfile(profile) && !q && !all) { $('#results').hidden = true; loaded = null; return; }
+  if (isEmptyProfile(profile) && !q && !all) { showResults(false); loaded = null; return; }
 
   // ➤ The same scope already downloaded? Then only redraw.
   const scope = { ...profile, remote: profile.remote || !profile.countries.length };
   const key = JSON.stringify([code]);
-  if (loaded && loaded.key === key) { draw(); return; }
+  if (loaded && loaded.key === key) { showResults(true); draw(); return; }
   loaded = null;
-  $('#results').hidden = false;
+  showResults(true);
   $('#list').replaceChildren();
   const files = shardFiles(index, scope);
   text('#results-status', `Downloading ${files.length} part${files.length === 1 ? '' : 's'} of the pile…`);
-  const { offers, failed } = await loadShards(files, 'data', getJson, (done, n) => text('#results-status', `Downloading ${done} of ${n}…`));
+  downloading(0, files.length);
+  const { offers, failed } = await loadShards(files, 'data', getJson, (done, total) => { text('#results-status', `Downloading ${done} of ${total}…`); downloading(done, total); });
+  downloading(1, 1);
   const alive = offers.filter(o => !isExpired(o));
   const stages = {}, dropped = [];
   let kept = alive;
@@ -225,6 +263,7 @@ async function run() {
 // ➤ The CV: a text file is read as it is; a PDF through pdf.js, loaded from this site only then.
 // ➤ Its job titles tick the occupations they belong to, its degree lines the degrees, its
 // ➤ language lines the languages. Nothing of it is kept or sent.
+const cvStatus = (state, s) => { const e = $('#cv-status'); e.dataset.state = state; e.textContent = s; };
 async function fileText(file) {
   if (/\.(txt|md)$/i.test(file.name) || file.type.startsWith('text/')) return file.text();
   const pdfjs = await import('./vendor/pdf.min.js');
@@ -235,19 +274,19 @@ async function fileText(file) {
   return pages.join('\n');
 }
 async function readCvFile(file) {
-  text('#cv-status', `Reading ${file.name}…`);
+  cvStatus('reading', `Reading ${file.name}…`);
   try {
     const t = await fileText(file);
-    if (t.trim().length < 200) { text('#cv-status', 'That file is too short to be a CV.'); return; }
+    if (t.trim().length < 200) { cvStatus('none', 'That file is too short to be a CV.'); return; }
     familyTerms ||= await getJson('catalogues/family-terms.json');
     const s = readCv(t, { ...cats, familyTerms });
     const p = profileFromForm();
     const merged = normaliseProfile({ ...p, families: [...p.families, ...s.families], degrees: [...p.degrees, ...s.degrees], languages: [...p.languages, ...s.languages] });
     const found = [s.families.length ? familiesSummary(s.families) : '', s.degrees.length ? `degrees: ${s.degrees.map(degreeName).join(', ')}` : '', s.languages.length ? `languages: ${s.languages.map(languageName).join(', ')}` : ''].filter(Boolean);
-    text('#cv-status', found.length ? `Ticked from your CV: ${found.join(' · ')}.` : 'Nothing of ours found in that CV; tick the filters by hand.');
+    if (found.length) cvStatus('ticked', `Ticked from your CV: ${found.join(' · ')}.`); else cvStatus('none', 'Nothing of ours found in that CV; tick the filters by hand.');
     writeHash(stateFromForm(merged));
   } catch (e) {
-    text('#cv-status', `Could not read that file (${e.message}).`);
+    cvStatus('error', `Could not read that file (${e.message}).`);
   }
 }
 
@@ -271,15 +310,16 @@ function wireControls() {
     const state = stateFromForm();
     const typed = $('#code-input').value.trim();
     if (typed && typed !== state.p) {
-      try { decodeProfile(typed, ids); state.p = typed; } catch (err) { $('#results').hidden = false; text('#results-status', `That code cannot be read: ${err.message}.`); return; }
+      try { decodeProfile(typed, ids); state.p = typed; } catch (err) { showResults(true); text('#results-status', `That code cannot be read: ${err.message}. Check it was pasted whole, or clear it and tick the filters by hand.`); return; }
     }
     if (!state.p && !state.q) state.all = '1';
     search(state);
   });
-  $('#copy-code').addEventListener('click', async () => {
+  const copy = $('#copy-code');
+  copy.addEventListener('click', async () => {
     const code = $('#code-input').value.trim();
     if (!code) return;
-    try { await navigator.clipboard.writeText(code); text('#copy-code', 'Copied'); setTimeout(() => text('#copy-code', 'Copy'), 1500); } catch { $('#code-input').select(); }
+    try { await navigator.clipboard.writeText(code); text('#copy-label', 'Copied'); copy.classList.add('is-done'); setTimeout(() => { text('#copy-label', 'Copy'); copy.classList.remove('is-done'); }, 1500); } catch { $('#code-input').select(); }
   });
   $('#cv-file').addEventListener('change', e => { const file = e.target.files[0]; if (file) readCvFile(file); e.target.value = ''; });
   // ➤ Typing redraws at once; the address follows once the typing pauses.
@@ -289,10 +329,10 @@ function wireControls() {
 }
 
 async function main() {
-  try { index = await getJson('data/index.json'); } catch { text('#generated', 'The pile is not published yet. Come back in a few hours.'); return; }
+  try { index = await getJson('data/index.json'); } catch { text('#generated', 'The pile is not published yet. Come back in a few hours.'); text('#hero-count', '0'); return; }
   const names = ['families', 'countries', 'languages', 'degrees', 'seniority', 'vetoes'];
-  const all = await Promise.all(names.map(n => getJson(`catalogues/${n}.json`)));
-  cats = Object.fromEntries(names.map((n, i) => [n, all[i]]));
+  const all = await Promise.all(names.map(name => getJson(`catalogues/${name}.json`)));
+  cats = Object.fromEntries(names.map((name, i) => [name, all[i]]));
   ids = catalogueIds(cats);
   ctx = { countryName, sourceName: s => index.sources?.[s]?.short || index.sources?.[s]?.name || s, languageName, degreeName };
   drawPile();
