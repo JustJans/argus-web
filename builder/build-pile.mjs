@@ -17,6 +17,10 @@ import * as jobtech from './adapters/jobtech.mjs';
 import * as lanbide from './adapters/lanbide.mjs';
 import * as feinaactiva from './adapters/feinaactiva.mjs';
 import * as jcyl from './adapters/jcyl.mjs';
+import * as sef from './adapters/sef.mjs';
+import * as mpsv from './adapters/mpsv.mjs';
+import * as uzt from './adapters/uzt.mjs';
+import * as nva from './adapters/nva.mjs';
 import * as boards from './adapters/boards.mjs';
 import { ATS } from './adapters/boards.mjs';
 
@@ -48,10 +52,12 @@ const europe = new Set(countries.map(c => c.iso));
 const startedAt = new Date();
 const log = line => console.log(`[${new Date().toISOString().slice(11, 19)}] ${line}`);
 const failed = [];
-// ➤ ssykGroups: the SSYK groups whose ISCO codes fall in the vertical, what JobTech is asked for.
-const ctx = { families, ssykGroups: [...gate.bySsyk.keys()], companies, log, fail: (who, why) => { failed.push(`${who}: ${why}`); log(`FAILED ${who}: ${why}`); } };
+// ➤ iscoUnits: the vertical's ISCO unit groups, for the feeds that classify by code (Czechia,
+// ➤ Lithuania); ssykGroups: the SSYK groups whose ISCO codes fall in the vertical, what JobTech
+// ➤ is asked for.
+const ctx = { families, iscoUnits: [...gate.byIsco.keys()], ssykGroups: [...gate.bySsyk.keys()], companies, log, fail: (who, why) => { failed.push(`${who}: ${why}`); log(`FAILED ${who}: ${why}`); } };
 
-const adapters = [lanbide, feinaactiva, jcyl, jobtech, boards];
+const adapters = [lanbide, feinaactiva, jcyl, sef, jobtech, mpsv, uzt, nva, boards];
 const items = [];
 const dropped = [];
 const counts = { found: 0, outsideVertical: 0, outsideEurope: 0, hygiene: 0, noLink: 0 };

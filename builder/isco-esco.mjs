@@ -28,7 +28,7 @@ export const EXCLUDED_UNITS = ['2163', '2166'];
 // ➤ instead of reading them as engineers.
 export const BLOCKER_GROUPS = ['251', '252', '351', '352', '243'];
 // ➤ The languages kept: those of today's and tomorrow's sources. ESCO has no Catalan.
-export const LANGS = ['en', 'es', 'fr', 'de', 'nl', 'sv', 'no', 'da', 'fi', 'it', 'pt', 'pl'];
+export const LANGS = ['en', 'es', 'fr', 'de', 'nl', 'sv', 'no', 'da', 'fi', 'it', 'pt', 'pl', 'cs', 'lt', 'lv'];
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 let calls = 0;

@@ -12,24 +12,27 @@ const T = titleRules(fold);
 
 // ➤ The bare word "engineer" in the sources' languages: the fallback when no ESCO title
 // ➤ matches. Plain dictionary words.
-const ENGINEER_WORDS = ['engineer', 'ingeniero', 'ingeniera', 'enginyer', 'enginyera', 'ingénieur', 'ingénieure', 'ingenieur', 'ingenieurin', 'ingenjör', 'civilingenjör', 'ingeniør', 'sivilingeniør', 'insinööri', 'ingegnere', 'engenheiro', 'engenheira', 'inżynier'];
+const ENGINEER_WORDS = ['engineer', 'ingeniero', 'ingeniera', 'enginyer', 'enginyera', 'ingénieur', 'ingénieure', 'ingenieur', 'ingenieurin', 'ingenjör', 'civilingenjör', 'ingeniør', 'sivilingeniør', 'insinööri', 'ingegnere', 'engenheiro', 'engenheira', 'inżynier', 'inženýr', 'inženýrka', 'inžinierius', 'inžinierė', 'inženieris', 'inženiere'];
 const GENERIC_FAMILY = '2149';
+// ➤ Languages that compound their engineers (būvinženieris, Bauingenieur, byggingenjör): a word
+// ➤ ending in the engineer word is the bare word too. Folded forms, as the title is read.
+const COMPOUND_ENGINEER = /(?:^|[^a-z])[a-z]{3,}(?:ingenieur|ingenieurin|ingenjor|ingenior|insinoori|inzenieris|inzeniere|inzynier|inzenyr|ingeniero|ingeniera)(?![a-z])/;
 // ➤ Bare role nouns ESCO lists among some occupations' alternative titles. On their own they
 // ➤ name no occupation ("coordinador" is as often a day-care coordinator as a production one),
 // ➤ so the gate does not match on them; there is no fallback for "technician" either, which in
 // ➤ Spanish names sales and office jobs as often as technical ones.
-const ROLE_WORDS = ['technician', 'técnico', 'técnica', 'tècnic', 'tècnica', 'technicien', 'technicienne', 'techniker', 'technikerin', 'technicus', 'tekniker', 'teknikko', 'tecnico', 'tecnica', 'technik',
+const ROLE_WORDS = ['technician', 'técnico', 'técnica', 'tècnic', 'tècnica', 'technicien', 'technicienne', 'techniker', 'technikerin', 'technicus', 'tekniker', 'teknikko', 'tecnico', 'tecnica', 'technik', 'technička', 'technikas', 'technikė', 'tehniķis', 'tehniķe',
   'coordinator', 'coordinador', 'coordinadora', 'coordinateur', 'coordinatrice', 'koordinator', 'koordinatör', 'coördinator', 'coordinatore',
   'supervisor', 'supervisora', 'superviseur', 'superviseuse', 'arbetsledare', 'foreman', 'capataz',
   'manager', 'gerente', 'gestor', 'gestora', 'responsable', 'responsible', 'leader', 'lead', 'líder', 'ledare', 'director', 'directora', 'directeur', 'directrice', 'jefe', 'jefa', 'chef', 'head', 'cap',
   'operator', 'operador', 'operadora', 'opérateur', 'opératrice', 'operatör', 'operatore', 'operaio', 'operario', 'operaria',
   'inspector', 'inspectora', 'inspecteur', 'inspectrice', 'controller', 'controlador', 'controladora', 'contrôleur', 'officer', 'oficial',
-  'specialist', 'especialista', 'spécialiste', 'consultant', 'consultor', 'consultora', 'analyst', 'analista', 'designer', 'diseñador', 'diseñadora', 'dissenyador', 'dissenyadora', 'planner', 'planificador', 'planificadora', 'assistant', 'asistente', 'auxiliar'];
+  'specialist', 'especialista', 'spécialiste', 'specialista', 'specialistka', 'specialistas', 'specialistė', 'speciālists', 'speciāliste', 'vadovas', 'vadovė', 'vadītājs', 'vadītāja', 'vedoucí', 'mistr', 'meistras', 'meistars', 'consultant', 'consultor', 'consultora', 'analyst', 'analista', 'designer', 'diseñador', 'diseñadora', 'dissenyador', 'dissenyadora', 'planner', 'planificador', 'planificadora', 'assistant', 'asistente', 'auxiliar'];
 const GENERIC_WORDS = new Set([...ENGINEER_WORDS, ...ROLE_WORDS].map(T.clean));
 const usableTitle = label => !GENERIC_WORDS.has(T.clean(label));
 // ➤ Words that put a title outside the vertical whatever else it says: computing (ISCO 25),
 // ➤ sales (24) and teaching (23). Read only when the title, not a code, decides.
-const OUTSIDE_WORDS = /(?:^|[^a-z0-9])(?:informatic[oa]s?|informatica|it|ict|tic|software|programador|programadora|developer|desarrollador|desarrolladora|datos|dades|data|ciberseguridad|cybersecurity|comercial|ventas|sales|profesor|profesora|professor|docente|teacher|lecturer|formador|formadora)(?![a-z0-9])/;
+const OUTSIDE_WORDS = /(?:^|[^a-z0-9])(?:informatic[oa]s?|informatica|it|ict|tic|software|programador|programadora|developer|desarrollador|desarrolladora|datos|dades|data|ciberseguridad|cybersecurity|comercial|ventas|sales|profesor|profesora|professor|docente|teacher|lecturer|formador|formadora|programator|programatorka|programuotojas|programmetajs|pardavimu|pardosanas|tirdzniecibas|prekybos|obchodni|prodej|ucitel|ucitelka|mokytojas|skolotajs|duomenu|datu|programovani|programavimo|programmesanas|skaitlotaju|datoru|kompiuteriu|pocitacovy|pocitacova)(?![a-z0-9])/;
 
 // ➤ The languages a title is read in: the source's, plus English (many adverts everywhere
 // ➤ are in English); a Catalan source is also read in Spanish, which ESCO has and Catalan lacks.
@@ -109,13 +112,13 @@ export function familiesOf(raw, gate) {
   if (OUTSIDE_WORDS.test(title)) return [];
   if (byTitle.families.length) return byTitle.families;
   if (byTitle.blocked || !gate.genericFamily) return [];
-  return T.matches(gate.generic, title).length ? [gate.genericFamily] : [];
+  return T.matches(gate.generic, title).length || COMPOUND_ENGINEER.test(title) ? [gate.genericFamily] : [];
 }
 
 // ➤ Title terms that mean "not the job you think": a sales role that names a product, a
 // ➤ recruiter hiring engineers, an internship, a labourer. In the sources' languages, kept
 // ➤ short; the visitor has vetoes of their own in the profile code.
-const HYGIENE = /(?:^|[^a-z0-9])(?:sales|vendedora?|venedora?|comercial|saljare|forsaljare|verkoper|vendeur|vendeuse|verkaufer|verkauferin|account manager|recruiter|talent acquisition|internship|intern|praktikum|stagiaire|stage\b|becario|becaria|practicas|apprentice|apprenti|azubi|trainee|peon|peones|peona)(?![a-z0-9])/;
+const HYGIENE = /(?:^|[^a-z0-9])(?:sales|vendedora?|venedora?|comercial|saljare|forsaljare|verkoper|vendeur|vendeuse|verkaufer|verkauferin|account manager|recruiter|talent acquisition|internship|intern|praktikum|stagiaire|stage\b|becario|becaria|practicas|apprentice|apprenti|azubi|trainee|peon|peones|peona|prodejce|prodavac|prodavacka|pardavejas|pardaveja|pardevejs|pardeveja|praktikant|praktikantka|praktikantas|praktikante|stazista|stazuotojas|delnik|delnice)(?![a-z0-9])/;
 export function hygieneReason(raw) {
   return HYGIENE.test(fold(raw.title || '')) ? 'title names a sales, recruiting, trainee or labourer role' : null;
 }

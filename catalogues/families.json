@@ -449,6 +449,10 @@
           "cap d'obra",
           "encarregat d'obra",
           "encarregada d'obra"
+        ],
+        "es": [
+          "jefe de obra",
+          "jefa de obra"
         ]
       }
     },

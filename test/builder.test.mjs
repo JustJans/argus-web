@@ -15,6 +15,11 @@ import { parseLanbide, isoDay } from '../builder/adapters/lanbide.mjs';
 import { parseFeinaActiva } from '../builder/adapters/feinaactiva.mjs';
 import { parseJcyl } from '../builder/adapters/jcyl.mjs';
 import { ATS } from '../builder/adapters/boards.mjs';
+import { toRaw as mpsvRaw } from '../builder/adapters/mpsv.mjs';
+import { toRaw as uztRaw, cityOf as ltCity } from '../builder/adapters/uzt.mjs';
+import { parseNva, parseCsv, cityOf as lvCity } from '../builder/adapters/nva.mjs';
+import { parseSef } from '../builder/adapters/sef.mjs';
+import { withoutContacts } from '../builder/normalise.mjs';
 
 const { ok, eq, done } = harness('builder');
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -42,6 +47,8 @@ eq(familiesOf({ title: 'Ingenjör', codes: { ssyk: ssykOf('2143') }, lang: 'sv' 
 eq(familiesOf({ title: 'Mechanical Engineer', codes: { ssyk: ssykOf('3323') }, lang: 'sv' }, gate), [], 'a code outside the vertical is the source\'s word: out, whatever the title');
 eq(familiesOf({ title: 'Anything', codes: { isco: '2142' } }, gate), ['2142'], 'an ISCO code decides too');
 eq(familiesOf({ title: 'Mechanical Engineer', codes: { isco: '2512' } }, gate), [], 'an ISCO code outside the vertical is out');
+eq(familiesOf({ title: 'Konstruktér/ka', codes: { isco: '31152' }, lang: 'cs' }, gate), ['3115'], 'a five-digit CZ-ISCO code decides by its first four digits');
+eq(familiesOf({ title: 'Automatikos inžinierius', codes: { isco: '214911' }, lang: 'lt' }, gate), ['2149'], 'a six-digit Lithuanian LPK code, the same way');
 
 // ── The gate: titles, by ESCO's names ───────────────────────────────────
 eq(familiesOf({ title: 'Mechanical Engineer', codes: {}, lang: 'en' }, gate), ['2144'], 'no code: the title; the group that names it beats the groups that list it as an alternative');
@@ -69,6 +76,15 @@ eq(familiesOf({ title: 'ARQUITECTO/TA TECNICO/CA - JEFE/FA DE OBRA', codes: {}, 
 eq(familiesOf({ title: 'TECNICO/A DE INFRAESTRUCTURAS IT', codes: {}, lang: 'es' }, gate), [], 'IT puts a title outside the vertical whatever else it says');
 ok(familiesOf({ title: "ENGINYER/A DE PONTS I CAMINS O D'OBRA CIVIL", codes: {}, lang: 'ca' }, gate).includes('2142'), 'the Catalan civil engineer');
 eq(matchableTitle("Enginyer/a d'automatització (m/f)"), 'enginyer d automatitzacio', 'gender marks and apostrophes go before the words are read');
+eq(familiesOf({ title: 'BŪVINŽENIERIS', codes: {}, lang: 'lv' }, gate), ['2142'], 'Latvian, by ESCO\'s Latvian titles');
+eq(familiesOf({ title: 'ELEKTROTEHNIĶIS (ELEKTRISKO IEKĀRTU SPECIĀLISTS)', codes: {}, lang: 'lv' }, gate), ['3113'], 'a Latvian electrical technician');
+eq(familiesOf({ title: 'PROGRAMMĒTĀJS', codes: {}, lang: 'lv' }, gate), [], 'a Latvian programmer is out');
+eq(familiesOf({ title: 'PROGRAMMĒŠANAS INŽENIERIS', codes: {}, lang: 'lv' }, gate), [], 'and so is a programming engineer, whatever the compound says');
+eq(familiesOf({ title: 'Stavební inženýr', codes: {}, lang: 'cs' }, gate), ['2142'], 'Czech, by ESCO\'s Czech titles (the feed carries codes; this is the fallback)');
+eq(familiesOf({ title: 'KOMUNĀLINŽENIERIS', codes: {}, lang: 'lv' }, gate), ['2149'], 'a Latvian compound with the engineer word inside falls into 2149');
+eq(familiesOf({ title: 'Bauingenieur (m/w/d)', codes: {}, lang: 'de' }, gate).length > 0, true, 'so does a German one');
+eq(familiesOf({ title: 'JEFE/A DE OBRA', codes: {}, lang: 'es' }, gate), ['3123'], 'a Spanish site manager is a construction supervisor');
+eq(hygieneReason({ title: 'PĀRDEVĒJS' }), 'title names a sales, recruiting, trainee or labourer role', 'a Latvian shop assistant is hygiene');
 eq(hygieneReason({ title: 'Sales Engineer' }), 'title names a sales, recruiting, trainee or labourer role', 'a sales engineer is hygiene');
 eq(hygieneReason({ title: 'VENDEDOR/A, INTERIORISTA, DISEÑADOR/A' }), 'title names a sales, recruiting, trainee or labourer role', 'so is a Spanish shop assistant, whatever else the title says');
 eq(hygieneReason({ title: 'PEONES DE LA INDUSTRIA METALÚRGICA' }), 'title names a sales, recruiting, trainee or labourer role', 'and a labourer');
@@ -87,6 +103,8 @@ eq(placeOf('', cc), { cc: '', city: '' }, 'nothing is nothing');
 eq(normUrl('https://jobs.example.com/view/12?utm_source=x&id=7#top'), 'https://jobs.example.com/view/12?id=7', 'campaign tail and fragment go, a real parameter stays');
 eq(idFor('https://jobs.example.com/view/12?utm_source=x'), idFor('https://jobs.example.com/view/12/'), 'the id survives the tail and the slash');
 eq(idFor('https://a.example/1').length, 8, 'eight characters');
+eq(normUrl('https://cvvp.nva.gov.lv/#/pub/vakances/462167750'), 'https://cvvp.nva.gov.lv/#/pub/vakances/462167750', 'a route in the fragment is the address itself and stays');
+ok(idFor('https://cvvp.nva.gov.lv/#/pub/vakances/1') !== idFor('https://cvvp.nva.gov.lv/#/pub/vakances/2'), 'two routes, two ids');
 
 // ── Excerpts ────────────────────────────────────────────────────────────
 {
@@ -174,8 +192,40 @@ eq(snippet('A'.repeat(300), 50).length, 50, 'a single overlong sentence is cut')
   eq([rc[0].location, rc[0].description.includes('Degree'), rc[0].posted], ['Bilbao, Spain', true, '2026-08-30'], 'Recruitee: city and country, requirements appended');
   const pe = ATS.personio.parse('<workzag-jobs><position><id>77</id><name>Konstrukteur (m/w/d)</name><office>Kiel</office><createdAt>2026-08-29</createdAt><jobDescriptions><jobDescription><name>Aufgaben</name><value><![CDATA[<p>Konstruktion.</p>]]></value></jobDescription></jobDescriptions></position></workzag-jobs>', 'acme');
   eq([pe[0].title, pe[0].location, pe[0].url, pe[0].description], ['Konstrukteur (m/w/d)', 'Kiel', 'https://acme.jobs.personio.de/job/77', 'Konstruktion.'], 'Personio: XML positions with CDATA bodies');
+  eq(withoutContacts('Write to jana.novak@firma.cz or call +420 602 123 456, tel. 482428663; 5 years, 40 hours, 2026-09-04.'), 'Write to   or call  , tel.  ; 5 years, 40 hours, 2026-09-04.', 'e-mails and phone numbers go, short numbers and dates stay');
   const ab = ATS.ashby.parse({ jobs: [{ id: 'z', title: 'Hardware Engineer', location: 'Berlin', jobUrl: 'https://jobs.ashbyhq.com/x/z', publishedAt: '2026-09-02T00:00:00Z', descriptionPlain: 'Plain.', isRemote: false }] }, 'x', 'Acme');
   eq([ab[0].title, ab[0].location, ab[0].posted], ['Hardware Engineer', 'Berlin', '2026-09-02'], 'Ashby: plain fields');
+}
+
+{
+  const obce = { '563960': 'Český Dub' };
+  const units = new Set(['3115', '2144']);
+  const v = { portalId: 67289171, zverejnovat: { id: 'ZverejnovatVpm/ano' }, profeseCzIsco: { id: 'CzIsco/31152' }, pozadovanaProfese: { cs: 'Konstruktér (m/ž)' }, upresnujiciInformace: { cs: 'Konstrukce strojů. Kontakt: 482428663.' }, zamestnavatel: { ico: '1', nazev: 'KOOL Trading, spol. s r.o.' }, datumVlozeni: '2026-09-04T00:00:00.000Z', expirace: null, mistoVykonuPrace: { pracoviste: [{ adresa: { obec: { id: 'Obec/563960' }, psc: '46343' } }] } };
+  const r = mpsvRaw(v, obce, units);
+  eq([r.title, r.company, r.location, r.city, r.url, r.posted, r.expires, r.codes.isco, r.lang], ['Konstruktér (m/ž)', 'KOOL Trading, spol. s r.o.', 'Český Dub, Czechia', 'Český Dub', 'https://up.gov.cz/volna-mista-v-cr/-/vm/67289171', '2026-09-04', '', '31152', 'cs'], 'Czechia: named municipality, portal address, the CZ-ISCO code');
+  eq(mpsvRaw({ ...v, profeseCzIsco: { id: 'CzIsco/52230' } }, obce, units), null, 'a code outside the vertical never leaves the adapter');
+  eq(mpsvRaw({ ...v, zverejnovat: { id: 'ZverejnovatVpm/ne' } }, obce, units), null, 'nor does a vacancy the source does not publish');
+  eq(mpsvRaw({ ...v, mistoVykonuPrace: null }, obce, units).location, 'Czechia', 'no workplace: the country alone');
+}
+{
+  const r = uztRaw({ darbo_vietos_id: 'DV-01-996748329', profesijos_kodas: '214201', profesijos_pareigybes_pav: 'Statybos inžinierius', darbdavys: 'UAB "ENERGUS GROUP"', darbo_vietos_adresas: 'Savanorių pr. 176C, Vilnius, Lietuva', darbo_aprasymas_lt: 'Projektų valdymas.', reik_darbo_patirtis: '2 metai', ikelimo_data: '2026-07-03', galioja_nuo: '2026-07-03', galioja_iki: '2026-10-01' });
+  eq([r.title, r.company, r.city, r.location, r.url, r.posted, r.expires, r.codes.isco, r.lang], ['Statybos inžinierius', 'UAB "ENERGUS GROUP"', 'Vilnius', 'Vilnius, Lithuania', 'https://uzt.lt/laisvos-darbo-vietos/436/p1/skelbimas/DV-01-996748329', '2026-07-03', '2026-10-01', '214201', 'lt'], 'Lithuania: the city before the country, the LPK code');
+  ok(r.description.includes('2 metai'), 'the requirement lines join the description');
+  eq([ltCity('Vilnius, Lietuva'), ltCity('Kaunas'), ltCity('')], ['Vilnius', 'Kaunas', ''], 'the city reader');
+}
+{
+  const csv = '\ufeffVakances_Nr,Aktualizacijas_datums,Iestades_registracijas_numurs,Vakances_nosaukums,Vakances_kategorija,Alga_no,Alga_lidz,Slodzes_tips,Darba_laika_veids,Darba_stundas_nedela,Pieteiksanas_termins,Attels,Vieta,Vakances_paplasinats_apraksts\r\n260828-62,2026-08-28,40003575567,"BŪVINŽENIERIS, PROJEKTU VADĪTĀJS",Būvniecība / Nekustamais īpašums,1650.000,2000.000,Viena vesela slodze,Normālais darba laiks,"",2026-09-17,"","Stadiona iela 10, Ozolnieki, Ozolnieku pag., Jelgavas nov.",https://cvvp.nva.gov.lv/#/pub/vakances/462167750\r\n260828-63,2026-08-28,1,BEZ SAITES,Cita,,,,,,,,,\r\n';
+  eq(parseCsv('a,"b ""c"", d",e\n1,,3')[0], ['a', 'b "c", d', 'e'], 'quoted fields with commas and doubled quotes');
+  const rows = parseNva(csv);
+  eq(rows.length, 1, 'a row without a link is dropped');
+  eq([rows[0].title, rows[0].city, rows[0].location, rows[0].posted, rows[0].expires, rows[0].url, rows[0].description, rows[0].lang], ['BŪVINŽENIERIS, PROJEKTU VADĪTĀJS', 'Ozolnieki', 'Stadiona iela 10, Ozolnieki, Ozolnieku pag., Jelgavas nov., Latvia', '2026-08-28', '2026-09-17', 'https://cvvp.nva.gov.lv/#/pub/vakances/462167750', 'Būvniecība / Nekustamais īpašums', 'lv'], 'Latvia: the town before the parish and the municipality, the sector as the only text');
+  eq(lvCity('Dārzciema iela 86, Rīga'), 'Rīga', 'a street and the city');
+}
+{
+  const rows = parseSef([{ numeroOferta: '142026005104', fechaDeInicio: '04/09/2026', fechaDeFin: '03/10/2026', municipio: { municipio: 'SAN JAVIER', provincia: { provincia: 'MURCIA' } }, descripcion: 'INGENIERO/A DE PROCESOS', adicionales: 'EMPRESA NECESITA <B>INGENIERO/A</B><BR/>-Diseño de procesos.', mesesExperiencia: 12, descNivelProfesional: 'TÉCNICOS', urlDetalles: 'https://sefoficinavirtual.carm.es/sefoficinavirtual/public/oferta/detalle-oferta.xhtml?id=57571' }, { numeroOferta: '2', descripcion: 'SIN ENLACE', urlDetalles: '' }]);
+  eq(rows.length, 1, 'a row without a link is dropped');
+  eq([rows[0].title, rows[0].location, rows[0].city, rows[0].posted, rows[0].expires, rows[0].url], ['INGENIERO/A DE PROCESOS', 'San Javier, Murcia, Spain', 'San Javier', '2026-09-04', '2026-10-03', 'https://sefoficinavirtual.carm.es/sefoficinavirtual/public/oferta/detalle-oferta.xhtml?id=57571'], 'Murcia: places title-cased, Spanish dates read');
+  ok(rows[0].description.includes('Diseño de procesos.') && rows[0].description.includes('Experiencia: 12 meses'), 'the HTML body becomes text, the experience line rides along');
 }
 
 done();
