@@ -9,7 +9,8 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import yaml from 'js-yaml';
 import { get, getText, deadline } from '../http.mjs';
-import { parseRobots, allowed, parseSitemap, looksLikeJob, jobPostings, jobLinks } from '../lib/crawl.mjs';
+import { parseRobots, allowed, parseSitemap, looksLikeJob, jobPostings, jobLinks, nextLink } from '../lib/crawl.mjs';
+import { parseSuccessFactors } from 'argus/server-bot/scan.mjs';
 
 export const id = 'careers';
 export const kind = 'board';
@@ -24,21 +25,26 @@ const NEW_PAGES_A_SITE = 40;     // ➤ per site and build: the fill spreads ove
 const NEW_PAGES_A_BUILD = 4000;  // ➤ in all: with thousands of sites, the least recently visited go first
 const SITEMAP_CAP = 6;           // ➤ child sitemaps read from an index
 const LANES = 12;                // ➤ sites read side by side (the pacing per host is in http.mjs)
+const LISTING_PAGES = 10;        // ➤ pages of a listing followed through its "next" link
 
-// ➤ A site is a sitemap or a listing page to read; the careers scouts may only give a host
-// ➤ and a few vacancy addresses seen, and the adapter then works out where to read from.
+// ➤ A site is a feed, a sitemap or a listing page to read; the careers scouts may only give
+// ➤ a host and a few vacancy addresses seen, and the adapter then works out where to read
+// ➤ from. The hand-made list (careers.yml) comes first, then the hunter's (hunted.yml) and
+// ➤ the scout's (careers-found.yml), marked found; a site named earlier is left to that list.
+const keyOf = s => s.feed || s.sitemap || s.listing || s.host;
 export function loadSites() {
   const read = f => { const p = join(ROOT, 'builder', 'config', f); return existsSync(p) ? (yaml.load(readFileSync(p, 'utf-8')) || {}).sites || [] : []; };
   const hand = read('careers.yml');
-  const key = s => s.sitemap || s.listing || s.host;
-  const named = new Set(hand.map(key));
-  return [...hand, ...read('careers-found.yml').filter(s => !named.has(key(s))).map(s => ({ ...s, found: true }))].filter(s => s.enabled !== false && key(s));
+  const seen = new Set(hand.map(keyOf));
+  const out = [...hand];
+  for (const s of [...read('hunted.yml'), ...read('careers-found.yml')]) { const k = keyOf(s); if (!k || seen.has(k)) continue; seen.add(k); out.push({ ...s, found: true }); }
+  return out.filter(s => s.enabled !== false && keyOf(s));
 }
 
 // ➤ Where a host's vacancies are read from: the sitemaps its robots.txt names, else the
 // ➤ usual sitemap addresses, else the listing the addresses seen hang from. Remembered.
-async function resolve(site, state, opts) {
-  if (site.sitemap || site.listing) return site;
+export async function resolve(site, state, opts) {
+  if (site.feed || site.sitemap || site.listing) return site;
   // ➤ The addresses the scout saw share a path ("/en/careers/jobs/"): only pages under it are
   // ➤ read, the rest of a big site's sitemap is not.
   if (!site.match && site.urls?.length) {
@@ -66,11 +72,19 @@ const loadState = () => { try { return JSON.parse(readFileSync(STATE, 'utf8')); 
 const saveState = s => { mkdirSync(dirname(STATE), { recursive: true }); writeFileSync(STATE, JSON.stringify(s)); };
 
 // ➤ The vacancy addresses a site lists: its sitemap, the children of its sitemap index, or
-// ➤ the links on its listing page.
-async function listed(site, opts) {
+// ➤ the links on its listing page and the pages its "next" link leads to.
+export async function listed(site, opts) {
   if (!site.sitemap) {
-    const html = await getText(site.listing, opts);
-    return jobLinks(html, site.listing).filter(u => !site.match || u.includes(site.match)).map(url => ({ url, lastmod: '' }));
+    const seen = new Set();
+    let url = site.listing;
+    for (let page = 0; url && page < LISTING_PAGES; page++) {
+      const html = await getText(url, opts);
+      const before = seen.size;
+      for (const u of jobLinks(html, url)) seen.add(u);
+      const next = nextLink(html, url);
+      url = next && !seen.has(next) && seen.size > before ? next : '';
+    }
+    return [...seen].filter(u => !site.match || u.includes(site.match)).map(url => ({ url, lastmod: '' }));
   }
   const first = parseSitemap(await getText(site.sitemap, opts));
   let items = first.items;
@@ -94,9 +108,16 @@ export function toRaw(job, site, url) {
 async function readSite(given, state, budget, log) {
   const opts = { tries: 1, timeoutMs: given.found ? 6000 : 12000, gapMs: 400 };
   // ➤ A site the scout found that did not answer is left alone for a day.
-  const failedAt = state.failed?.[given.sitemap || given.listing || given.host];
+  const failedAt = state.failed?.[keyOf(given)];
   if (given.found && failedAt && Date.now() - new Date(failedAt).getTime() < 24 * 3600 * 1000) return [];
   const site = await resolve(given, state, opts);
+  // ➤ A feed (SuccessFactors' jobs.xml) is the whole list with the adverts' text: one read, no budget.
+  if (site.feed) {
+    const jobs = parseSuccessFactors(await getText(site.feed, opts), site.name || '').map(p => toRaw({ title: p.title, company: p.company || site.name, location: p.location, description: p._jd }, site, p.url));
+    (state.visited ||= {})[site.feed] = new Date().toISOString();
+    if (!given.found) log(`careers: ${site.name}: ${jobs.length} adverts in the feed`);
+    return jobs;
+  }
   const from = site.sitemap || site.listing;
   const host = new URL(from).origin;
   let robots = { rules: [], delay: 0 };
@@ -132,7 +153,7 @@ export async function* fetchAll(ctx) {
   const state = loadState();
   // ➤ The least recently visited sites first, so a budget that runs out one build is spent
   // ➤ elsewhere the next; the sites by hand always come first.
-  const sites = loadSites().sort((a, b) => (a.found ? 1 : 0) - (b.found ? 1 : 0) || String(state.visited?.[a.sitemap || a.listing || a.host] || '').localeCompare(String(state.visited?.[b.sitemap || b.listing || b.host] || '')));
+  const sites = loadSites().sort((a, b) => (a.found ? 1 : 0) - (b.found ? 1 : 0) || String(state.visited?.[keyOf(a)] || '').localeCompare(String(state.visited?.[keyOf(b)] || '')));
   if (!sites.length) return;
   const budget = { left: NEW_PAGES_A_BUILD };
   const out = [];
@@ -141,7 +162,7 @@ export async function* fetchAll(ctx) {
   await Promise.all(Array.from({ length: LANES }, async () => {
     while (queue.length) {
       const site = queue.shift();
-      try { out.push(...await deadline(readSite(site, state, budget, ctx.log), site.found ? 400_000 : 900_000)); read++; } catch (e) { failed++; (state.failed ||= {})[site.sitemap || site.listing || site.host] = new Date().toISOString(); if (!site.found) ctx.log(`careers: ${site.name}: ${e.message.slice(0, 80)}`); }
+      try { out.push(...await deadline(readSite(site, state, budget, ctx.log), site.found ? 400_000 : 900_000)); read++; } catch (e) { failed++; (state.failed ||= {})[keyOf(site)] = new Date().toISOString(); if (!site.found) ctx.log(`careers: ${site.name}: ${e.message.slice(0, 80)}`); }
       // ➤ The state is saved as it goes: a build cut short keeps what it read.
       if ((read + failed) % 200 === 0) { saveState(state); ctx.log(`careers: ${read + failed} of ${sites.length} sites, ${NEW_PAGES_A_BUILD - budget.left} pages fetched, ${out.length} adverts so far`); }
     }

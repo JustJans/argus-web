@@ -160,10 +160,41 @@ shards in eleven minutes.
   (see the Sources page).
 - The crawl of a site is bounded: at most 40 new pages a build, sitemaps first.
 
+## What the vendor-hosted careers sites give away without JavaScript (checked 2026-09-06)
+
+The big industrial employers do not run their own careers sites: a vendor hosts them. Fetched
+with plain HTTP, as a search engine's crawler and this project do:
+
+| Vendor | The list of vacancies | One vacancy's page | Read here |
+|---|---|---|---|
+| Workday (`*.myworkdayjobs.com`, 925 employers in the WDC data) | Drawn by JavaScript; no sitemap (`/sitemap.xml` answers the app shell); the page asks `/wday/cxs/{tenant}/{site}/jobs` (POST) | Static HTML with the JobPosting block | The list the way the page asks it, behind `config/vendors.yml` |
+| Oracle Cloud Recruiting (`*.oraclecloud.com/hcmUI/CandidateExperience`) | Drawn by JavaScript; the page asks `/hcmRestApi/resources/latest/recruitingCEJobRequisitions` | Drawn by JavaScript (no block) | The list the way the page asks it, behind `config/vendors.yml` |
+| SuccessFactors career sites (SAP, Vestas) | `/jobs.xml`: an RSS feed of every vacancy with its text | Static HTML with the block | The feed (`feed:` in careers.yml or hunted.yml) |
+| iCIMS (`careers-*.icims.com`, 747 employers) | "Human Verification" interstitial | Static HTML with the block | Not without a browser |
+| Eightfold, softgarden, Taleo | Drawn by JavaScript | Static HTML with the block (Eightfold) | Not without a browser |
+
+Common Crawl's index has the vacancy pages of all of them (their addresses circulate on job
+boards and LinkedIn), so the vendors' tenants can be collected the way the ATS slugs are
+(`scout.mjs --collect` knows Workday and Oracle); reading them is the owner's decision.
+
+## Reading one company: the hunter
+
+`node builder/tools/hunt.mjs vestas.com boskalis.com [--write]` (or `--file domains.txt`) does
+what a person would: reads the home page, follows the links that say careers, jobs, empleo,
+karriere, vacatures (and the usual paths), recognises the platform behind the page (the ATS
+and its slug, embedded or linked; a Workday or Oracle site; a `jobs.xml` feed; else a site with
+a sitemap or a listing), reads a sample and says how many adverts the gate keeps in Europe.
+`--write` puts the readable ones in `builder/config/hunted.yml`, which the builder reads like
+`companies.yml` and `careers.yml`. Seen on the first run: Vestas by its feed (761 adverts),
+Van Oord by its sitemap (134 pages), DEME and Damen on Workday (named, switched off),
+Boskalis and Aviva with careers pages whose vacancies are drawn by JavaScript.
+
 ## Where it can still grow
 
 - The .com hosts of Web Data Commons (26,207), told apart by the countries their postings name.
 - Common Crawl's own pages (WARC records) for hosts without a sitemap: read the archived copy
   first, ask the live site only for what changed.
 - A monthly cron for the scouts on the server; the lists are committed for now.
-- Workday, Oracle and SuccessFactors sites, if the owner decides they are in.
+- Workday and Oracle sites: the readers exist, `config/vendors.yml` switches them on; the
+  scout collects their tenants from Common Crawl. iCIMS, Eightfold, Taleo and softgarden would
+  need a browser (Playwright on the server) for their lists.
