@@ -1,9 +1,10 @@
 // ➤ Which parts of the pile a profile needs, and fetching them: one file per family and
-// ➤ country the visitor named (plus the remote and the country-unknown parts), merged by
-// ➤ advert id because an advert with two families appears in two files.
+// ➤ country the visitor named (plus the remote part when remote is fine; the adverts whose
+// ➤ country is not stated come only when no country was chosen), merged by advert id because
+// ➤ an advert with two families appears in two files.
 export function shardFiles(index, profile) {
   const families = profile.families.length ? profile.families : Object.keys(index.families || {});
-  const wanted = new Set([...profile.countries, 'zz', ...(profile.remote ? ['xx'] : [])]);
+  const wanted = new Set([...profile.countries, ...(profile.remote ? ['xx'] : [])]);
   const files = [];
   for (const fam of families) {
     const countries = index.families?.[fam]?.countries || {};

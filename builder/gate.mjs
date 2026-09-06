@@ -128,7 +128,7 @@ export function familiesOf(raw, gate) {
 // ➤ Title terms that mean "not the job you think": a sales role that names a product, a
 // ➤ recruiter hiring engineers, an internship, a labourer. In the sources' languages, kept
 // ➤ short; the visitor has vetoes of their own in the profile code.
-const HYGIENE = /(?:^|[^a-z0-9])(?:sales|vendedora?|venedora?|comercial|saljare|forsaljare|verkoper|vendeur|vendeuse|verkaufer|verkauferin|account manager|recruiter|talent acquisition|internship|intern|praktikum|stagiaire|stage\b|becario|becaria|practicas|apprentice|apprenti|azubi|trainee|peon|peones|peona|prodejce|prodavac|prodavacka|pardavejas|pardaveja|pardevejs|pardeveja|praktikant|praktikantka|praktikantas|praktikante|stazista|stazuotojas|delnik|delnice)(?![a-z0-9])/;
+const HYGIENE = /(?:^|[^a-z0-9])(?:sales|vendedora?|venedora?|comercial|saljare|forsaljare|verkoper|vendeur|vendeuse|verkaufer|verkauferin|account manager|recruiter|talent acquisition|internship|intern|praktikum|stagiaire|stage\b|becario|becaria|practicas|apprentice|apprenti|azubi|trainee|peon|peones|peona|prodejce|prodavac|prodavacka|pardavejas|pardaveja|pardevejs|pardeveja|praktikant|praktikantka|praktikantas|praktikante|stazista|stazuotojas|delnik|delnice|ai trainer|ai training|ai tutor|data collector|data labeling|data labelling|annotator|survey|study participant|task based|freelance rater)(?![a-z0-9])/;
 export function hygieneReason(raw) {
-  return HYGIENE.test(fold(raw.title || '')) ? 'title names a sales, recruiting, trainee or labourer role' : null;
+  return HYGIENE.test(fold(raw.title || '')) ? 'title names a sales, recruiting, trainee, labourer or gig role' : null;
 }
