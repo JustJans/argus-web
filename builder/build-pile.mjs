@@ -23,6 +23,8 @@ import * as mpsv from './adapters/mpsv.mjs';
 import * as uzt from './adapters/uzt.mjs';
 import * as nva from './adapters/nva.mjs';
 import * as adzuna from './adapters/adzuna.mjs';
+import * as jooble from './adapters/jooble.mjs';
+import * as jobfeed from './adapters/jobfeed.mjs';
 import { jobicy, remotive, arbeitnow } from './adapters/remote.mjs';
 import * as careers from './adapters/careers.mjs';
 import * as boards from './adapters/boards.mjs';
@@ -95,7 +97,9 @@ function isolated(adapter) {
   }
   return { ...adapter, fetchAll };
 }
-const adapters = [lanbide, feinaactiva, jcyl, sef, jobtech, mpsv, uzt, nva, adzuna, jobicy, remotive, arbeitnow, isolated(careers), isolated(boards)];
+// ➤ The intermediaries (adzuna, jooble, jobfeed) come last and rank lowest in the dedupe: an
+// ➤ employer's own advert always beats an aggregator's copy of it.
+const adapters = [lanbide, feinaactiva, jcyl, sef, jobtech, mpsv, uzt, nva, jobicy, remotive, arbeitnow, isolated(careers), isolated(boards), adzuna, jooble, jobfeed];
 const items = [];
 const dropped = [];
 const counts = { found: 0, outsideVertical: 0, outsideEurope: 0, hygiene: 0, noLink: 0 };
@@ -120,7 +124,7 @@ for (const adapter of adapters) {
       // ➤ Company boards are read the world over: an advert of theirs whose place names nothing
       // ➤ known is more often outside Europe than in it, and is left out.
       if (!rec.cc && adapter.kind === 'board') { counts.outsideEurope++; drop('PLACE UNKNOWN', raw); continue; }
-      items.push({ rec, kind: adapter.kind === 'board' ? 'board' : 'feed' });
+      items.push({ rec, kind: adapter.kind === 'board' || adapter.kind === 'via' ? adapter.kind : 'feed' });
     }
   } catch (e) {
     ctx.fail(adapter.id, e.message);
@@ -141,15 +145,21 @@ const generatedAt = new Date().toISOString();
 const { files, families: familiesIndex } = buildShards(kept, families, generatedAt);
 
 const sources = {};
-for (const a of adapters) if (a.licence && sourcesSeen.has(a.id)) sources[a.id] = { ...a.licence, kind: a.kind, enabled: true, extracted_at: generatedAt };
+for (const a of adapters) {
+  if (a.licence && sourcesSeen.has(a.id)) sources[a.id] = { ...a.licence, kind: a.kind, ...(a.via ? { via: true } : {}), enabled: true, extracted_at: generatedAt };
+  // ➤ An adapter that yields several sources (the intermediaries' feeds) names each with its licence.
+  for (const [sid, lic] of Object.entries(a.sourcesOf?.() || {})) if (sourcesSeen.has(sid)) sources[sid] = { ...lic, kind: a.kind, ...(a.via ? { via: true } : {}), enabled: true, extracted_at: generatedAt };
+}
 for (const [key, ats] of Object.entries(ATS)) if (sourcesSeen.has(key)) sources[key] = { ...ats.licence, kind: 'board', enabled: true, extracted_at: generatedAt };
 const perCountry = {};
 for (const rec of kept) perCountry[rec.cc || 'zz'] = (perCountry[rec.cc || 'zz'] || 0) + 1;
+const viaSources = new Set(Object.entries(sources).filter(([, v]) => v.via).map(([k]) => k));
+const viaCount = kept.filter(rec => viaSources.has(rec.s)).length;
 
 const index = {
   v: 1, generated_at: generatedAt, expires_at: new Date(Date.now() + 48 * 3600 * 1000).toISOString(), catalogue_v: 2,
   families: familiesIndex, sources,
-  counts: { offers: kept.length, found: counts.found, by_country: perCountry, companies: companies.filter(c => c.enabled !== false).length },
+  counts: { offers: kept.length, found: counts.found, by_country: perCountry, via: viaCount, companies: companies.filter(c => c.enabled !== false).length },
   status: { ok: kept.length > 0 && failed.length < adapters.length, sources_failed: failed, seconds: Math.round((Date.now() - startedAt) / 1000) },
 };
 mkdirSync(OUT, { recursive: true });

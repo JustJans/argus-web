@@ -41,7 +41,9 @@ how aggregators gather their adverts; here it stays with employers' own pages an
 (`docs/CRAWLING.md` has the research, with sources). One company at a time, `node
 builder/tools/hunt.mjs acme.com` finds its careers pages from its home page, names the platform
 behind them and reads the adverts with no API key; `--write` keeps what it found in
-`builder/config/hunted.yml`. Spanish supply is thin
+`builder/config/hunted.yml`. The intermediaries' partner programmes (Adzuna, Jooble, Talent.com,
+WhatJobs) are read once their keys are in `builder/.env` on the server (`builder/.env.example`
+lists them); their adverts show after the employers' own, in a section of their own. Spanish supply is thin
 on purpose until a licensed feed covers the private market; every source's licence is shown
 on the page. Feeds that need an account or a signed request (France Travail, Norway's NAV,
 Poland's CBOP) wait for the owner.

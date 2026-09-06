@@ -1,6 +1,8 @@
 // ➤ Everything that draws: cards, the empty state, the debug panel. Text goes in through
 // ➤ textContent only, links are set only when they parse as http(s), and every outbound
 // ➤ link opens in a new tab without a referrer.
+import { splitVia } from './search.js';
+
 const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined) e.textContent = txt; return e; };
 
 const safeUrl = u => { try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : null; } catch { return null; } };
@@ -48,18 +50,21 @@ export function card(o, ctx) {
   return li;
 }
 
+// ➤ The intermediaries' adverts come after the employers' own, under one line that says so.
 export function renderList(container, offers, ctx, pageSize = 40) {
   container.replaceChildren();
   const ul = el('ul', 'offers');
   container.append(ul);
+  const { origin, via } = ctx.isVia ? splitVia(offers, ctx.isVia) : { origin: offers, via: [] };
+  const rows = via.length ? [...origin, { divider: via.length }, ...via] : origin;
   let shown = 0;
   const more = el('button', 'btn btn-secondary more', 'Show more');
   more.type = 'button';
   const show = () => {
-    for (const o of offers.slice(shown, shown + pageSize)) ul.append(card(o, ctx));
-    shown = Math.min(offers.length, shown + pageSize);
-    more.hidden = shown >= offers.length;
-    more.textContent = `Show more (${(offers.length - shown).toLocaleString('en')} left)`;
+    for (const o of rows.slice(shown, shown + pageSize)) ul.append(o.divider ? el('li', 'offers__divider', `Via intermediaries (${o.divider.toLocaleString('en')})`) : card(o, ctx));
+    shown = Math.min(rows.length, shown + pageSize);
+    more.hidden = shown >= rows.length;
+    more.textContent = `Show more (${(rows.length - shown).toLocaleString('en')} left)`;
   };
   more.addEventListener('click', show);
   container.append(more);

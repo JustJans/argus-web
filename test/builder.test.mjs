@@ -21,6 +21,8 @@ import { parseNva, parseCsv, cityOf as lvCity } from '../builder/adapters/nva.mj
 import { parseSef } from '../builder/adapters/sef.mjs';
 import { withoutContacts } from '../builder/normalise.mjs';
 import { toRaw as adzunaRaw, detailsUrl } from '../builder/adapters/adzuna.mjs';
+import { toRaw as joobleRaw } from '../builder/adapters/jooble.mjs';
+import { parseJobFeed } from '../builder/adapters/jobfeed.mjs';
 import { jobicy, remotive, arbeitnow } from '../builder/adapters/remote.mjs';
 import { parseRobots, allowed, parseSitemap, looksLikeJob, jobPostings, careerLinks, nextLink, detectPlatform, feedName } from '../builder/lib/crawl.mjs';
 import { toRaw as careersRaw } from '../builder/adapters/careers.mjs';
@@ -319,5 +321,15 @@ const ora = ATS.oracle.parse({ items: [{ TotalJobsCount: 1, requisitionList: [{ 
 eq([ora[0].url, ora[0].location, ora[0].posted, ora[0].description], ['https://eeho.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/requisitions/preview/344589', 'Madrid, Spain', '2026-09-01', 'Ops'], 'Oracle: the preview address, the place, the day, the short text');
 eq([ATS.workday.more({ total: 148 }, 20), ATS.workday.more({ total: 148 }, 160), ATS.oracle.more({ items: [{ TotalJobsCount: 2261 }] }, 1000)], [true, false, false], 'paging stops at the total, or at a thousand');
 eq(ATS.workday.request('aviva.wd1/External', 40).method, 'POST', 'the Workday list is asked the way its page asks it');
+
+// The intermediaries: Jooble's records and the partner feeds' <job> schema.
+{
+  const j = joobleRaw({ id: '-123', title: 'Ingeniero de procesos', location: 'Getafe, Madrid', snippet: 'Planta de <b>procesos</b>&nbsp;químicos', salary: '', source: 'infojobs.net', type: 'Full-time', link: 'https://es.jooble.org/desc/-123', company: 'Acme SL', updated: '2026-09-05T10:00:00.0000000' }, 'es');
+  eq([j.source, j.sourceId, j.title, j.company, j.location, j.country, j.url, j.description, j.posted, j.lang], ['jooble', '-123', 'Ingeniero de procesos', 'Acme SL', 'Getafe, Madrid', 'es', 'https://es.jooble.org/desc/-123', 'Planta de procesos químicos', '2026-09-05', 'es'], 'a Jooble advert: the fields, the snippet as text, the day, the link to Jooble as its programme asks');
+  const xml = '<?xml version="1.0"?><source><publisher>Talent.com</publisher><job><title><![CDATA[Site Engineer]]></title><date><![CDATA[Fri, 05 Sep 2026 08:00:00 GMT]]></date><referencenumber>ab12</referencenumber><url><![CDATA[https://www.talent.com/view?id=ab12]]></url><company><![CDATA[Van Oord]]></company><city>Rotterdam</city><state>Zuid-Holland</state><country>NL</country><description><![CDATA[<p>Dredging &amp; reclamation works.</p>]]></description><jobtype>fulltime</jobtype></job><job><title>No link</title><url>x</url></job></source>';
+  const jobs = parseJobFeed(xml, 'talentcom');
+  eq(jobs.length, 1, 'a <job> without a web address is left out');
+  eq([jobs[0].source, jobs[0].sourceId, jobs[0].title, jobs[0].company, jobs[0].location, jobs[0].country, jobs[0].city, jobs[0].url, jobs[0].description, jobs[0].posted], ['talentcom', 'ab12', 'Site Engineer', 'Van Oord', 'Rotterdam, Zuid-Holland, NL', 'nl', 'Rotterdam', 'https://www.talent.com/view?id=ab12', 'Dredging & reclamation works.', '2026-09-05'], 'a partner feed advert: the usual <job> fields, CDATA and entities undone');
+}
 
 done();

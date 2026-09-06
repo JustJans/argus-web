@@ -1,6 +1,6 @@
 // ➤ The plain search and the deadline rule the list page applies to every advert.
 import { harness } from 'argus/server-bot/test-harness.mjs';
-import { wordsOf, matchesWords, isExpired, newestFirst } from '../app/lib/search.js';
+import { wordsOf, matchesWords, isExpired, newestFirst, splitVia } from '../app/lib/search.js';
 
 const { ok, eq, done } = harness('search');
 const name = cc => ({ es: 'Spain', se: 'Sweden' })[cc] || '';
@@ -19,5 +19,8 @@ ok(!isExpired({}, '2026-09-04'), 'no deadline: never expired');
 ok(!isExpired({ x: '2026-09-04' }, '2026-09-04'), 'the deadline day itself is still open');
 
 eq(newestFirst([{ d: '2026-08-01' }, { d: '2026-09-03' }, { d: '' }]).map(x => x.d), ['2026-09-03', '2026-08-01', ''], 'newest first, undated last');
+
+const split = splitVia([{ s: 'jobtech', t: 'a' }, { s: 'jooble', t: 'b' }, { s: 'lever', t: 'c' }], s => s === 'jooble');
+eq([split.origin.map(o => o.t), split.via.map(o => o.t)], [['a', 'c'], ['b']], "the intermediaries' adverts are split from the employers' own, order kept");
 
 done();

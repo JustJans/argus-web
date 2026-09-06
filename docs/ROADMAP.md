@@ -17,6 +17,12 @@ The structure is built for the changes already known. Each item names the seam.
   extraction (`builder/state/wdc/`, 5 GB, downloaded once) and writes `builder/config/careers-found.yml`;
   `scout-careers.mjs [--tlds es,de] [--limit N]` walks a domain list the slow way (resumable, hours
   long); a site by hand goes into `careers.yml` with its sitemap.
+- **Intermediaries (partner programmes, they pay per click)**: sign up at developer.adzuna.com
+  (app id and key), jooble.org/api/about (API key), employers.talent.com/publishers (XML feed
+  address) and whatjobs.com/affiliates (XML feed address); put them in `builder/.env` on the
+  server as `builder/.env.example` shows; the next build reads them and shows their adverts in
+  the intermediaries' section. Careerjet stays out: its API wants the visitor's IP with every
+  search.
 - **One company by domain**: `node builder/tools/hunt.mjs acme.com [--write]` finds the careers
   pages, the platform and the adverts; Workday and Oracle sites read once `builder/config/vendors.yml`
   says so.

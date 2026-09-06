@@ -190,6 +190,27 @@ never follows a link to a job board, an agency or a social network.
 Van Oord by its sitemap (134 pages), DEME and Damen on Workday (named, switched off),
 Boskalis and Aviva with careers pages whose vacancies are drawn by JavaScript.
 
+## Intermediaries, on their own terms
+
+The aggregators run partner programmes for sites like this one: free, and they pay the site for
+every click sent to their pages. Jooble hands an API key (jooble.org/api/about, a form),
+Talent.com and WhatJobs an XML feed of their adverts (employers.talent.com/publishers,
+whatjobs.com/affiliates), Adzuna an app key for its API (developer.adzuna.com: 250 calls a day,
+2,500 a month; a licence agreement "may be required" for commercial use after 14 days, and every
+advert labelled "Jobs by Adzuna"). None of the figures per click are published; they come with
+the sign-up.
+
+What this site does with them (`builder/adapters/adzuna.mjs`, `jooble.mjs`, `jobfeed.mjs`, keys
+in `builder/.env`, see `builder/.env.example`): their adverts are read by the server like any
+other source, pass the same gate, and are shown **after the employers' own adverts, in a section
+of their own, labelled**, each linking to the intermediary's page as the programmes ask. An
+employer's own advert always beats an aggregator's copy of it in the dedupe. Nothing about the
+visitor is sent to them: the server reads feeds, the visitor only follows a link.
+
+Left out: Careerjet, whose API wants each search made live with the visitor's IP address and
+browser (`user_ip`, `user_agent` are required parameters), which the static site cannot and
+will not do; and Indeed and LinkedIn, which sell nothing of the kind.
+
 ## Where it can still grow
 
 - The .com hosts of Web Data Commons (26,207), told apart by the countries their postings name.

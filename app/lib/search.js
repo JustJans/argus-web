@@ -23,3 +23,11 @@ export function isExpired(o, today = new Date().toISOString().slice(0, 10)) {
 export function newestFirst(offers) {
   return [...offers].sort((a, b) => String(b.d || '').localeCompare(String(a.d || '')));
 }
+
+// ➤ The employers' own adverts first, then the intermediaries' (Jooble, Talent.com, Adzuna)
+// ➤ in a section of their own: an aggregator's copy never mixes with the source.
+export function splitVia(offers, isVia) {
+  const origin = [], via = [];
+  for (const o of offers) (isVia(o.s) ? via : origin).push(o);
+  return { origin, via };
+}

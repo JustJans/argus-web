@@ -164,6 +164,7 @@ details[open] > summary > .chev { transform: rotate(90deg); }
 .skeleton i { display: block; height: 10px; background: var(--n200); }
 .skeleton i:first-child { height: 14px; }
 .offers { list-style: none; padding: 0; margin: 0; }
+.offers__divider { padding: 28px 0 6px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--n800); border-bottom: 1px solid var(--hairline); }
 .offer { padding: 20px 0; border-bottom: 1px solid var(--hairline); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 32px; }
 .offer__title { grid-column: 1; font-size: 20px; line-height: 24px; letter-spacing: 0; }
 .offer__title a { color: var(--text); text-decoration: none; }
