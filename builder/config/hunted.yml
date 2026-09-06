@@ -1,0 +1,113 @@
+# ➤ Sources the hunter found (builder/tools/hunt.mjs --write): companies read through their
+# ➤ ATS's public listing, and sites read through their feed, sitemap or listing page. Read by the
+# ➤ builder like companies.yml and careers.yml; a source those name is left to them. adverts and
+# ➤ kept are what the hunter saw that day, for the record.
+companies:
+  - name: Sener
+    teamtailor: https://www.engineering-jobs.sener
+    hunted: '2026-09-06'
+    adverts: 100
+    kept: 18
+  - name: Equinor
+    workday: equinor.wd3/EQNR
+    hunted: '2026-09-06'
+    adverts: 0
+    kept: 0
+  - name: Airbus
+    workday: ag.wd3/Airbus
+    hunted: '2026-09-06'
+    adverts: 0
+    kept: 0
+  - name: Acciona
+    workday: acciona.wd3/ACCIONA_Employment_Channel
+    hunted: '2026-09-06'
+    adverts: 0
+    kept: 0
+  - name: Repsol
+    workday: repsol.wd3/es
+    hunted: '2026-09-06'
+    adverts: 0
+    kept: 0
+  - name: DEME
+    workday: demegroup.wd3/careers_external
+    hunted: '2026-09-06'
+    adverts: 0
+    kept: 0
+  - name: Damen
+    workday: damen.wd3/Damen_Careers
+    hunted: '2026-09-06'
+    adverts: 0
+    kept: 0
+sites:
+  - name: Vestas
+    feed: https://careers.vestas.com/jobs.xml
+    hunted: '2026-09-06'
+    adverts: 761
+    kept: 41
+  - name: Tietoevry
+    sitemap: https://careers.tieto.com/sitemap.xml
+    hunted: '2026-09-06'
+    adverts: 11
+    kept: 9
+  - name: SAP
+    feed: https://jobs.sap.com/jobs.xml
+    hunted: '2026-09-06'
+    adverts: 1034
+    kept: 318
+  - name: Nordex
+    feed: https://jobs.nordex-online.com/jobs.xml
+    hunted: '2026-09-06'
+    adverts: 535
+    kept: 88
+  - name: Subsea7
+    feed: https://careers.subsea7.com/jobs.xml
+    hunted: '2026-09-06'
+    adverts: 67
+    kept: 6
+  - name: Alstom
+    feed: https://jobsearch.alstom.com/jobs.xml
+    hunted: '2026-09-06'
+    adverts: 2292
+    kept: 413
+  - name: Indra
+    feed: https://careers.indragroup.com/jobs.xml
+    hunted: '2026-09-06'
+    adverts: 728
+    kept: 405
+  - name: Heerema
+    feed: https://careers.heerema.com/jobs.xml
+    hunted: '2026-09-06'
+    adverts: 21
+    kept: 11
+  - name: Navantia
+    feed: https://empleo.navantia.es/jobs.xml
+    hunted: '2026-09-06'
+    adverts: 95
+    kept: 71
+  - name: Talgo
+    feed: https://jobs.talgo.com/jobs.xml
+    hunted: '2026-09-06'
+    adverts: 81
+    kept: 36
+  - name: CAF
+    feed: https://jobs.caf.net/jobs.xml
+    hunted: '2026-09-06'
+    adverts: 123
+    kept: 20
+  - name: Vattenfall
+    sitemap: https://careers.vattenfall.com/sitemap.xml
+    match: /global/
+    hunted: '2026-09-06'
+    adverts: 11
+    kept: 6
+  - name: Sweco
+    sitemap: https://www.sweco.se/sitemaps.xml
+    match: /karriar/lediga-tjanster/
+    hunted: '2026-09-06'
+    adverts: 12
+    kept: 2
+  - name: TechnipFMC
+    feed: https://careers.technipfmc.com/jobs.xml
+    hunted: '2026-09-06'
+    adverts: 151
+    kept: 27
