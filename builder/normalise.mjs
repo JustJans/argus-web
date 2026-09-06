@@ -12,13 +12,14 @@ import { requiredDegrees, requiredLanguages } from './screens.mjs';
 // ➤ The address without its campaign tail, trailing slash or fragment: what makes two
 // ➤ sightings of the same advert compare equal. Not Argus's normUrl, on purpose: that one
 // ➤ drops the whole query, and Lanbide's adverts are told apart ONLY by a query parameter
-// ➤ (IDRG=…), so here only the known tracking parameters go.
+// ➤ (IDRG=…), so here only the known tracking parameters go. A fragment that is a route
+// ➤ ("#/pub/vakances/4621", the whole address of a single-page portal) stays; any other goes.
 const TRACKING = /^(utm_.*|gclid|fbclid|msclkid|clickid|click_id|campaign_id|source|ref)$/i;
 export function normUrl(u) {
   let url;
   try { url = new URL(String(u || '').trim()); } catch { return String(u || '').trim(); }
   for (const k of [...url.searchParams.keys()]) if (TRACKING.test(k)) url.searchParams.delete(k);
-  url.hash = '';
+  if (!url.hash.startsWith('#/')) url.hash = '';
   return url.toString().replace(/\?$/, '').replace(/\/$/, '');
 }
 
@@ -59,12 +60,16 @@ function cityIn(raw, c) {
   return /^[A-Z]{2}$/.test(first) || fold(first) === fold(c.name) ? '' : first.slice(0, 40);
 }
 
+// ➤ E-mail addresses and phone numbers go before anything is excerpted: some feeds carry the
+// ➤ contact person in the advert text, and the site keeps nothing personal.
+export const withoutContacts = s => String(s || '').replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, ' ').replace(/(?:\+\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?){2,4}\d{2,4}(?!\d)/g, m => (m.replace(/\D/g, '').length >= 9 ? ' ' : m));
+
 // ➤ The record itself. `families` come from the gate; `source` is the adapter's id;
 // ➤ `screens`, when given, adds the degree families and languages the text demands.
 export function toRecord(raw, families, compiledCountries, screens = null) {
   const place = raw.country ? { cc: raw.country, city: raw.city || cityIn(raw.location || '', compiledCountries.find(c => c.iso === raw.country) || { cities: [], name: '' }) } : placeOf(raw.location, compiledCountries);
   if (raw.remote && !place.cc) place.cc = 'xx';
-  const text = String(raw.description || '');
+  const text = withoutContacts(raw.description);
   const years = extractRequiredYears(`${raw.title || ''}. ${text}`);
   // ➤ The title and the location cleaned the way the bot cleans them before showing them.
   const rec = {

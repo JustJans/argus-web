@@ -12,7 +12,7 @@ and language rules, run client-side.
 
 ## Status
 
-**Working, Spain and Sweden.** Live at <https://justjans.github.io/argus-web/>: search the
+**Working: Spain, Sweden, Czechia, Lithuania and Latvia.** Live at <https://justjans.github.io/argus-web/>: search the
 pile by words and filters — country, occupations by ISCO group, date, level, languages,
 degrees, title words, deal-breakers — let your CV tick them, and carry them as a short code. Every advert past
 its deadline is hidden; the page says when the pile was last rebuilt. A home server rebuilds
@@ -20,9 +20,12 @@ and publishes the pile every six hours with `ops/server-refresh.sh` (the GitHub 
 workflows wait in `ops/workflows/` until the repository's token can create them).
 
 Sources read today: Lanbide (Basque Country), Feina Activa (Catalonia), the Junta de
-Castilla y León, Arbetsförmedlingen (Sweden, by occupation code) and the company boards
-listed in `builder/config/companies.yml`. Spanish supply is thin on purpose until a licensed
-feed covers the private market; every source's licence is shown on the page.
+Castilla y León, the SEF of Murcia, Arbetsförmedlingen (Sweden, by occupation code), the
+Czech Labour Office (by CZ-ISCO code), Lithuania's Employment Service (by LPK code), Latvia's
+NVA, and the company boards listed in `builder/config/companies.yml`. Spanish supply is thin
+on purpose until a licensed feed covers the private market; every source's licence is shown
+on the page. Feeds that need an account or a signed request (France Travail, Norway's NAV,
+Poland's CBOP) wait for the owner.
 
 ## Running it yourself
 

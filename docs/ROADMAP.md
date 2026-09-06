@@ -3,7 +3,7 @@
 The structure is built for the changes already known. Each item names the seam.
 
 ## Sources
-- **More feeds** (France Travail, Norway's NAV, Czechia, Lithuania, Latvia): one file each in
+- **More feeds** (France Travail, Norway's NAV, Poland's CBOP: each needs an account or a signed request from the owner): one file each in
   `builder/adapters/`, registered in the `adapters` list of `builder/build-pile.mjs`. A feed
   that carries occupation codes puts them in `codes` (`isco` or `ssyk`) and the gate uses
   them; one that does not is classified by title. Keys go in GitHub Actions secrets and are

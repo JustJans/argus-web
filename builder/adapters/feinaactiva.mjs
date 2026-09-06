@@ -16,7 +16,7 @@ const URL_XML = 'https://feinaactiva.gencat.cat/api/offers/offers-xml';
 const unescape = s => String(s || '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
   .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&amp;/g, '&').trim();
 const tag = (block, name) => unescape((block.match(new RegExp(`<${name}>([\\s\\S]*?)</${name}>`)) || [])[1]);
-const titleCase = s => String(s || '').toLowerCase().replace(/(^|[\s-])(\p{L})/gu, (m, p, ch) => p + ch.toUpperCase());
+export const titleCase = s => String(s || '').toLowerCase().replace(/(^|[\s-])(\p{L})/gu, (m, p, ch) => p + ch.toUpperCase());
 
 export function parseFeinaActiva(xml) {
   const ads = String(xml || '').match(/<ad>[\s\S]*?<\/ad>/g) || [];
