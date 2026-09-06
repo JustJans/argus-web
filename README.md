@@ -24,8 +24,21 @@ Castilla y León, the SEF of Murcia, Arbetsförmedlingen (Sweden, by occupation 
 Czech Labour Office (by CZ-ISCO code), Lithuania's Employment Service (by LPK code), Latvia's
 NVA, Jobicy, Remotive and Arbeitnow (boards whose API terms allow sharing with a link back), Adzuna
 once its keys are in `builder/.env` (ADZUNA_APP_ID and ADZUNA_APP_KEY, from developer.adzuna.com;
-its terms allow publishing its listings labelled "Jobs by Adzuna"), and the company boards listed in
-`builder/config/companies.yml`. Spanish supply is thin
+its terms allow publishing its listings labelled "Jobs by Adzuna"), the company boards listed in
+`builder/config/companies.yml` and the thousands the scout found (`companies-found.yml`), and employers'
+own careers sites read without an API (`careers.yml`, `careers-found.yml`): their sitemap names the
+vacancy pages, each page carries the schema.org JobPosting block it publishes for search engines, and
+robots.txt is obeyed.
+
+Scouts find sources by the thousand instead of by name. `builder/tools/scout.mjs` reads Common
+Crawl's index of the web for every address on the eight ATS hosts, unions three open-source tenant
+lists, takes the board slug off each and keeps the boards whose public API answers with adverts the
+gate keeps in Europe. `builder/tools/scout-wdc.mjs` reads Web Data Commons' extraction of the
+JobPosting markup Common Crawl saw (3.6 million vacancy pages) and keeps the employers (one hiring
+organisation across their pages, unlike a job board) with adverts of ours in Europe;
+`scout-careers.mjs` walks a domain list the slow way (robots.txt, sitemaps, a few pages). This is
+how aggregators gather their adverts; here it stays with employers' own pages and documented APIs
+(`docs/CRAWLING.md` has the research, with sources). Spanish supply is thin
 on purpose until a licensed feed covers the private market; every source's licence is shown
 on the page. Feeds that need an account or a signed request (France Travail, Norway's NAV,
 Poland's CBOP) wait for the owner.

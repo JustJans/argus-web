@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { harness } from 'argus/server-bot/test-harness.mjs';
 import { compileFamilies, familiesOf, hygieneReason, matchableTitle } from '../builder/gate.mjs';
-import { compileCountries, placeOf, normUrl, idFor, toRecord } from '../builder/normalise.mjs';
+import { compileCountries, placeOf, placeOfAdvert, normUrl, idFor, toRecord } from '../builder/normalise.mjs';
 import { snippet, requirements } from '../builder/excerpt.mjs';
 import { dedupe, roleKey } from '../builder/dedupe.mjs';
 import { buildShards } from '../builder/shard.mjs';
@@ -22,6 +22,9 @@ import { parseSef } from '../builder/adapters/sef.mjs';
 import { withoutContacts } from '../builder/normalise.mjs';
 import { toRaw as adzunaRaw, detailsUrl } from '../builder/adapters/adzuna.mjs';
 import { jobicy, remotive, arbeitnow } from '../builder/adapters/remote.mjs';
+import { parseRobots, allowed, parseSitemap, looksLikeJob, jobPostings } from '../builder/lib/crawl.mjs';
+import { toRaw as careersRaw } from '../builder/adapters/careers.mjs';
+import { deadline } from '../builder/http.mjs';
 
 const { ok, eq, done } = harness('builder');
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -94,20 +97,37 @@ eq(familiesOf({ title: 'Stavební inženýr', codes: {}, lang: 'cs' }, gate), ['
 eq(familiesOf({ title: 'KOMUNĀLINŽENIERIS', codes: {}, lang: 'lv' }, gate), ['2149'], 'a Latvian compound with the engineer word inside falls into 2149');
 eq(familiesOf({ title: 'Bauingenieur (m/w/d)', codes: {}, lang: 'de' }, gate).length > 0, true, 'so does a German one');
 eq(familiesOf({ title: 'JEFE/A DE OBRA', codes: {}, lang: 'es' }, gate), ['3123'], 'a Spanish site manager is a construction supervisor');
-eq(hygieneReason({ title: 'PĀRDEVĒJS' }), 'title names a sales, recruiting, trainee or labourer role', 'a Latvian shop assistant is hygiene');
-eq(hygieneReason({ title: 'Sales Engineer' }), 'title names a sales, recruiting, trainee or labourer role', 'a sales engineer is hygiene');
-eq(hygieneReason({ title: 'VENDEDOR/A, INTERIORISTA, DISEÑADOR/A' }), 'title names a sales, recruiting, trainee or labourer role', 'so is a Spanish shop assistant, whatever else the title says');
-eq(hygieneReason({ title: 'PEONES DE LA INDUSTRIA METALÚRGICA' }), 'title names a sales, recruiting, trainee or labourer role', 'and a labourer');
+eq(hygieneReason({ title: 'PĀRDEVĒJS' }), 'title names a sales, recruiting, trainee, labourer or gig role', 'a Latvian shop assistant is hygiene');
+eq(hygieneReason({ title: 'Sales Engineer' }), 'title names a sales, recruiting, trainee, labourer or gig role', 'a sales engineer is hygiene');
+eq(hygieneReason({ title: 'VENDEDOR/A, INTERIORISTA, DISEÑADOR/A' }), 'title names a sales, recruiting, trainee, labourer or gig role', 'so is a Spanish shop assistant, whatever else the title says');
+eq(hygieneReason({ title: 'PEONES DE LA INDUSTRIA METALÚRGICA' }), 'title names a sales, recruiting, trainee, labourer or gig role', 'and a labourer');
 eq(hygieneReason({ title: 'Ingeniero/a de procesos' }), null, 'an engineer is not');
+ok(hygieneReason({ title: 'AI Trainer – Aerospace Engineers - CAD Expertise (Remote Advisory - US)' }), 'a gig-platform task is hygiene, whatever engineer it asks for');
 
 // ── Places ──────────────────────────────────────────────────────────────
 eq(placeOf('Gorinchem, Netherlands', cc), { cc: 'nl', city: 'Gorinchem' }, 'country name and a known city');
 eq(placeOf('Madrid, ES', cc), { cc: 'es', city: 'Madrid' }, 'an ISO code as its own word');
 eq(placeOf('Stavanger', cc), { cc: 'no', city: 'Stavanger' }, 'a city alone names its country');
 eq(placeOf('Remote - Europe', cc), { cc: 'xx', city: '' }, 'remote is its own place');
+eq(placeOf('Remote - USA', cc).cc, 'us', 'a remote job in a named country outside Europe is outside Europe');
+eq(placeOf('Remote, Germany', cc).cc, 'de', 'and one in a named European country is in it');
+eq(placeOf('Baltimore, MD', cc).cc, 'us', 'MD after a town is Maryland, not Moldova');
+eq(placeOf('Rockville, MD, US', cc).cc, 'us', 'a country outside Europe coded at the end wins over a European code');
+eq([placeOf('Chisinau, MD', cc).cc, placeOf('Chișinău, Moldova', cc).cc], ['md', 'md'], 'MD with a Moldovan city, or Moldova named, is Moldova');
+eq([placeOf('Huntsville, AL', cc).cc, placeOf('Tirana, AL', cc).cc], ['us', 'al'], 'AL is Alabama unless an Albanian city is named');
+eq([placeOf("St. Julian's, MT", cc).cc, placeOf('Billings, MT', cc).cc, placeOf('Portland, ME', cc).cc], ['mt', 'us', 'us'], 'MT and ME the same way');
+eq([placeOf('Wilmington, DE', cc).cc, placeOf('Rottach-Egern, DE', cc).cc], ['us', 'de'], 'DE is Germany except for the towns of Delaware');
+eq([placeOf('Saskatoon, SK', cc).cc, placeOf('Trnava, SK', cc).cc, placeOf("St. John's, NL, CA", cc).cc, placeOf('Zwolle, NL', cc).cc], ['ca', 'sk', 'ca', 'nl'], 'SK and NL the same way');
+eq([placeOf('Erfurt, TH, DE', cc).cc, placeOf('Rockville, MD or Hawthorne, CA', cc).cc], ['de', 'ca'], 'the last code is the country: a code before it is a region');
+eq(placeOf('KR - Seoul', cc).cc, 'kr', 'a code outside Europe anywhere in the text');
+eq(placeOf('New York', cc).cc, 'us', 'a big city outside Europe, unnamed country');
+eq(placeOf('São Paulo', cc).cc, 'br', 'accents and all');
 eq(placeOf('Houston, TX, United States', cc), { cc: 'us', city: 'Houston' }, 'outside Europe by name: the country is named, so the builder can drop it');
 eq(placeOf('Sherbrooke, QC, CA', cc), { cc: 'ca', city: 'Sherbrooke' }, 'outside Europe by a code at the end');
 eq(placeOf('Head Office', cc), { cc: '', city: 'Head Office' }, 'nothing known: no country, the text kept as the city');
+eq(placeOfAdvert({ title: 'Site Engineer - Lyon, France', location: 'Statistician Network' }, cc).cc, 'fr', 'a board that puts the place in the title: the title is read when the location names no country');
+eq(placeOfAdvert({ title: 'Sports Data Collector (American Football) - Albuquerque, New Mexico, USA', location: 'Network' }, cc).cc, 'us', 'and a place outside Europe in the title is read too');
+eq(placeOfAdvert({ title: 'Mechanical Engineer', location: 'Gorinchem, Netherlands' }, cc).cc, 'nl', 'the location first, when it has a country');
 eq(placeOf('München', cc), { cc: 'de', city: 'München' }, 'a native spelling');
 eq(placeOf('', cc), { cc: '', city: '' }, 'nothing is nothing');
 
@@ -205,6 +225,10 @@ eq(snippet('A'.repeat(300), 50).length, 50, 'a single overlong sentence is cut')
   const pe = ATS.personio.parse('<workzag-jobs><position><id>77</id><name>Konstrukteur (m/w/d)</name><office>Kiel</office><createdAt>2026-08-29</createdAt><jobDescriptions><jobDescription><name>Aufgaben</name><value><![CDATA[<p>Konstruktion.</p>]]></value></jobDescription></jobDescriptions></position></workzag-jobs>', 'acme');
   eq([pe[0].title, pe[0].location, pe[0].url, pe[0].description], ['Konstrukteur (m/w/d)', 'Kiel', 'https://acme.jobs.personio.de/job/77', 'Konstruktion.'], 'Personio: XML positions with CDATA bodies');
   eq(withoutContacts('Write to jana.novak@firma.cz or call +420 602 123 456, tel. 482428663; 5 years, 40 hours, 2026-09-04.'), 'Write to   or call  , tel.  ; 5 years, 40 hours, 2026-09-04.', 'e-mails and phone numbers go, short numbers and dates stay');
+  const wk = ATS.workable.parse({ name: 'Acme Robotics', jobs: [{ shortcode: 'AB12', title: 'Mechanical Engineer', locations: [{ city: 'Athens', region: 'Attica', country: 'Greece', countryCode: 'GR' }], url: 'https://apply.workable.com/acme/j/AB12/', published_on: '2026-09-01', description: '<p>Build robots.</p>' }] }, 'acme');
+  eq([wk[0].title, wk[0].company, wk[0].location, wk[0].url, wk[0].posted, wk[0].description], ['Mechanical Engineer', 'Acme Robotics', 'Athens, Attica, Greece', 'https://apply.workable.com/acme/j/AB12/', '2026-09-01', 'Build robots.'], 'Workable: the widget names the company, the first location is the place');
+  const tt = ATS.teamtailor.parse('<?xml version="1.0"?><rss xmlns:tt="https://teamtailor.com/rss"><channel><title>Northvolt</title><item><title>Battery Cell Engineer</title><link>https://northvolt.teamtailor.com/jobs/1-battery-cell-engineer</link><guid>1</guid><pubDate>Mon, 01 Sep 2026 10:00:00 +0000</pubDate><description><![CDATA[<p>Cells &amp; modules.</p>]]></description><tt:locations><tt:location><tt:name>Skellefteå</tt:name><tt:city>Skellefteå</tt:city><tt:country>Sweden</tt:country></tt:location></tt:locations><tt:remoteStatus>hybrid</tt:remoteStatus></item></channel></rss>', 'northvolt');
+  eq([tt[0].title, tt[0].company, tt[0].location, tt[0].url, tt[0].posted, tt[0].description, tt[0].remote], ['Battery Cell Engineer', 'Northvolt', 'Skellefteå', 'https://northvolt.teamtailor.com/jobs/1-battery-cell-engineer', '2026-09-01', 'Cells & modules.', true], 'Teamtailor: RSS items with the location in its own tags');
   const ab = ATS.ashby.parse({ jobs: [{ id: 'z', title: 'Hardware Engineer', location: 'Berlin', jobUrl: 'https://jobs.ashbyhq.com/x/z', publishedAt: '2026-09-02T00:00:00Z', descriptionPlain: 'Plain.', isRemote: false }] }, 'x', 'Acme');
   eq([ab[0].title, ab[0].location, ab[0].posted], ['Hardware Engineer', 'Berlin', '2026-09-02'], 'Ashby: plain fields');
 }
@@ -250,6 +274,26 @@ eq(snippet('A'.repeat(300), 50).length, 50, 'a single overlong sentence is cut')
   eq([rm[0].title, rm[0].location, rm[0].remote, rm[0].posted, rm[0].description], ['Backend Engineer', 'Europe', true, '2026-09-04', 'Body'], 'Remotive: the required location kept as the place');
   const ab = arbeitnow.parse({ data: [{ slug: 'x-1', company_name: 'Superchat', title: 'Tech Lead (m/f/d)', description: '&lt;p&gt;We&#39;re &lt;strong&gt;hiring&lt;/strong&gt;.&lt;/p&gt;', remote: false, url: 'https://www.arbeitnow.com/jobs/companies/superchat/x-1', location: 'Berlin', created_at: Date.UTC(2026, 8, 5, 12) / 1000 }] });
   eq([ab[0].title, ab[0].company, ab[0].location, ab[0].description, ab[0].posted, ab[0].lang], ['Tech Lead (m/f/d)', 'Superchat', 'Berlin', "We're hiring.", '2026-09-05', 'de'], 'Arbeitnow: escaped HTML read as text, the epoch as a day');
+}
+
+{
+  const robots = parseRobots('User-agent: *\nDisallow: /admin/\nDisallow: /jobs/apply\nAllow: /jobs/apply/faq\nCrawl-delay: 2\nSitemap: https://x.example/sitemap.xml\n\nUser-agent: GPTBot\nDisallow: /\n');
+  eq([robots.delay, robots.sitemaps, robots.rules.length], [2, ['https://x.example/sitemap.xml'], 3], 'robots.txt: the group that binds everyone, its delay, the sitemaps');
+  eq([allowed(robots, '/jobs/123'), allowed(robots, '/admin/x'), allowed(robots, '/jobs/apply/now'), allowed(robots, '/jobs/apply/faq')], [true, false, false, true], 'the most specific rule wins');
+  eq(allowed({ rules: [] }, '/anything'), true, 'no rules: everything may be read');
+  const sm = parseSitemap('<?xml version="1.0"?><urlset><url><loc>https://x.example/vacancies/engineer-12</loc><lastmod>2026-09-01T10:00:00+00:00</lastmod></url><url><loc> https://x.example/about </loc></url></urlset>');
+  eq([sm.index, sm.items.length, sm.items[0].url, sm.items[0].lastmod, sm.items[1].lastmod], [false, 2, 'https://x.example/vacancies/engineer-12', '2026-09-01', ''], 'a sitemap: addresses and lastmod, trimmed');
+  eq(parseSitemap('<sitemapindex><sitemap><loc>https://x.example/sitemap-jobs.xml</loc></sitemap></sitemapindex>').index, true, 'a sitemap index is told apart');
+  eq(await deadline(Promise.resolve('fast'), 1000), 'fast', 'a read that answers in time is handed over');
+  eq(await deadline(new Promise(r => setTimeout(() => r('slow'), 300)), 30).catch(e => e.message), 'took too long', 'a read that neither answers nor fails is given up at its deadline');
+  eq([looksLikeJob('https://x.example/vacancies/engineer-12'), looksLikeJob('https://x.example/de/karriere/stellenangebote/abc'), looksLikeJob('https://x.example/ofertas-de-empleo/123'), looksLikeJob('https://x.example/about-us'), looksLikeJob('https://x.example/blog/jobs-of-the-future')], [true, true, true, false, true], 'addresses that look like vacancy pages');
+  const html = '<html><head><script type="application/ld+json">{"@context":"https://schema.org","@type":"JobPosting","title":"Mechanical Engineer","datePosted":"2026-09-02","validThrough":"2026-10-02T00:00","hiringOrganization":{"@type":"Organization","name":"Damen"},"jobLocation":{"@type":"Place","address":{"@type":"PostalAddress","addressLocality":"Gorinchem","addressCountry":"NL"}},"description":"<p>Design &amp; build.</p>","url":"https://x.example/vacancies/12"}</script></head></html>';
+  const jobs = jobPostings(html, 'https://x.example/page');
+  eq([jobs.length, jobs[0].title, jobs[0].company, jobs[0].location, jobs[0].country, jobs[0].posted, jobs[0].expires, jobs[0].description, jobs[0].url], [1, 'Mechanical Engineer', 'Damen', 'Gorinchem, NL', 'nl', '2026-09-02', '2026-10-02', 'Design & build.', 'https://x.example/vacancies/12'], 'a JobPosting block: the fields the pile keeps');
+  eq(jobPostings('<script type="application/ld+json">{"@graph":[{"@type":"Organization","name":"X"},{"@type":["JobPosting"],"name":"Welder","jobLocationType":"TELECOMMUTE"}]}</script>', 'https://x.example/p').map(j => [j.title, j.location, j.remote])[0], ['Welder', 'Remote', true], 'a graph, a type in a list, a remote job');
+  eq(jobPostings('<script type="application/ld+json">not json</script><p>no block</p>', 'u'), [], 'no block, nothing');
+  const raw = careersRaw(jobs[0], { name: 'Damen Shipyards', sitemap: 'https://x.example/sitemap.xml', lang: 'nl' }, 'https://x.example/vacancies/12');
+  eq([raw.source, raw.company, raw.country, raw.lang, raw.url, raw.sourceId], ['careers', 'Damen', 'nl', 'nl', 'https://x.example/vacancies/12', 'https://x.example/vacancies/12'], 'a careers advert: the organisation on the page, the site\'s language');
 }
 
 done();

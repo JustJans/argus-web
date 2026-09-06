@@ -47,7 +47,8 @@ eq(judge({ ...base, lg: ['en'] }).ok, true, 'a language spoken is fine');
 }
 {
   const index = { families: { 2144: { countries: { es: { files: ['offers/2144-es.json'] }, se: { files: ['offers/2144-se-1.json', 'offers/2144-se-2.json'] }, xx: { files: ['offers/2144-xx.json'] }, zz: { files: ['offers/2144-zz.json'] } } }, 2142: { countries: { es: { files: ['offers/2142-es.json'] } } } } };
-  eq(shardFiles(index, normaliseProfile({ families: ['2144'], countries: ['es'] })), ['offers/2144-es.json', 'offers/2144-zz.json'], 'only the parts the profile names, plus the country-unknown part');
+  eq(shardFiles(index, normaliseProfile({ families: ['2144'], countries: ['es'] })), ['offers/2144-es.json'], 'only the parts the profile names; the country-unknown part is left out once a country is chosen');
+  ok(shardFiles(index, normaliseProfile({ families: ['2144'] })).includes('offers/2144-zz.json'), 'with no country chosen, the country-unknown part comes too');
   eq(shardFiles(index, normaliseProfile({ families: ['2144'], countries: ['es'], remote: true })).includes('offers/2144-xx.json'), true, 'remote adds its part');
   eq(shardFiles(index, normaliseProfile({})).length, 6, 'no choices: everything');
   const pages = { 'data/offers/a.json': { offers: [{ id: '1', f: ['2144'] }, { id: '2', f: ['2144'] }] }, 'data/offers/b.json': { offers: [{ id: '2', f: ['3151'] }] } };

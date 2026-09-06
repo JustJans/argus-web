@@ -4,6 +4,7 @@
 // ➤ hour at one API never publishes an empty site. --explain writes one line per dropped
 // ➤ advert with the reason, --limit N stops each source after N adverts (for a quick look).
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import yaml from 'js-yaml';
@@ -23,8 +24,9 @@ import * as uzt from './adapters/uzt.mjs';
 import * as nva from './adapters/nva.mjs';
 import * as adzuna from './adapters/adzuna.mjs';
 import { jobicy, remotive, arbeitnow } from './adapters/remote.mjs';
+import * as careers from './adapters/careers.mjs';
 import * as boards from './adapters/boards.mjs';
-import { ATS } from './adapters/boards.mjs';
+import { ATS, loadCompanies } from './adapters/boards.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 // ➤ Keys for the sources that need one (Adzuna): builder/.env, one KEY=VALUE per line, never
@@ -46,7 +48,7 @@ const codes = {
   ssyk: JSON.parse(readFileSync(join(ROOT, 'catalogues', 'codes', 'ssyk-isco.json'), 'utf-8')),
 };
 const countries = JSON.parse(readFileSync(join(ROOT, 'catalogues', 'countries.json'), 'utf-8')).countries;
-const companies = (yaml.load(readFileSync(join(ROOT, 'builder', 'config', 'companies.yml'), 'utf-8')) || {}).companies || [];
+const companies = loadCompanies();
 const gate = compileFamilies(catalogue, codes);
 const cc = compileCountries(countries);
 const screens = compileScreens({
@@ -63,7 +65,37 @@ const failed = [];
 // ➤ is asked for.
 const ctx = { families, iscoUnits: [...gate.byIsco.keys()], ssykGroups: [...gate.bySsyk.keys()], companies, log, fail: (who, why) => { failed.push(`${who}: ${why}`); log(`FAILED ${who}: ${why}`); } };
 
-const adapters = [lanbide, feinaactiva, jcyl, sef, jobtech, mpsv, uzt, nva, adzuna, jobicy, remotive, arbeitnow, boards];
+// ➤ The two heavy readers run in processes of their own (adapters/run.mjs): a crash of the
+// ➤ runtime under thousands of sites ends the reader, not the build, and the reader is
+// ➤ started once more; what arrived before stays.
+async function* linesOf(stream) {
+  let rest = '';
+  stream.setEncoding('utf8');
+  for await (const chunk of stream) { const parts = (rest + chunk).split('\n'); rest = parts.pop(); for (const p of parts) if (p) yield p; }
+  if (rest) yield rest;
+}
+function isolated(adapter) {
+  async function* fetchAll(ctx) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const child = spawn(process.execPath, [join(ROOT, 'builder', 'adapters', 'run.mjs'), adapter.id], { stdio: ['ignore', 'pipe', 'pipe'] });
+      child.stderr.on('data', d => { for (const line of String(d).split(/\r?\n/)) if (line.trim()) ctx.log(line.trim()); });
+      let n = 0, unread = 0;
+      for await (const line of linesOf(child.stdout)) {
+        let raw;
+        // ➤ A line that cannot be read costs one advert, not the source; it is logged to be understood.
+        try { raw = JSON.parse(line); } catch (e) { if (++unread <= 5) ctx.log(`${adapter.id}: an unreadable line of ${line.length} chars (${e.message.slice(0, 50)}) starting ${line.slice(0, 60)} and ending ${line.slice(-60)}`); continue; }
+        n++;
+        yield raw;
+      }
+      const code = await new Promise(r => child.on('close', r));
+      if (unread) ctx.log(`${adapter.id}: ${unread} lines could not be read`);
+      if (code === 0) return;
+      ctx.log(`${adapter.id}: the reader ended with code ${code} after ${n} adverts${attempt === 1 ? '; started once more' : ''}`);
+    }
+  }
+  return { ...adapter, fetchAll };
+}
+const adapters = [lanbide, feinaactiva, jcyl, sef, jobtech, mpsv, uzt, nva, adzuna, jobicy, remotive, arbeitnow, isolated(careers), isolated(boards)];
 const items = [];
 const dropped = [];
 const counts = { found: 0, outsideVertical: 0, outsideEurope: 0, hygiene: 0, noLink: 0 };
@@ -76,13 +108,18 @@ for (const adapter of adapters) {
       counts.found++;
       sourcesSeen.add(raw.source);
       if (LIMIT && ++n > LIMIT) break;
-      if (!/^https?:\/\//.test(String(raw.url || ''))) { counts.noLink++; dropped.push(['NO LINK', raw]); continue; }
+      // ➤ The explain report keeps only what it prints: the adverts themselves are many.
+      const drop = (why, r) => { if (EXPLAIN) dropped.push([why, { title: r.title, company: r.company, location: r.location, source: r.source }]); };
+      if (!/^https?:\/\//.test(String(raw.url || ''))) { counts.noLink++; drop('NO LINK', raw); continue; }
       const fam = familiesOf(raw, gate);
-      if (!fam.length) { counts.outsideVertical++; dropped.push(['OUTSIDE VERTICAL', raw]); continue; }
+      if (!fam.length) { counts.outsideVertical++; drop('OUTSIDE VERTICAL', raw); continue; }
       const why = hygieneReason(raw);
-      if (why) { counts.hygiene++; dropped.push([`HYGIENE ${why}`, raw]); continue; }
+      if (why) { counts.hygiene++; drop(`HYGIENE ${why}`, raw); continue; }
       const rec = toRecord(raw, fam, cc, screens);
-      if (rec.cc && rec.cc !== 'xx' && !europe.has(rec.cc)) { counts.outsideEurope++; dropped.push(['OUTSIDE EUROPE', raw]); continue; }
+      if (rec.cc && rec.cc !== 'xx' && !europe.has(rec.cc)) { counts.outsideEurope++; drop('OUTSIDE EUROPE', raw); continue; }
+      // ➤ Company boards are read the world over: an advert of theirs whose place names nothing
+      // ➤ known is more often outside Europe than in it, and is left out.
+      if (!rec.cc && adapter.kind === 'board') { counts.outsideEurope++; drop('PLACE UNKNOWN', raw); continue; }
       items.push({ rec, kind: adapter.kind === 'board' ? 'board' : 'feed' });
     }
   } catch (e) {

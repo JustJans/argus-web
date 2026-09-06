@@ -30,6 +30,8 @@ export function idFor(url) {
 // ➤ Countries outside Europe that company boards name most, so their adverts are told apart
 // ➤ from adverts whose country is merely unstated. A two-letter code ending the location
 // ➤ that is not a European country counts too ("Sherbrooke, QC, CA").
+// ➤ The biggest cities outside Europe that boards name without their country.
+const FAR_CITIES = { us: ['new york', 'nyc', 'san francisco', 'los angeles', 'seattle', 'austin', 'boston', 'chicago', 'denver', 'atlanta', 'dallas', 'houston', 'miami', 'washington dc', 'washington, dc', 'san diego', 'san jose', 'palo alto', 'mountain view', 'sunnyvale', 'menlo park', 'redwood city', 'santa clara', 'santa barbara', 'portland', 'phoenix', 'philadelphia', 'pittsburgh', 'minneapolis', 'detroit', 'raleigh', 'salt lake city', 'las vegas', 'silicon valley', 'bay area'], ca: ['toronto', 'vancouver', 'montreal', 'montréal', 'ottawa', 'calgary', 'waterloo'], au: ['sydney', 'melbourne', 'brisbane', 'perth'], in: ['bangalore', 'bengaluru', 'mumbai', 'hyderabad', 'pune', 'chennai', 'delhi', 'new delhi', 'gurgaon', 'gurugram', 'noida'], sg: ['singapore'], jp: ['tokyo', 'osaka'], kr: ['seoul'], cn: ['shanghai', 'beijing', 'shenzhen', 'hangzhou'], hk: ['hong kong'], tw: ['taipei'], br: ['sao paulo', 'são paulo', 'rio de janeiro'], mx: ['mexico city', 'guadalajara', 'monterrey'], ar: ['buenos aires'], co: ['bogota', 'bogotá'], cl: ['santiago'], ae: ['dubai', 'abu dhabi'], il: ['tel aviv'], za: ['cape town', 'johannesburg'], ke: ['nairobi'], ng: ['lagos'], eg: ['cairo'], nz: ['auckland'], ph: ['manila'], id: ['jakarta'], my: ['kuala lumpur'], th: ['bangkok'], vn: ['ho chi minh', 'hanoi'] };
 const FAR = { us: ['united states', 'usa', 'u s a'], ca: ['canada'], au: ['australia'], nz: ['new zealand'], cn: ['china'], in: ['india'], jp: ['japan'], kr: ['korea', 'south korea'], sg: ['singapore'], tw: ['taiwan'], th: ['thailand'], my: ['malaysia'], id: ['indonesia'], vn: ['vietnam'], ph: ['philippines'], br: ['brazil', 'brasil'], mx: ['mexico'], ar: ['argentina'], cl: ['chile'], co: ['colombia'], pe: ['peru'], za: ['south africa'], eg: ['egypt'], ma: ['morocco'], ng: ['nigeria'], ke: ['kenya'], ae: ['united arab emirates', 'uae', 'dubai'], sa: ['saudi arabia'], qa: ['qatar'], il: ['israel'], kz: ['kazakhstan'], pk: ['pakistan'] };
 
 // ➤ Country and city from a free-text location, against the countries catalogue: an ISO
@@ -44,21 +46,39 @@ export function compileCountries(countries) {
   }));
 }
 
+// ➤ Codes that are also a US state or a Canadian province, read the way boards use them:
+// ➤ "Baltimore, MD" is Maryland and "Huntsville, AL" Alabama unless a city of Moldova or
+// ➤ Albania is named; "Wilmington, DE" is Delaware and "Saskatoon, SK" Saskatchewan, but any
+// ➤ other town with DE or SK is in Germany or Slovakia, as their boards write it.
+const STATE_CODES = { md: 'us', al: 'us', me: 'us', mt: 'us' };
+const STATE_TOWNS = { de: ['wilmington', 'newark', 'dover'], nl: ["st. john's", "st john's", 'st. johns', 'newfoundland'], sk: ['saskatoon', 'regina', 'saskatchewan'] };
+
+// ➤ In this order: a European country named, a country outside Europe named or coded
+// ➤ ("Rockville, MD, US"), a European country coded (unless the code reads as a US state or
+// ➤ a Canadian province), then the word "remote" (a remote job in a named country stays in
+// ➤ that country), then a known city in Europe, then a big city outside it. What names
+// ➤ nothing known keeps its text as the city and no country.
 export function placeOf(location, compiled) {
   const raw = String(location || '').trim();
   const f = fold(raw);
   if (!raw) return { cc: '', city: '' };
-  if (/(?:^|[^a-z])remote(?![a-z])|home ?office|teletrabajo|télétravail|homeoffice|thuiswerk|distans/.test(f)) return { cc: 'xx', city: '' };
-  const isoHit = raw.match(/(?:^|[\s,(])([A-Z]{2})(?=$|[\s,)])/g);
+  const isoHit = raw.match(/(?:^|[\s,(-])([A-Z]{2})(?=$|[\s,)-])/g);
   const codes = new Set((isoHit || []).map(s => s.replace(/[^A-Z]/g, '').toLowerCase()));
-  for (const c of compiled) {
-    if (c.nameRe.test(f) || codes.has(c.iso)) return { cc: c.iso, city: cityIn(raw, c) };
-  }
-  for (const c of compiled) if (c.cityRe && c.cityRe.test(f)) return { cc: c.iso, city: cityIn(raw, c) };
+  // ➤ The country's code comes last ("Erfurt, TH, DE"): a code before it is a region's.
+  const lastCode = isoHit ? isoHit.at(-1).replace(/[^A-Z]/g, '').toLowerCase() : '';
   const city = raw.split(',')[0].trim().slice(0, 40);
-  for (const [iso, names] of Object.entries(FAR)) if (names.some(n => new RegExp(`(?:^|[^a-z0-9])${n}(?![a-z0-9])`).test(f))) return { cc: iso, city };
-  const last = raw.split(',').pop().trim();
-  if (/^[A-Z]{2}$/.test(last) && !compiled.some(c => c.iso === last.toLowerCase())) return { cc: last.toLowerCase(), city };
+  const word = n => new RegExp(`(?:^|[^a-z0-9])${n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![a-z0-9])`);
+  for (const c of compiled) if (c.nameRe.test(f)) return { cc: c.iso, city: cityIn(raw, c) };
+  for (const [iso, names] of Object.entries(FAR)) if (names.some(n => word(n).test(f)) || lastCode === iso) return { cc: iso, city };
+  for (const c of compiled) {
+    if (!codes.has(c.iso)) continue;
+    const state = STATE_CODES[c.iso] && !(c.cityRe && c.cityRe.test(f)) ? STATE_CODES[c.iso]
+      : (STATE_TOWNS[c.iso] || []).some(t => word(fold(t)).test(f)) ? (c.iso === 'de' ? 'us' : 'ca') : '';
+    return state ? { cc: state, city } : { cc: c.iso, city: cityIn(raw, c) };
+  }
+  if (/(?:^|[^a-z])remote(?![a-z])|home ?office|teletrabajo|télétravail|homeoffice|thuiswerk|distans/.test(f)) return { cc: 'xx', city: '' };
+  for (const c of compiled) if (c.cityRe && c.cityRe.test(f)) return { cc: c.iso, city: cityIn(raw, c) };
+  for (const [iso, names] of Object.entries(FAR_CITIES)) if (names.some(n => word(fold(n)).test(f))) return { cc: iso, city };
   return { cc: '', city };
 }
 
@@ -75,8 +95,18 @@ export const withoutContacts = s => String(s || '').replace(/[\w.+-]+@[\w-]+(?:\
 
 // ➤ The record itself. `families` come from the gate; `source` is the adapter's id;
 // ➤ `screens`, when given, adds the degree families and languages the text demands.
+// ➤ Company boards often put the place in the title ("Site Engineer - Lyon, France"): when
+// ➤ the location names no country, the title's tail is read the same way.
+export function placeOfAdvert(raw, compiledCountries) {
+  const place = placeOf(raw.location, compiledCountries);
+  if (place.cc) return place;
+  const tail = String(raw.title || '').split(/\s[-–|(]\s?|\(/).slice(1).join(', ').replace(/\)/g, '');
+  const fromTitle = tail ? placeOf(tail, compiledCountries) : { cc: '' };
+  return fromTitle.cc ? fromTitle : place;
+}
+
 export function toRecord(raw, families, compiledCountries, screens = null) {
-  const place = raw.country ? { cc: raw.country, city: raw.city || cityIn(raw.location || '', compiledCountries.find(c => c.iso === raw.country) || { cities: [], name: '' }) } : placeOf(raw.location, compiledCountries);
+  const place = raw.country ? { cc: raw.country, city: raw.city || cityIn(raw.location || '', compiledCountries.find(c => c.iso === raw.country) || { cities: [], name: '' }) } : placeOfAdvert(raw, compiledCountries);
   if (raw.remote && !place.cc) place.cc = 'xx';
   const text = withoutContacts(raw.description);
   const years = extractRequiredYears(`${raw.title || ''}. ${text}`);

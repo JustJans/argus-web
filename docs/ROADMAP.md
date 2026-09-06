@@ -8,9 +8,15 @@ The structure is built for the changes already known. Each item names the seam.
   that carries occupation codes puts them in `codes` (`isco` or `ssyk`) and the gate uses
   them; one that does not is classified by title. Keys go in GitHub Actions secrets and are
   read from `process.env` inside the adapter.
-- **More company boards**: `node builder/tools/discover.mjs "Company name" …` (or `--file` with one
-  name per line) probes the six ATS patterns and prints what answers, with how many adverts the
-  gate would keep and where. The good ones go into `builder/config/companies.yml` by hand.
+- **More company boards**: `node builder/tools/scout.mjs --collect` then `--probe` reads Common Crawl's
+  index for every board on the eight ATS hosts and writes `builder/config/companies-found.yml`
+  (thousands); `--write` writes it from what the probes answered so far; `builder/tools/discover.mjs
+  "Company name"` probes one name. Re-run the scout monthly (Common Crawl publishes a new index every
+  month); Workable allows about a thousand calls a day, so its slugs take several daily runs.
+- **More careers sites**: `node builder/tools/scout-wdc.mjs` reads Web Data Commons' JobPosting
+  extraction (`builder/state/wdc/`, 5 GB, downloaded once) and writes `builder/config/careers-found.yml`;
+  `scout-careers.mjs [--tlds es,de] [--limit N]` walks a domain list the slow way (resumable, hours
+  long); a site by hand goes into `careers.yml` with its sitemap.
 - **Licensed backfill that pays per click** (Jooble, Careerjet): a `live` adapter kind is
   reserved; it would answer from a small serverless function, not from the builder, and
   feed the same `judge()` on the client. Needs a signed agreement first.

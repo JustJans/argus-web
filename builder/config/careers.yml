@@ -1,0 +1,15 @@
+# Employers' careers sites read without an API: the sitemap lists the vacancy pages and each
+# page carries a schema.org JobPosting block (what search engines read). One entry per site:
+# its name as shown to visitors, the sitemap address, `match` (a piece of the address every
+# vacancy page shares; without it, addresses that look like vacancies are taken), and
+# optionally the country (iso) and the language of the adverts, and enabled: false to pause.
+# The careers scout (builder/tools/scout-careers.mjs) writes careers-found.yml the same way.
+sites:
+  - name: Van Oord
+    sitemap: https://careers.vanoord.com/sitemap.xml
+    match: /vacancies/
+    country: nl
+  - name: Boskalis
+    sitemap: https://careers.boskalis.com/sitemap.vacancy.xml
+    match: /vacancy/
+    country: nl
