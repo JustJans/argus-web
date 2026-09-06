@@ -13,14 +13,15 @@ async function pace(host, gapMs) {
 }
 
 // ➤ GET a URL; answers the Response, or throws after the last failed try. `gapMs` is the
-// ➤ minimum distance between two calls to the same host (default 250 ms).
-export async function get(url, { headers = {}, gapMs = 250, tries = 3 } = {}) {
+// ➤ minimum distance between two calls to the same host (default 250 ms); `timeoutMs` the
+// ➤ wait for one answer (default 20 s).
+export async function get(url, { headers = {}, gapMs = 250, tries = 3, timeoutMs = TIMEOUT_MS } = {}) {
   const host = new URL(url).hostname;
   let lastError;
   for (let attempt = 0; attempt < tries; attempt++) {
     await pace(host, gapMs);
     try {
-      const res = await fetch(url, { headers: { 'User-Agent': UA, ...headers }, redirect: 'follow', signal: AbortSignal.timeout(TIMEOUT_MS) });
+      const res = await fetch(url, { headers: { 'User-Agent': UA, ...headers }, redirect: 'follow', signal: AbortSignal.timeout(timeoutMs) });
       if (res.status === 429) { nextSlot.set(host, Date.now() + 30_000); lastError = new Error(`429 from ${host}`); continue; }
       if (res.status >= 500) { lastError = new Error(`${res.status} from ${host}`); continue; }
       return res;

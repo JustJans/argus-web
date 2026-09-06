@@ -57,6 +57,10 @@ eq(familiesOf({ title: 'Chief Engineer', codes: {}, lang: 'en' }, gate), ['3151'
 eq(familiesOf({ title: 'Senior Solution Architect', codes: {}, lang: 'en' }, gate), [], 'a solution architect is ICT: blocked');
 eq(familiesOf({ title: 'Software Engineer', codes: {}, lang: 'en' }, gate), [], 'so is a software engineer, whatever the word engineer says');
 eq(familiesOf({ title: 'Project Engineer', codes: {}, lang: 'en' }, gate), ['2149'], 'only the word engineer: engineers not elsewhere classified');
+eq(familiesOf({ title: 'Senior Backend Engineer', codes: {}, lang: 'en' }, gate), [], 'a backend engineer is software: out');
+eq(familiesOf({ title: 'AI Research Engineer - Computer Vision', codes: {}, lang: 'en' }, gate), [], 'so is an AI research engineer');
+eq(familiesOf({ title: 'Lead D365 F&O Solutions Architect Finance', codes: {}, lang: 'en' }, gate), [], 'and a solutions architect is not a building architect');
+eq(familiesOf({ title: 'Advanced Mechanical Design Engineer (Thermal Runaway)', codes: {}, lang: 'en' }, gate), ['2149'], 'a mechanical design engineer stays in, as an engineer not elsewhere classified');
 eq(familiesOf({ title: 'Draughtsman', codes: {}, lang: 'en' }, gate), ['3118'], 'a British spelling ESCO lacks comes from the extra terms');
 eq(familiesOf({ title: 'INGENIERO/A MECÁNICO/A', codes: {}, lang: 'es' }, gate), ['2144'], 'Spanish, with gender marks');
 eq(familiesOf({ title: 'INGENIERO/A TÉCNICO/A O INDUSTRIAL JUNIOR', codes: {}, lang: 'es' }, gate), ['2149'], 'a Spanish title with only the word ingeniero falls into 2149');
@@ -95,7 +99,9 @@ eq(placeOf('Gorinchem, Netherlands', cc), { cc: 'nl', city: 'Gorinchem' }, 'coun
 eq(placeOf('Madrid, ES', cc), { cc: 'es', city: 'Madrid' }, 'an ISO code as its own word');
 eq(placeOf('Stavanger', cc), { cc: 'no', city: 'Stavanger' }, 'a city alone names its country');
 eq(placeOf('Remote - Europe', cc), { cc: 'xx', city: '' }, 'remote is its own place');
-eq(placeOf('Houston, TX, United States', cc), { cc: '', city: 'Houston' }, 'outside Europe: no country, the city kept for the record');
+eq(placeOf('Houston, TX, United States', cc), { cc: 'us', city: 'Houston' }, 'outside Europe by name: the country is named, so the builder can drop it');
+eq(placeOf('Sherbrooke, QC, CA', cc), { cc: 'ca', city: 'Sherbrooke' }, 'outside Europe by a code at the end');
+eq(placeOf('Head Office', cc), { cc: '', city: 'Head Office' }, 'nothing known: no country, the text kept as the city');
 eq(placeOf('München', cc), { cc: 'de', city: 'München' }, 'a native spelling');
 eq(placeOf('', cc), { cc: '', city: '' }, 'nothing is nothing');
 

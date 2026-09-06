@@ -1,12 +1,80 @@
 # Company boards read directly through their applicant-tracking system's public API.
 # One entry per company: its name as shown to visitors, ONE key naming the ATS with the
-# company's slug on it (lever, greenhouse, ashby, recruitee, personio), and optionally
-# the country the board's adverts are in when the board does not say (iso code), the
-# language its adverts are written in, and enabled: false to pause it.
+# company's slug on it (lever, greenhouse, ashby, smartrecruiters, recruitee, personio), and
+# optionally the country the board's adverts are in when the board does not say (iso code),
+# the language its adverts are written in (so the gate reads ESCO's titles in it too), and
+# enabled: false to pause it.
 #
 # Every entry here has answered its API at least once. Add companies with
 #   node builder/tools/discover.mjs "Company name" [...]
-# which probes the five ATS patterns and prints what answers with adverts.
+# which probes the six ATS patterns and prints what answers with adverts, with how many of
+# them the gate would keep and where; the list below is what that gave on 2026-09-06 among
+# some 230 European engineering employers, kept when the adverts are engineering and in
+# Europe.
 companies:
+  # Marine, offshore, logistics
+  - name: Boskalis
+    smartrecruiters: boskalis
   - name: GEODIS
     recruitee: geodis
+  # Energy, batteries, climate
+  - name: Vattenfall
+    smartrecruiters: vattenfall
+    lang: sv
+  - name: Verkor
+    lever: verkor
+    country: fr
+    lang: fr
+  - name: Fastned
+    recruitee: fastned
+  - name: Climeworks
+    recruitee: climeworks
+  - name: Marvel Fusion
+    greenhouse: marvelfusion
+    country: de
+  - name: Proxima Fusion
+    ashby: proxima-fusion
+  # Aerospace, defence
+  - name: Vertical Aerospace
+    ashby: vertical-aerospace
+    country: gb
+  - name: Isar Aerospace
+    greenhouse: isaraerospace
+    lang: de
+  - name: The Exploration Company
+    ashby: the-exploration-company
+  - name: Helsing
+    greenhouse: helsing
+  - name: Wingcopter
+    personio: wingcopter
+    country: de
+  # Industry
+  - name: Continental
+    smartrecruiters: continental
+  - name: Konecranes
+    smartrecruiters: konecranes
+  # Engineering consultancies, construction
+  - name: AFRY
+    smartrecruiters: afry
+    lang: sv
+  - name: Artelia
+    smartrecruiters: artelia
+    lang: fr
+  - name: Besix
+    smartrecruiters: besix
+    lang: fr
+  - name: NCC
+    smartrecruiters: ncc
+    lang: sv
+  - name: Antea Group
+    recruitee: anteagroup
+    lang: nl
+  - name: Movares
+    recruitee: movares
+    lang: nl
+  - name: Dura Vermeer
+    recruitee: duravermeer
+    lang: nl
+  - name: Ballast Nedam
+    recruitee: ballastnedam
+    lang: nl
