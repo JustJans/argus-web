@@ -334,7 +334,7 @@ async function main() {
   const all = await Promise.all(names.map(name => getJson(`catalogues/${name}.json`)));
   cats = Object.fromEntries(names.map((name, i) => [name, all[i]]));
   ids = catalogueIds(cats);
-  ctx = { countryName, sourceName: s => index.sources?.[s]?.short || index.sources?.[s]?.name || s, languageName, degreeName };
+  ctx = { countryName, sourceName: s => index.sources?.[s]?.short || index.sources?.[s]?.name || s, isVia: s => !!index.sources?.[s]?.via, languageName, degreeName };
   drawPile();
   drawStaticLists();
   wireControls();

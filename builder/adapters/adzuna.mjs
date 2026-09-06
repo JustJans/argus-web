@@ -5,14 +5,16 @@
 // ➤ European country and category are asked for once a day, sorted by date; what came
 // ➤ earlier is kept for thirty days in builder/state/adzuna.json, so the other builds of the
 // ➤ day cost no calls. Adverts link to Adzuna's page for the advert: the tracking bounce is
-// ➤ replaced by the details page, as Argus does.
+// ➤ replaced by the details page, as Argus does. An intermediary: its adverts show in their own
+// ➤ section, after the employers' own.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { getJson } from '../http.mjs';
 
 export const id = 'adzuna';
-export const kind = 'feed';
+export const kind = 'via';
+export const via = true;
 export const licence = {
   name: 'Adzuna', short: 'Adzuna', url: 'https://developer.adzuna.com/docs/terms_of_service',
   licence: 'Adzuna API terms: publishing its ad listings, each labelled "Jobs by Adzuna"', credit: 'Jobs by Adzuna', needsKey: true,
