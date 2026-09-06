@@ -27,6 +27,11 @@ export function idFor(url) {
   return createHash('sha256').update(normUrl(url)).digest('base64url').slice(0, 8);
 }
 
+// ➤ Countries outside Europe that company boards name most, so their adverts are told apart
+// ➤ from adverts whose country is merely unstated. A two-letter code ending the location
+// ➤ that is not a European country counts too ("Sherbrooke, QC, CA").
+const FAR = { us: ['united states', 'usa', 'u s a'], ca: ['canada'], au: ['australia'], nz: ['new zealand'], cn: ['china'], in: ['india'], jp: ['japan'], kr: ['korea', 'south korea'], sg: ['singapore'], tw: ['taiwan'], th: ['thailand'], my: ['malaysia'], id: ['indonesia'], vn: ['vietnam'], ph: ['philippines'], br: ['brazil', 'brasil'], mx: ['mexico'], ar: ['argentina'], cl: ['chile'], co: ['colombia'], pe: ['peru'], za: ['south africa'], eg: ['egypt'], ma: ['morocco'], ng: ['nigeria'], ke: ['kenya'], ae: ['united arab emirates', 'uae', 'dubai'], sa: ['saudi arabia'], qa: ['qatar'], il: ['israel'], kz: ['kazakhstan'], pk: ['pakistan'] };
+
 // ➤ Country and city from a free-text location, against the countries catalogue: an ISO
 // ➤ code as its own word, a country name or alias, or a known city. "Remote" is 'xx'.
 export function compileCountries(countries) {
@@ -50,7 +55,11 @@ export function placeOf(location, compiled) {
     if (c.nameRe.test(f) || codes.has(c.iso)) return { cc: c.iso, city: cityIn(raw, c) };
   }
   for (const c of compiled) if (c.cityRe && c.cityRe.test(f)) return { cc: c.iso, city: cityIn(raw, c) };
-  return { cc: '', city: raw.split(',')[0].trim().slice(0, 40) };
+  const city = raw.split(',')[0].trim().slice(0, 40);
+  for (const [iso, names] of Object.entries(FAR)) if (names.some(n => new RegExp(`(?:^|[^a-z0-9])${n}(?![a-z0-9])`).test(f))) return { cc: iso, city };
+  const last = raw.split(',').pop().trim();
+  if (/^[A-Z]{2}$/.test(last) && !compiled.some(c => c.iso === last.toLowerCase())) return { cc: last.toLowerCase(), city };
+  return { cc: '', city };
 }
 
 function cityIn(raw, c) {

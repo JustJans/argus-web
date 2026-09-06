@@ -30,7 +30,7 @@ function slugsOf(name) {
 async function probe(ats, slug, company) {
   const url = ATS[ats].url(slug);
   try {
-    const body = ATS[ats].xml ? await getText(url, { tries: 1, gapMs: 150 }) : await getJson(url, { tries: 1, gapMs: 150 });
+    const body = ATS[ats].xml ? await getText(url, { tries: 1, gapMs: 150, timeoutMs: 8000 }) : await getJson(url, { tries: 1, gapMs: 150, timeoutMs: 8000 });
     return ATS[ats].parse(body, slug, company);
   } catch { return null; }
 }
@@ -56,13 +56,13 @@ const fileAt = args.indexOf('--file');
 const names = fileAt >= 0 ? readFileSync(args[fileAt + 1], 'utf8').split(/\r?\n/).map(s => s.trim()).filter(s => s && !s.startsWith('#')) : args;
 if (!names.length) { console.log('give company names, or --file with one per line'); process.exit(1); }
 
-// ➤ The ATS live on different hosts, so one company is asked of all of them at once.
+// ➤ The ATS live on different hosts, so one company is asked of all of them at once, and
+// ➤ every slug at once too; the first slug that answers with adverts is the board.
 async function onAts(ats, name) {
-  for (const slug of slugsOf(name)) {
-    const jobs = await probe(ats, slug, name);
-    if (jobs && jobs.length) return { ats, slug, total: jobs.length, ...judge(jobs, ats) };
-  }
-  return null;
+  const slugs = slugsOf(name);
+  const answers = await Promise.all(slugs.map(slug => probe(ats, slug, name)));
+  const i = answers.findIndex(jobs => jobs && jobs.length);
+  return i < 0 ? null : { ats, slug: slugs[i], total: answers[i].length, ...judge(answers[i], ats) };
 }
 for (const name of names) {
   const hits = (await Promise.all(Object.keys(ATS).map(ats => onAts(ats, name)))).filter(Boolean);

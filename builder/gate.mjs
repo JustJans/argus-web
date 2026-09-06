@@ -31,8 +31,10 @@ const ROLE_WORDS = ['technician', 'técnico', 'técnica', 'tècnic', 'tècnica',
 const GENERIC_WORDS = new Set([...ENGINEER_WORDS, ...ROLE_WORDS].map(T.clean));
 const usableTitle = label => !GENERIC_WORDS.has(T.clean(label));
 // ➤ Words that put a title outside the vertical whatever else it says: computing (ISCO 25),
-// ➤ sales (24) and teaching (23). Read only when the title, not a code, decides.
-const OUTSIDE_WORDS = /(?:^|[^a-z0-9])(?:informatic[oa]s?|informatica|it|ict|tic|software|programador|programadora|developer|desarrollador|desarrolladora|datos|dades|data|ciberseguridad|cybersecurity|comercial|ventas|sales|profesor|profesora|professor|docente|teacher|lecturer|formador|formadora|programator|programatorka|programuotojas|programmetajs|pardavimu|pardosanas|tirdzniecibas|prekybos|obchodni|prodej|ucitel|ucitelka|mokytojas|skolotajs|duomenu|datu|programovani|programavimo|programmesanas|skaitlotaju|datoru|kompiuteriu|pocitacovy|pocitacova)(?![a-z0-9])/;
+// ➤ sales (24) and teaching (23), in the sources' languages and in the English of company
+// ➤ boards (a backend, cloud or machine-learning engineer is a software job). Read only when
+// ➤ the title, not a code, decides.
+const OUTSIDE_WORDS = /(?:^|[^a-z0-9])(?:informatic[oa]s?|informatica|it|ict|tic|software|programador|programadora|developer|desarrollador|desarrolladora|datos|dades|data|ciberseguridad|cybersecurity|security|backend|back end|frontend|front end|fullstack|full stack|mobile|devops|sre|cloud|ml|machine learning|ai|analytics|compiler|infrastructure|platform|web|api|firmware|app|apps|android|ios|javascript|typescript|python|java|kubernetes|saas|crm|erp|d365|sap|salesforce|solution|solutions|enterprise|database|sql|comercial|ventas|sales|profesor|profesora|professor|docente|teacher|lecturer|formador|formadora|programator|programatorka|programuotojas|programmetajs|pardavimu|pardosanas|tirdzniecibas|prekybos|obchodni|prodej|ucitel|ucitelka|mokytojas|skolotajs|duomenu|datu|programovani|programavimo|programmesanas|skaitlotaju|datoru|kompiuteriu|pocitacovy|pocitacova)(?![a-z0-9])/;
 
 // ➤ The languages a title is read in: the source's, plus English (many adverts everywhere
 // ➤ are in English); a Catalan source is also read in Spanish, which ESCO has and Catalan lacks.

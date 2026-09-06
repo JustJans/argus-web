@@ -51,7 +51,9 @@ export const ATS = {
   },
   smartrecruiters: {
     licence: { name: 'SmartRecruiters Posting API', short: 'SmartRecruiters', url: 'https://developers.smartrecruiters.com/docs/posting-api', licence: 'Public posting API, where the company enables it', credit: '', needsKey: false },
-    url: slug => `https://api.smartrecruiters.com/v1/companies/${encodeURIComponent(slug)}/postings?limit=100`,
+    url: (slug, offset = 0) => `https://api.smartrecruiters.com/v1/companies/${encodeURIComponent(slug)}/postings?limit=100&offset=${offset}`,
+    // ➤ A hundred per page; the answer says how many there are in all.
+    more: (j, got) => got < Math.min(Number(j.totalFound) || 0, 1000),
     // ➤ The list carries no advert text (that is a second call per posting the pile does not make).
     parse: (j, slug, company = slug) => parseSmartRecruiters(j, company).map((p, i) => ({
       sourceId: String(j.content[i]?.id || ''), title: p.title, location: p.location, url: p.url,
@@ -88,9 +90,20 @@ export { unescapeEntities };
 export const id = 'boards';
 export const kind = 'board';
 
+// ➤ The whole board: one answer for most ATS, page after page where the ATS says there is more.
 async function readBoard(ats, slug, company) {
-  const url = ATS[ats].url(slug);
-  return ATS[ats].parse(ATS[ats].xml ? await getText(url) : await getJson(url), slug, company);
+  const a = ATS[ats];
+  if (a.xml) return a.parse(await getText(a.url(slug)), slug, company);
+  const out = [];
+  let got = 0;
+  for (;;) {
+    const j = await getJson(a.url(slug, got));
+    const page = a.parse(j, slug, company);
+    out.push(...page);
+    got += (j.content || j.jobs || j).length || 0;
+    if (!a.more || !page.length || !a.more(j, got)) break;
+  }
+  return out;
 }
 
 // ➤ Yields RawOffers for every enabled company; a board that fails is logged and skipped,
