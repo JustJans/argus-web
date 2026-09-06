@@ -22,7 +22,7 @@ import { parseSef } from '../builder/adapters/sef.mjs';
 import { withoutContacts } from '../builder/normalise.mjs';
 import { toRaw as adzunaRaw, detailsUrl } from '../builder/adapters/adzuna.mjs';
 import { jobicy, remotive, arbeitnow } from '../builder/adapters/remote.mjs';
-import { parseRobots, allowed, parseSitemap, looksLikeJob, jobPostings, careerLinks, nextLink, detectPlatform } from '../builder/lib/crawl.mjs';
+import { parseRobots, allowed, parseSitemap, looksLikeJob, jobPostings, careerLinks, nextLink, detectPlatform, feedName } from '../builder/lib/crawl.mjs';
 import { toRaw as careersRaw } from '../builder/adapters/careers.mjs';
 import { deadline } from '../builder/http.mjs';
 
@@ -302,11 +302,16 @@ eq(detectPlatform('https://eeho.fa.us2.oraclecloud.com/hcmUI/CandidateExperience
 eq(detectPlatform('https://acme.example/careers', '<iframe src="https://boards.greenhouse.io/embed/job_board?for=acme"></iframe>'), { ats: 'greenhouse', slug: 'acme' }, 'an ATS embedded in a company page is found in the HTML');
 eq(detectPlatform('https://careers-acme.icims.com/jobs/search'), { vendor: 'icims' }, 'a platform drawn by JavaScript is named, not read');
 eq(detectPlatform('https://acme.example/jobs'), {}, 'nothing known: a site, read through feed, sitemap or listing');
+eq(detectPlatform('https://www.engineering-jobs.acme/', '<script src="https://tt.teamtailor.com/assets/app.js"></script>'), { ats: 'teamtailor', slug: 'https://www.engineering-jobs.acme' }, 'a Teamtailor site on the company\'s own domain reads through that domain');
+eq(ATS.teamtailor.url('https://www.engineering-jobs.acme/'), 'https://www.engineering-jobs.acme/jobs.rss', 'and its feed hangs off that address');
+eq(careerLinks('<a href="/es/talento">Talento</a>', 'https://acme.es/'), ['https://acme.es/es/talento'], 'talent pages count as careers links');
+eq(careerLinks('<a href="https://www.linkedin.com/company/acme/jobs">Jobs on LinkedIn</a> <a href="https://es.indeed.com/cmp/acme">Indeed</a> <a href="https://jobs.lever.co/acme">Jobs</a>', 'https://acme.es/'), ['https://jobs.lever.co/acme'], 'links to job boards and social networks are never followed; an ATS is');
 eq(detectPlatform('https://careers.acme.example/', '<a href="https://jobs.smartrecruiters.com/my-applications/Acme2">My applications</a>'), {}, "a link to an applicant's own pages names no board");
 eq(careerLinks('<a href="/about">About</a> <a href="/trabaja-con-nosotros">Únete</a> <a href="https://jobs.lever.co/acme">Open roles</a> <a href="/news">Jobs report</a>', 'https://acme.es/'), ['https://jobs.lever.co/acme', 'https://acme.es/trabaja-con-nosotros', 'https://acme.es/news'], 'careers links by a word in the address or the text; another host first, then the address, then the text');
 eq(nextLink('<a href="?page=2" rel="next">›</a>', 'https://acme.example/jobs'), 'https://acme.example/jobs?page=2', 'the next page of a listing by rel=next');
 eq(nextLink('<a class="p" href="/jobs?p=3">Siguiente</a>', 'https://acme.example/jobs?p=2'), 'https://acme.example/jobs?p=3', 'or by the word next in the languages of the sites read');
 eq(nextLink('<a href="/jobs/1">Engineer</a>', 'https://acme.example/jobs'), '', 'no next link: the listing ends');
+eq([feedName('<rss><channel><title>Jobs at SAP</title>'), feedName('<rss><channel><title>Ofertas de empleo de Navantia</title>'), feedName('<rss><channel><title>Vestas</title>')], ['SAP', 'Navantia', 'Vestas'], 'the company behind a feed, from its channel title');
 const wd = ATS.workday.parse({ total: 2, jobPostings: [{ title: 'Test Engineer', externalPath: '/job/Bristol/Test-Engineer_R-1', locationsText: 'Bristol', postedOn: 'Posted 3 Days Ago', bulletFields: ['R-1'] }, { title: 'Analyst', externalPath: '/job/x/Analyst_R-2', locationsText: '2 Locations', postedOn: 'Posted Today' }] }, 'aviva.wd1/External');
 eq([wd[0].url, wd[0].sourceId, wd[0].location, wd[1].location, wd[1].posted], ['https://aviva.wd1.myworkdayjobs.com/en-US/External/job/Bristol/Test-Engineer_R-1', 'R-1', 'Bristol', '', new Date().toISOString().slice(0, 10)], 'Workday: the page address, the reference, the place ("2 Locations" says nothing), the day');
 eq(wd[0].posted, new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10), 'and "Posted 3 Days Ago" is three days ago');

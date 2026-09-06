@@ -101,7 +101,8 @@ export const ATS = {
   },
   teamtailor: {
     licence: { name: 'Teamtailor careers site (RSS)', short: 'Teamtailor', url: 'https://www.teamtailor.com/', licence: "The employer's own careers site, read through the RSS it publishes", credit: '', needsKey: false },
-    url: slug => `https://${encodeURIComponent(slug)}.teamtailor.com/jobs.rss`,
+    // ➤ The slug is the board's name on teamtailor.com, or the address of a site on the company's own domain.
+    url: slug => (/^https?:\/\//.test(slug) ? `${String(slug).replace(/\/$/, '')}/jobs.rss` : `https://${encodeURIComponent(slug)}.teamtailor.com/jobs.rss`),
     xml: true,
     // ➤ One RSS item per job: title, link, date, the description as HTML, the location in tt: tags.
     parse: (xml, slug) => {

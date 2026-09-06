@@ -183,7 +183,8 @@ boards and LinkedIn), so the vendors' tenants can be collected the way the ATS s
 what a person would: reads the home page, follows the links that say careers, jobs, empleo,
 karriere, vacatures (and the usual paths), recognises the platform behind the page (the ATS
 and its slug, embedded or linked; a Workday or Oracle site; a `jobs.xml` feed; else a site with
-a sitemap or a listing), reads a sample and says how many adverts the gate keeps in Europe.
+a sitemap or a listing), reads a sample and says how many adverts the gate keeps in Europe. It
+never follows a link to a job board, an agency or a social network.
 `--write` puts the readable ones in `builder/config/hunted.yml`, which the builder reads like
 `companies.yml` and `careers.yml`. Seen on the first run: Vestas by its feed (761 adverts),
 Van Oord by its sitemap (134 pages), DEME and Damen on Workday (named, switched off),

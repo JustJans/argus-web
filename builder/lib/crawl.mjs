@@ -119,8 +119,13 @@ export function jobPostings(html, pageUrl) {
   return out.length ? out : microdataPostings(html, pageUrl);
 }
 
+// ➤ The hosts a crawler of employers' own pages never follows: job boards and aggregators
+// ➤ (their terms), recruitment agencies, social networks. A host is one of them when its
+// ➤ registrable name is in the list ("jobs.linkedin.com", "es.indeed.com").
+export const BOARD_HOSTS = /(?:^|\.)(?:facebook|twitter|x|instagram|youtube|tiktok|xing|wikipedia|freelance-informatique|rollingadz|php-resource|qreer|studentjob|jobteaser|indeed|linkedin|glassdoor|monster|stepstone|infojobs|infoempleo|tecnoempleo|jobrapido|jooble|adzuna|talent|neuvoo|trovit|mitula|careerjet|jobted|jobijoba|kimeta|jobware|stellenanzeigen|jobvector|hays|adecco|randstad|manpower|michaelpage|robertwalters|reed|totaljobs|cv-library|jobsite|welcometothejungle|jobteaser|hellowork|apec|francetravail|pole-emploi|arbeitsagentur|arbeitnow|jobs\.ch|jobscout24|karriere\.at|willhaben|pracuj|olx|jobs\.cz|profesia|nofluffjobs|justjoin|jobs\.bg|ejobs|bestjobs|cvbankas|cv\.lv|cvkeskus|duunitori|oikotie|finn|nav\.no|jobindex|jobnet|arbetsformedlingen|platsbanken|ledigajobb|blocket|jobsora|jobsinnetwork|jobs\.de|jobcenter|jobbnorge|thelocal|eurojobs|eures|ziprecruiter|simplyhired|careerbuilder)\.[a-z.]+$/i;
+
 // ➤ The words a careers link carries, in the languages of the sites read.
-const CAREER_WORDS = /(?:^|[^a-z])(?:careers?|jobs?|vacanc(?:y|ies)|join[-\s]us|work(?:ing)?[-\s](?:with|for|at)[-\s]us|empleo|trabaja[-\s]con[-\s]nosotros|ofertas[-\s]de[-\s]empleo|carri[eè]res?|emplois?|recrutement|nous[-\s]rejoindre|karriere|stellen(?:angebote|anzeigen)?|vacatures?|werken[-\s]bij|lediga[-\s]jobb|jobb|ledige[-\s]stillinger|stillinger|kariera|praca|oferty[-\s]pracy|lavora[-\s]con[-\s]noi|carriere|posizioni[-\s]aperte|carreiras?|recrutamento|voln[aá][-\s]m[ií]sta|kari[eé]ra|vakances)(?![a-z])/i;
+const CAREER_WORDS = /(?:^|[^a-z])(?:careers?|jobs?|vacanc(?:y|ies)|talento?|[uú]nete|trabajar|emprego|recruit(?:ing|ment)?|work[-\s]with[-\s]us|join[-\s]us|work(?:ing)?[-\s](?:with|for|at)[-\s]us|empleo|trabaja[-\s]con[-\s]nosotros|ofertas[-\s]de[-\s]empleo|carri[eè]res?|emplois?|recrutement|nous[-\s]rejoindre|karriere|stellen(?:angebote|anzeigen)?|vacatures?|werken[-\s]bij|lediga[-\s]jobb|jobb|ledige[-\s]stillinger|stillinger|kariera|praca|oferty[-\s]pracy|lavora[-\s]con[-\s]noi|carriere|posizioni[-\s]aperte|carreiras?|recrutamento|voln[aá][-\s]m[ií]sta|kari[eé]ra|vakances)(?![a-z])/i;
 
 // ➤ The links on a page that lead to a careers section, by the words in their address or
 // ➤ their text; the address is the stronger sign, a link to another host (an ATS) stronger
@@ -131,12 +136,12 @@ export function careerLinks(html, pageUrl) {
   for (const m of String(html || '').matchAll(/<a\s[^>]*href\s*=\s*["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
     let u;
     try { u = new URL(text(m[1]), base); } catch { continue; }
-    if (!/^https?:$/.test(u.protocol)) continue;
+    if (!/^https?:$/.test(u.protocol) || BOARD_HOSTS.test(u.hostname)) continue;
     const label = text(m[2]).replace(/\s+/g, ' ').trim();
     const inHref = CAREER_WORDS.test(u.hostname + u.pathname), inText = CAREER_WORDS.test(label);
     if (!inHref && !inText) continue;
     const href = u.href.split('#')[0];
-    scored.set(href, Math.max(scored.get(href) || 0, (inHref ? 2 : 0) + (inText ? 1 : 0) + (u.host === base.host ? 0 : 1)));
+    scored.set(href, Math.max(scored.get(href) || 0, (inHref ? 2 : 0) + (inText ? 1 : 0) + (u.host === base.host ? 0 : 2)));
   }
   return [...scored.entries()].sort((a, b) => b[1] - a[1]).map(([u]) => u);
 }
@@ -171,7 +176,7 @@ const ATS_MARKS = [
   ['recruitee', /https?:\/\/([a-z0-9-]+)\.recruitee\.com/i],
   ['personio', /https?:\/\/([a-z0-9-]+)\.jobs\.personio\.(?:de|com)/i],
   ['workable', /apply\.workable\.com\/(?!api\/)([a-z0-9-]+)/i],
-  ['teamtailor', /https?:\/\/([a-z0-9-]+)\.teamtailor\.com/i],
+  ['teamtailor', /https?:\/\/(?!tt\.|cdn\.|static\.|app\.|www\.|assets\.|images\.|api\.)([a-z0-9-]+)\.teamtailor\.com/i],
   ['workday', /https?:\/\/([a-z0-9-]+)\.(wd\d+)\.myworkdayjobs\.com\/(?:[a-z]{2}-[A-Za-z]{2}\/)?(?!wday\/)([A-Za-z0-9_-]+)/],
   ['oracle', /https?:\/\/([a-z0-9.-]+\.oraclecloud\.com)\/hcmUI\/CandidateExperience\/[a-z]{2}\/sites\/([A-Za-z0-9_]+)/],
 ];
@@ -185,6 +190,16 @@ export function detectPlatform(url, html = '') {
     if (ats === 'oracle') return { ats, slug: `${m[1]}/${m[2]}` };
     return { ats, slug: m[1] };
   }
+  // ➤ A Teamtailor site on the company's own domain: the page carries the vendor's assets, and
+  // ➤ its /jobs.rss reads like any Teamtailor board.
+  if (/teamtailor/i.test(String(html || ''))) { try { return { ats: 'teamtailor', slug: new URL(url).origin }; } catch { /* no origin */ } }
   for (const [vendor, re] of VENDOR_MARKS) if (re.test(s)) return { vendor };
   return {};
+}
+
+// ➤ The company a feed belongs to, from its channel title: "Jobs at SAP", "Careers at Vestas",
+// ➤ "Ofertas de empleo de Navantia" are SAP, Vestas, Navantia.
+export function feedName(xml) {
+  const title = text((String(xml || '').match(/<channel>\s*<title>([\s\S]*?)<\/title>/i) || [])[1] || '').trim();
+  return title.replace(/^(?:jobs?|careers?|vacancies|vacatures|stellen(?:angebote)?|ofertas(?:\s+de\s+(?:empleo|trabajo))?|offres(?:\s+d'emploi)?|emplois?)\s+(?:at|en|de|bei|chez|van|with|@)\s+/i, '').replace(/\s*[-|:]\s*(?:jobs?|careers?|karriere|empleo)\s*$/i, '').trim();
 }
