@@ -17,6 +17,9 @@ The structure is built for the changes already known. Each item names the seam.
   extraction (`builder/state/wdc/`, 5 GB, downloaded once) and writes `builder/config/careers-found.yml`;
   `scout-careers.mjs [--tlds es,de] [--limit N]` walks a domain list the slow way (resumable, hours
   long); a site by hand goes into `careers.yml` with its sitemap.
+- **One company by domain**: `node builder/tools/hunt.mjs acme.com [--write]` finds the careers
+  pages, the platform and the adverts; Workday and Oracle sites read once `builder/config/vendors.yml`
+  says so.
 - **Licensed backfill that pays per click** (Jooble, Careerjet): a `live` adapter kind is
   reserved; it would answer from a small serverless function, not from the builder, and
   feed the same `judge()` on the client. Needs a signed agreement first.

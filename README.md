@@ -38,7 +38,10 @@ JobPosting markup Common Crawl saw (3.6 million vacancy pages) and keeps the emp
 organisation across their pages, unlike a job board) with adverts of ours in Europe;
 `scout-careers.mjs` walks a domain list the slow way (robots.txt, sitemaps, a few pages). This is
 how aggregators gather their adverts; here it stays with employers' own pages and documented APIs
-(`docs/CRAWLING.md` has the research, with sources). Spanish supply is thin
+(`docs/CRAWLING.md` has the research, with sources). One company at a time, `node
+builder/tools/hunt.mjs acme.com` finds its careers pages from its home page, names the platform
+behind them and reads the adverts with no API key; `--write` keeps what it found in
+`builder/config/hunted.yml`. Spanish supply is thin
 on purpose until a licensed feed covers the private market; every source's licence is shown
 on the page. Feeds that need an account or a signed request (France Travail, Norway's NAV,
 Poland's CBOP) wait for the owner.

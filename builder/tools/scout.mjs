@@ -12,7 +12,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import yaml from 'js-yaml';
-import { ATS } from '../adapters/boards.mjs';
+import { ATS, loadVendors } from '../adapters/boards.mjs';
 import { getJson, getText, deadline } from '../http.mjs';
 import { compileFamilies, familiesOf, hygieneReason } from '../gate.mjs';
 import { compileCountries, placeOf } from '../normalise.mjs';
@@ -34,6 +34,10 @@ const HOSTS = {
   personio: { patterns: ['*.jobs.personio.de'], slug: u => (u.match(/^https?:\/\/([^.]+)\.jobs\.personio\.de/) || [])[1] },
   workable: { patterns: ['apply.workable.com/*'], slug: u => (u.match(/apply\.workable\.com\/([^/?#]+)/) || [])[1] },
   teamtailor: { patterns: ['*.teamtailor.com'], slug: u => (u.match(/^https?:\/\/([^.]+)\.(?:jobs\.)?teamtailor\.com/) || [])[1] },
+  // ➤ Vendor-hosted careers sites (config/vendors.yml decides whether they are read): the slug
+  // ➤ keeps its case, the site name is part of the address.
+  workday: { patterns: ['*.myworkdayjobs.com/*'], keepCase: true, slug: u => { const m = u.match(/^https?:\/\/([a-z0-9-]+)\.(wd\d+)\.myworkdayjobs\.com\/(?:[a-z]{2}-[A-Za-z]{2}\/)?(?!wday\/)([A-Za-z0-9_-]+)/); return m ? `${m[1]}.${m[2]}/${m[3]}` : ''; } },
+  oracle: { patterns: ['*.oraclecloud.com/hcmUI/CandidateExperience/*'], keepCase: true, slug: u => { const m = u.match(/^https?:\/\/([a-z0-9.-]+\.oraclecloud\.com)\/hcmUI\/CandidateExperience\/[a-z]{2}\/sites\/([A-Za-z0-9_]+)/); return m ? `${m[1]}/${m[2]}` : ''; } },
 };
 const PROBED = join(STATE, 'scout-probed.json');   // ➤ what every probe answered, so a rerun asks only the new slugs
 const NOT_A_SLUG = /^(v1|api|embed|static|www|jobs|careers|boards|_next|assets|favicon\.ico|robots\.txt|sitemap\.xml)$/i;
@@ -55,7 +59,7 @@ async function collect(log = console.log) {
             if (!line) continue;
             let url; try { url = JSON.parse(line).url; } catch { continue; }
             const s = h.slug(url);
-            if (s && !NOT_A_SLUG.test(s)) set.add(s.toLowerCase());
+            if (s && !NOT_A_SLUG.test(s)) set.add(h.keepCase ? s : s.toLowerCase());
           }
         } catch (e) { log(`${ats} ${crawl} ${pattern} page ${p}: ${e.message.slice(0, 60)}`); }
       }
@@ -82,11 +86,12 @@ async function probe(ats, slug, gate, countries, europe) {
     // ➤ Three pages at most: enough to judge a board; the build reads the rest.
     let got = 0, pages = 0;
     for (;;) {
-      const j = await getJson(a.url(slug, got).replace('content=true', 'content=false'), opts);
+      const req = a.request ? a.request(slug, got) : {};
+      const j = await getJson(a.url(slug, got).replace('content=true', 'content=false'), { ...opts, ...req, headers: { ...(req.headers || {}) } });
       name ||= j?.content?.[0]?.company?.name || j?.jobs?.[0]?.organizationName || j?.name || '';
       const page = a.parse(j, slug, pretty(slug));
       jobs.push(...page);
-      got += (j.content || j.jobs || j).length || 0;
+      got += (a.count ? a.count(j) : (j.content || j.jobs || j).length) || 0;
       if (!a.more || !page.length || !a.more(j, got) || ++pages >= 3) break;
     }
   }
@@ -142,6 +147,7 @@ async function probeAll(log = console.log) {
   // ➤ One ATS at a time per host, the hosts side by side.
   await Promise.all(Object.entries(slugs).map(async ([ats, list]) => {
     if (!ATS[ats]) return;
+    if (ATS[ats].vendor && loadVendors()[ats] !== true) { log(`${ats}: switched off in config/vendors.yml, ${list.length} slugs not probed`); return; }
     let done = 0, asked = 0;
     for (const slug of list) {
       done++;

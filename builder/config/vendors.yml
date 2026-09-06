@@ -1,0 +1,6 @@
+# ➤ Careers sites drawn by JavaScript (Workday, Oracle): the reader asks the address the page
+# ➤ itself asks for its list, exactly as a browser does. It is not a documented API, so each
+# ➤ vendor stays off until the owner turns it on here. What is off is skipped by the builder,
+# ➤ the hunter and the scout alike.
+workday: false
+oracle: false

@@ -118,3 +118,73 @@ export function jobPostings(html, pageUrl) {
   }
   return out.length ? out : microdataPostings(html, pageUrl);
 }
+
+// ➤ The words a careers link carries, in the languages of the sites read.
+const CAREER_WORDS = /(?:^|[^a-z])(?:careers?|jobs?|vacanc(?:y|ies)|join[-\s]us|work(?:ing)?[-\s](?:with|for|at)[-\s]us|empleo|trabaja[-\s]con[-\s]nosotros|ofertas[-\s]de[-\s]empleo|carri[eè]res?|emplois?|recrutement|nous[-\s]rejoindre|karriere|stellen(?:angebote|anzeigen)?|vacatures?|werken[-\s]bij|lediga[-\s]jobb|jobb|ledige[-\s]stillinger|stillinger|kariera|praca|oferty[-\s]pracy|lavora[-\s]con[-\s]noi|carriere|posizioni[-\s]aperte|carreiras?|recrutamento|voln[aá][-\s]m[ií]sta|kari[eé]ra|vakances)(?![a-z])/i;
+
+// ➤ The links on a page that lead to a careers section, by the words in their address or
+// ➤ their text; the address is the stronger sign, a link to another host (an ATS) stronger
+// ➤ still. Ordered by that, strongest first.
+export function careerLinks(html, pageUrl) {
+  const base = new URL(pageUrl);
+  const scored = new Map();
+  for (const m of String(html || '').matchAll(/<a\s[^>]*href\s*=\s*["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+    let u;
+    try { u = new URL(text(m[1]), base); } catch { continue; }
+    if (!/^https?:$/.test(u.protocol)) continue;
+    const label = text(m[2]).replace(/\s+/g, ' ').trim();
+    const inHref = CAREER_WORDS.test(u.hostname + u.pathname), inText = CAREER_WORDS.test(label);
+    if (!inHref && !inText) continue;
+    const href = u.href.split('#')[0];
+    scored.set(href, Math.max(scored.get(href) || 0, (inHref ? 2 : 0) + (inText ? 1 : 0) + (u.host === base.host ? 0 : 1)));
+  }
+  return [...scored.entries()].sort((a, b) => b[1] - a[1]).map(([u]) => u);
+}
+
+// ➤ The next page of a listing: a rel="next" link, or a link that says "next" in the
+// ➤ languages of the sites read. Empty when the listing ends.
+const NEXT_WORDS = /^(?:next|next page|siguiente|suivant|suivante|weiter|nächste|volgende|nästa|neste|næste|następna|dalej|další|seguente|successiva|próxima|seguinte|›|»|>|→)$/i;
+export function nextLink(html, pageUrl) {
+  const base = new URL(pageUrl);
+  const s = String(html || '');
+  const rel = s.match(/<(?:a|link)\s[^>]*rel\s*=\s*["']next["'][^>]*href\s*=\s*["']([^"'#]+)["']/i) || s.match(/<(?:a|link)\s[^>]*href\s*=\s*["']([^"'#]+)["'][^>]*rel\s*=\s*["']next["']/i);
+  let found = rel?.[1] || '';
+  if (!found) {
+    for (const m of s.matchAll(/<a\s[^>]*href\s*=\s*["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+      const label = text(m[2]).replace(/\s+/g, ' ').trim();
+      if (NEXT_WORDS.test(label) || /aria-label\s*=\s*["'](?:next|siguiente|suivant|weiter|volgende|nästa)/i.test(m[0])) { found = m[1]; break; }
+    }
+  }
+  if (!found) return '';
+  try { const u = new URL(text(found), base); return u.host === base.host && u.href !== base.href ? u.href : ''; } catch { return ''; }
+}
+
+// ➤ The platform behind a careers address, from the address itself or from what the page
+// ➤ embeds or links to: an ATS with its slug (read through the boards adapter), a vendor
+// ➤ whose pages are drawn by JavaScript (named, not read), or nothing known (a site, read
+// ➤ through its feed, sitemap or listing).
+const ATS_MARKS = [
+  ['greenhouse', /(?:boards|job-boards)(?:\.eu)?\.greenhouse\.io\/(?:embed\/job_board(?:\/js)?\?for=)?([a-z0-9_-]+)/i],
+  ['lever', /jobs\.(?:eu\.)?lever\.co\/([a-z0-9_-]+)/i],
+  ['ashby', /jobs\.ashbyhq\.com\/([a-z0-9_.-]+)/i],
+  ['smartrecruiters', /(?:jobs|careers)\.smartrecruiters\.com\/(?!my-applications|oneclick-ui|sign-in|api)([A-Za-z0-9_-]+)/],
+  ['recruitee', /https?:\/\/([a-z0-9-]+)\.recruitee\.com/i],
+  ['personio', /https?:\/\/([a-z0-9-]+)\.jobs\.personio\.(?:de|com)/i],
+  ['workable', /apply\.workable\.com\/(?!api\/)([a-z0-9-]+)/i],
+  ['teamtailor', /https?:\/\/([a-z0-9-]+)\.teamtailor\.com/i],
+  ['workday', /https?:\/\/([a-z0-9-]+)\.(wd\d+)\.myworkdayjobs\.com\/(?:[a-z]{2}-[A-Za-z]{2}\/)?(?!wday\/)([A-Za-z0-9_-]+)/],
+  ['oracle', /https?:\/\/([a-z0-9.-]+\.oraclecloud\.com)\/hcmUI\/CandidateExperience\/[a-z]{2}\/sites\/([A-Za-z0-9_]+)/],
+];
+const VENDOR_MARKS = [['icims', /[a-z0-9-]+\.icims\.com/i], ['eightfold', /[a-z0-9-]+\.eightfold\.ai/i], ['taleo', /[a-z0-9-]+\.taleo\.net/i], ['softgarden', /[a-z0-9-]+\.softgarden\.io/i]];
+export function detectPlatform(url, html = '') {
+  const s = `${url}\n${String(html || '')}`;
+  for (const [ats, re] of ATS_MARKS) {
+    const m = s.match(re);
+    if (!m) continue;
+    if (ats === 'workday') return { ats, slug: `${m[1]}.${m[2]}/${m[3]}` };
+    if (ats === 'oracle') return { ats, slug: `${m[1]}/${m[2]}` };
+    return { ats, slug: m[1] };
+  }
+  for (const [vendor, re] of VENDOR_MARKS) if (re.test(s)) return { vendor };
+  return {};
+}

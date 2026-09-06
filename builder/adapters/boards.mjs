@@ -12,6 +12,8 @@ import yaml from 'js-yaml';
 import { getJson, getText, deadline } from '../http.mjs';
 import { parseGreenhouse, parseAshby, parseLever, parseSmartRecruiters, unescapeEntities } from 'argus/server-bot/scan.mjs';
 
+const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
+
 // ➤ Advert text from its HTML: line breaks kept where the markup had them, entities decoded.
 const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', euro: '€', copy: '©', reg: '®', deg: '°', middot: '·', hellip: '…', ndash: '–', mdash: '—', lsquo: '‘', rsquo: '’', ldquo: '“', rdquo: '”', laquo: '«', raquo: '»', iexcl: '¡', iquest: '¿', ordf: 'ª', ordm: 'º', szlig: 'ß', aelig: 'æ', AElig: 'Æ', oslash: 'ø', Oslash: 'Ø', aring: 'å', Aring: 'Å', ccedil: 'ç', Ccedil: 'Ç', ntilde: 'ñ', Ntilde: 'Ñ', aacute: 'á', eacute: 'é', iacute: 'í', oacute: 'ó', uacute: 'ú', Aacute: 'Á', Eacute: 'É', Iacute: 'Í', Oacute: 'Ó', Uacute: 'Ú', agrave: 'à', egrave: 'è', igrave: 'ì', ograve: 'ò', ugrave: 'ù', Agrave: 'À', Egrave: 'È', acirc: 'â', ecirc: 'ê', icirc: 'î', ocirc: 'ô', ucirc: 'û', auml: 'ä', euml: 'ë', iuml: 'ï', ouml: 'ö', uuml: 'ü', Auml: 'Ä', Ouml: 'Ö', Uuml: 'Ü', yuml: 'ÿ', atilde: 'ã', otilde: 'õ' };
 export const decodeEntities = s => String(s || '')
@@ -31,6 +33,11 @@ export const text = html => decodeEntities(String(html || '').slice(0, 20000)
 
 const day = v => { const d = v ? new Date(v) : null; return d && !Number.isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : ''; };
 const remoteWord = s => /remote/i.test(String(s || ''));
+// ➤ Workday says when, not the day: "Posted Today", "Posted Yesterday", "Posted 3 Days Ago", "Posted 30+ Days Ago".
+const agoDay = s => { const m = String(s || '').match(/(\d+)\+?\s*days?/i); const n = /today/i.test(s) ? 0 : /yesterday/i.test(s) ? 1 : m ? Number(m[1]) : null; return n === null ? '' : new Date(Date.now() - n * 86400000).toISOString().slice(0, 10); };
+// ➤ A Workday slug is "tenant.dc/site" ("aviva.wd1/External"); an Oracle one "host/site".
+const wdParts = slug => { const [tenantDc, site] = String(slug).split('/'); const [tenant, dc = 'wd3'] = tenantDc.split('.'); return [tenant, dc, site || 'External']; };
+const oraParts = slug => { const i = String(slug).indexOf('/'); return i < 0 ? [String(slug), 'CX_1'] : [slug.slice(0, i), slug.slice(i + 1)]; };
 
 export const ATS = {
   greenhouse: {
@@ -125,34 +132,77 @@ export const ATS = {
       });
     },
   },
+  // ➤ Careers sites hosted by Workday and Oracle: their pages are drawn by JavaScript, so the
+  // ➤ reader asks the address the page itself asks for its list, exactly as a browser does.
+  // ➤ Not a documented API: each vendor is switched on in config/vendors.yml, off by default.
+  workday: {
+    vendor: true,
+    licence: { name: 'Workday careers site', short: 'Workday', url: 'https://www.myworkdayjobs.com/', licence: "The employer's own careers site, read through the listing call its page makes; no key", credit: '', needsKey: false },
+    url: slug => { const [tenant, dc, site] = wdParts(slug); return `https://${tenant}.${dc}.myworkdayjobs.com/wday/cxs/${tenant}/${site}/jobs`; },
+    request: (slug, offset = 0) => ({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ limit: 20, offset, appliedFacets: {}, searchText: '' }) }),
+    count: j => (j?.jobPostings || []).length,
+    more: (j, got) => got < Math.min(Number(j?.total) || 0, 1000),
+    // ➤ The list carries no advert text; "2 Locations" says nothing and is left blank.
+    parse: (j, slug) => { const [tenant, dc, site] = wdParts(slug); return (j?.jobPostings || []).map(p => ({
+      sourceId: String(p.bulletFields?.[0] || p.externalPath || ''), title: String(p.title || '').trim(),
+      location: /^\d+\s+locations$/i.test(String(p.locationsText || '').trim()) ? '' : String(p.locationsText || ''),
+      url: p.externalPath ? `https://${tenant}.${dc}.myworkdayjobs.com/en-US/${site}${p.externalPath}` : '',
+      description: '', posted: agoDay(p.postedOn), remote: remoteWord(p.locationsText),
+    })).filter(p => p.url && p.title); },
+  },
+  oracle: {
+    vendor: true,
+    licence: { name: 'Oracle Cloud careers site', short: 'Oracle', url: 'https://www.oracle.com/human-capital-management/recruiting/', licence: "The employer's own careers site, read through the listing call its page makes; no key", credit: '', needsKey: false },
+    url: (slug, offset = 0) => { const [host, site] = oraParts(slug); return `https://${host}/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList&finder=findReqs;siteNumber=${site},limit=50,offset=${offset},sortBy=POSTING_DATES_DESC`; },
+    count: j => (j?.items?.[0]?.requisitionList || []).length,
+    more: (j, got) => got < Math.min(Number(j?.items?.[0]?.TotalJobsCount) || 0, 1000),
+    parse: (j, slug) => { const [host, site] = oraParts(slug); return (j?.items?.[0]?.requisitionList || []).map(p => ({
+      sourceId: String(p.Id || ''), title: String(p.Title || '').trim(), location: String(p.PrimaryLocation || ''),
+      url: p.Id ? `https://${host}/hcmUI/CandidateExperience/en/sites/${site}/requisitions/preview/${p.Id}` : '',
+      description: text(p.ShortDescriptionStr || ''), posted: day(p.PostedDate), remote: remoteWord(p.PrimaryLocation) || remoteWord(p.WorkplaceType),
+    })).filter(p => p.url && p.title); },
+  },
 };
 export { unescapeEntities };
 
 export const id = 'boards';
 export const kind = 'board';
 
-// ➤ The company boards to read: the hand-made list (config/companies.yml), then the scout's
-// ➤ (companies-found.yml, marked found); a slug the hand-made list names is left to it.
-export function loadCompanies() {
-  const root = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
-  const read = file => { const p = join(root, 'builder', 'config', file); return existsSync(p) ? (yaml.load(readFileSync(p, 'utf-8')) || {}).companies || [] : []; };
-  const hand = read('companies.yml');
-  const slugOf = c => Object.keys(ATS).map(k => c[k] && `${k}:${String(c[k]).toLowerCase()}`).find(Boolean);
-  const named = new Set(hand.map(slugOf));
-  return [...hand, ...read('companies-found.yml').filter(c => !named.has(slugOf(c))).map(c => ({ ...c, found: true }))];
+// ➤ The vendors whose sites read through the call their own page makes (Workday, Oracle):
+// ➤ each is on or off in config/vendors.yml, and off is the default.
+export function loadVendors() {
+  const p = join(ROOT, 'builder', 'config', 'vendors.yml');
+  return existsSync(p) ? (yaml.load(readFileSync(p, 'utf-8')) || {}) : {};
 }
 
-// ➤ The whole board: one answer for most ATS, page after page where the ATS says there is more.
-async function readBoard(ats, slug, company, opts = {}) {
+// ➤ The company boards to read: the hand-made list (config/companies.yml), then the hunter's
+// ➤ (hunted.yml) and the scout's (companies-found.yml), marked found; a slug named earlier is
+// ➤ left to the earlier list. A vendor switched off in vendors.yml is left out.
+export function loadCompanies() {
+  const read = file => { const p = join(ROOT, 'builder', 'config', file); return existsSync(p) ? (yaml.load(readFileSync(p, 'utf-8')) || {}).companies || [] : []; };
+  const vendors = loadVendors();
+  const slugOf = c => Object.keys(ATS).map(k => c[k] && `${k}:${String(c[k]).toLowerCase()}`).find(Boolean);
+  const on = c => { const k = Object.keys(ATS).find(k => c[k]); return !k || !ATS[k].vendor || vendors[k] === true; };
+  const hand = read('companies.yml');
+  const seen = new Set(hand.map(slugOf));
+  const out = [...hand];
+  for (const c of [...read('hunted.yml'), ...read('companies-found.yml')]) { const key = slugOf(c); if (!key || seen.has(key)) continue; seen.add(key); out.push({ ...c, found: true }); }
+  return out.filter(on);
+}
+
+// ➤ The whole board: one answer for most ATS, page after page where the ATS says there is
+// ➤ more; an ATS with a `request` says how the call is made (Workday's list is a POST).
+export async function readBoard(ats, slug, company, opts = {}) {
   const a = ATS[ats];
   if (a.xml) return a.parse(await getText(a.url(slug), opts), slug, company);
   const out = [];
   let got = 0;
   for (;;) {
-    const j = await getJson(a.url(slug, got), opts);
+    const req = a.request ? a.request(slug, got) : {};
+    const j = await getJson(a.url(slug, got), { ...opts, ...req, headers: { ...(opts.headers || {}), ...(req.headers || {}) } });
     const page = a.parse(j, slug, company);
     out.push(...page);
-    got += (j.content || j.jobs || j).length || 0;
+    got += (a.count ? a.count(j) : (j.content || j.jobs || j).length) || 0;
     if (!a.more || !page.length || !a.more(j, got)) break;
   }
   return out;

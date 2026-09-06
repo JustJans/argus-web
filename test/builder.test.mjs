@@ -22,7 +22,7 @@ import { parseSef } from '../builder/adapters/sef.mjs';
 import { withoutContacts } from '../builder/normalise.mjs';
 import { toRaw as adzunaRaw, detailsUrl } from '../builder/adapters/adzuna.mjs';
 import { jobicy, remotive, arbeitnow } from '../builder/adapters/remote.mjs';
-import { parseRobots, allowed, parseSitemap, looksLikeJob, jobPostings } from '../builder/lib/crawl.mjs';
+import { parseRobots, allowed, parseSitemap, looksLikeJob, jobPostings, careerLinks, nextLink, detectPlatform } from '../builder/lib/crawl.mjs';
 import { toRaw as careersRaw } from '../builder/adapters/careers.mjs';
 import { deadline } from '../builder/http.mjs';
 
@@ -295,5 +295,24 @@ eq(snippet('A'.repeat(300), 50).length, 50, 'a single overlong sentence is cut')
   const raw = careersRaw(jobs[0], { name: 'Damen Shipyards', sitemap: 'https://x.example/sitemap.xml', lang: 'nl' }, 'https://x.example/vacancies/12');
   eq([raw.source, raw.company, raw.country, raw.lang, raw.url, raw.sourceId], ['careers', 'Damen', 'nl', 'nl', 'https://x.example/vacancies/12', 'https://x.example/vacancies/12'], 'a careers advert: the organisation on the page, the site\'s language');
 }
+
+// The hunter: where a careers section is, how a listing goes on, which platform serves it.
+eq(detectPlatform('https://aviva.wd1.myworkdayjobs.com/External'), { ats: 'workday', slug: 'aviva.wd1/External' }, 'a Workday careers site is known by its address: tenant, data centre, site');
+eq(detectPlatform('https://eeho.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/requisitions'), { ats: 'oracle', slug: 'eeho.fa.us2.oraclecloud.com/CX_1' }, 'an Oracle one by host and site');
+eq(detectPlatform('https://acme.example/careers', '<iframe src="https://boards.greenhouse.io/embed/job_board?for=acme"></iframe>'), { ats: 'greenhouse', slug: 'acme' }, 'an ATS embedded in a company page is found in the HTML');
+eq(detectPlatform('https://careers-acme.icims.com/jobs/search'), { vendor: 'icims' }, 'a platform drawn by JavaScript is named, not read');
+eq(detectPlatform('https://acme.example/jobs'), {}, 'nothing known: a site, read through feed, sitemap or listing');
+eq(detectPlatform('https://careers.acme.example/', '<a href="https://jobs.smartrecruiters.com/my-applications/Acme2">My applications</a>'), {}, "a link to an applicant's own pages names no board");
+eq(careerLinks('<a href="/about">About</a> <a href="/trabaja-con-nosotros">Únete</a> <a href="https://jobs.lever.co/acme">Open roles</a> <a href="/news">Jobs report</a>', 'https://acme.es/'), ['https://jobs.lever.co/acme', 'https://acme.es/trabaja-con-nosotros', 'https://acme.es/news'], 'careers links by a word in the address or the text; another host first, then the address, then the text');
+eq(nextLink('<a href="?page=2" rel="next">›</a>', 'https://acme.example/jobs'), 'https://acme.example/jobs?page=2', 'the next page of a listing by rel=next');
+eq(nextLink('<a class="p" href="/jobs?p=3">Siguiente</a>', 'https://acme.example/jobs?p=2'), 'https://acme.example/jobs?p=3', 'or by the word next in the languages of the sites read');
+eq(nextLink('<a href="/jobs/1">Engineer</a>', 'https://acme.example/jobs'), '', 'no next link: the listing ends');
+const wd = ATS.workday.parse({ total: 2, jobPostings: [{ title: 'Test Engineer', externalPath: '/job/Bristol/Test-Engineer_R-1', locationsText: 'Bristol', postedOn: 'Posted 3 Days Ago', bulletFields: ['R-1'] }, { title: 'Analyst', externalPath: '/job/x/Analyst_R-2', locationsText: '2 Locations', postedOn: 'Posted Today' }] }, 'aviva.wd1/External');
+eq([wd[0].url, wd[0].sourceId, wd[0].location, wd[1].location, wd[1].posted], ['https://aviva.wd1.myworkdayjobs.com/en-US/External/job/Bristol/Test-Engineer_R-1', 'R-1', 'Bristol', '', new Date().toISOString().slice(0, 10)], 'Workday: the page address, the reference, the place ("2 Locations" says nothing), the day');
+eq(wd[0].posted, new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10), 'and "Posted 3 Days Ago" is three days ago');
+const ora = ATS.oracle.parse({ items: [{ TotalJobsCount: 1, requisitionList: [{ Id: '344589', Title: 'Data Center Engineer', PrimaryLocation: 'Madrid, Spain', PostedDate: '2026-09-01', ShortDescriptionStr: '<p>Ops</p>' }] }] }, 'eeho.fa.us2.oraclecloud.com/CX_1');
+eq([ora[0].url, ora[0].location, ora[0].posted, ora[0].description], ['https://eeho.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/requisitions/preview/344589', 'Madrid, Spain', '2026-09-01', 'Ops'], 'Oracle: the preview address, the place, the day, the short text');
+eq([ATS.workday.more({ total: 148 }, 20), ATS.workday.more({ total: 148 }, 160), ATS.oracle.more({ items: [{ TotalJobsCount: 2261 }] }, 1000)], [true, false, false], 'paging stops at the total, or at a thousand');
+eq(ATS.workday.request('aviva.wd1/External', 40).method, 'POST', 'the Workday list is asked the way its page asks it');
 
 done();

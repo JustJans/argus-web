@@ -28,17 +28,17 @@ export function deadline(promise, ms) {
   return Promise.race([promise, clock]).finally(() => clearTimeout(timer));
 }
 
-// ➤ GET a URL; answers the Response, or throws after the last failed try. `gapMs` is the
-// ➤ minimum distance between two calls to the same host (default 250 ms); `timeoutMs` the
-// ➤ wait for one answer (default 20 s).
-export async function get(url, { headers = {}, gapMs = 250, tries = 3, timeoutMs = TIMEOUT_MS } = {}) {
+// ➤ GET a URL (or POST it, with `method` and `body`); answers the Response, or throws after
+// ➤ the last failed try. `gapMs` is the minimum distance between two calls to the same host
+// ➤ (default 250 ms); `timeoutMs` the wait for one answer (default 20 s).
+export async function get(url, { headers = {}, gapMs = 250, tries = 3, timeoutMs = TIMEOUT_MS, method = 'GET', body } = {}) {
   const host = new URL(url).hostname;
   if (blocked.get(host) > Date.now()) throw tooMany(host, blocked.get(host));
   let lastError;
   for (let attempt = 0; attempt < tries; attempt++) {
     await pace(host, gapMs);
     try {
-      const res = await fetch(url, { headers: { 'User-Agent': UA, ...headers }, redirect: 'follow', signal: AbortSignal.timeout(timeoutMs) });
+      const res = await fetch(url, { method, body, headers: { 'User-Agent': UA, ...headers }, redirect: 'follow', signal: AbortSignal.timeout(timeoutMs) });
       if (res.status === 429) {
         const until = Date.now() + retryAfterMs(res.headers.get('retry-after'));
         blocked.set(host, until); nextSlot.set(host, until); lastError = tooMany(host, until);
