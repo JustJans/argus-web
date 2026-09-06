@@ -15,25 +15,24 @@ export function relativeDay(iso) {
   return `${Math.round(days / 30)} months ago`;
 }
 
+// ➤ A card: the English title with the date at its right, the original title in small print
+// ➤ when they differ, employer and place, the excerpt, and the tags (the source outlined).
 export function card(o, ctx) {
   const li = el('li', 'offer');
-  // ➤ The English title leads; the original follows in small print when they differ.
   const h = el('h3', 'offer__title');
   const href = safeUrl(o.u);
   const shown = o.te || o.t;
   if (href) { const a = el('a', null, shown); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; h.append(a); } else h.textContent = shown;
-  li.append(h);
+  li.append(h, el('span', 'offer__date', relativeDay(o.d)));
   if (o.te) li.append(el('p', 'offer__original', o.t));
-  const meta = el('p', 'offer__meta');
-  const bits = [o.c, [o.ci, ctx.countryName(o.cc)].filter(Boolean).join(', '), relativeDay(o.d)].filter(Boolean);
-  meta.textContent = bits.join(' · ');
-  li.append(meta);
+  const place = [o.ci, ctx.countryName(o.cc)].filter(Boolean).join(', ');
+  li.append(el('p', 'offer__meta', [o.c, place].filter(Boolean).join(' · ')));
   if (o.sn) li.append(el('p', 'offer__snippet', o.sn));
   const tags = el('p', 'offer__tags');
-  tags.append(el('span', 'tag tag--source', `via ${ctx.sourceName(o.s)}`));
-  if (o.y) tags.append(el('span', 'tag', `asks ${o.y}+ years`));
-  if (o.lg?.length) tags.append(el('span', 'tag', `requires ${o.lg.map(ctx.languageName).join(', ')}`));
-  if (o.dg?.length) tags.append(el('span', 'tag', `degree: ${o.dg.map(ctx.degreeName).join(' / ')}`));
+  tags.append(el('span', 'tag tag-outline', `via ${ctx.sourceName(o.s)}`));
+  if (o.y) tags.append(el('span', 'tag tag-neutral', `asks ${o.y}+ years`));
+  if (o.lg?.length) tags.append(el('span', 'tag tag-neutral', `requires ${o.lg.map(ctx.languageName).join(', ')}`));
+  if (o.dg?.length) tags.append(el('span', 'tag tag-neutral', `degree: ${o.dg.map(ctx.degreeName).join(' / ')}`));
   li.append(tags);
   return li;
 }
@@ -43,26 +42,28 @@ export function renderList(container, offers, ctx, pageSize = 40) {
   const ul = el('ul', 'offers');
   container.append(ul);
   let shown = 0;
-  const more = el('button', 'button', 'Show more');
+  const more = el('button', 'btn btn-secondary more', 'Show more');
+  more.type = 'button';
   const show = () => {
     for (const o of offers.slice(shown, shown + pageSize)) ul.append(card(o, ctx));
     shown = Math.min(offers.length, shown + pageSize);
     more.hidden = shown >= offers.length;
-    more.textContent = `Show more (${offers.length - shown} left)`;
+    more.textContent = `Show more (${(offers.length - shown).toLocaleString('en')} left)`;
   };
   more.addEventListener('click', show);
   container.append(more);
   show();
 }
 
+// ➤ Zero results: how many adverts fell at each stage, and how to loosen the filters.
 export function renderEmpty(container, stages, total) {
   container.replaceChildren();
   const box = el('div', 'empty');
-  box.append(el('h3', null, `0 of ${total} offers match`));
+  box.append(el('h3', null, `0 of ${total.toLocaleString('en')} offers match`));
   const ul = el('ul');
-  for (const [stage, n] of Object.entries(stages)) if (n) ul.append(el('li', null, `${n} dropped at ${stage.toLowerCase()}`));
+  for (const [stage, count] of Object.entries(stages)) if (count) { const li = el('li'); li.append(el('span', 'empty__n', count.toLocaleString('en')), el('span', null, `dropped at ${stage.toLowerCase()}`)); ul.append(li); }
   box.append(ul);
-  box.append(el('p', 'muted', 'Loosen the profile: more families, more countries, fewer deal-breakers, a higher years cap.'));
+  box.append(el('p', null, 'Loosen the filters: more occupations, more countries, fewer deal-breakers, a higher years cap.'));
   container.append(box);
 }
 
