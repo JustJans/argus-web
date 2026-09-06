@@ -21,12 +21,12 @@ const JOBTECH = 'https://taxonomy.api.jobtechdev.se/v1/taxonomy/graphql';
 // ➤ The vertical, as decided: ISCO-08 minor groups 214-216 and 311-315 (engineers,
 // ➤ architects/planners/surveyors, technicians, supervisors, plant operators, crews), minus
 // ➤ product/garment and graphic designers.
-export const MINOR_GROUPS = ['214', '215', '216', '311', '312', '313', '315'];
+export const MINOR_GROUPS = ['214', '215', '216', '251', '252', '311', '312', '313', '315', '351', '352'];
 export const EXCLUDED_UNITS = ['2163', '2166'];
 // ➤ Groups next door whose job titles look like ours but are out (software and ICT, technical
 // ➤ sales): their ESCO titles let the gate refuse "software engineer" or "sales engineer"
 // ➤ instead of reading them as engineers.
-export const BLOCKER_GROUPS = ['251', '252', '351', '352', '243'];
+export const BLOCKER_GROUPS = ['243'];
 // ➤ The languages kept: those of today's and tomorrow's sources. ESCO has no Catalan.
 export const LANGS = ['en', 'es', 'fr', 'de', 'nl', 'sv', 'no', 'da', 'fi', 'it', 'pt', 'pl', 'cs', 'lt', 'lv'];
 

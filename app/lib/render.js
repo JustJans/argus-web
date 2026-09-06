@@ -5,6 +5,17 @@ const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) 
 
 const safeUrl = u => { try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : null; } catch { return null; } };
 
+// ➤ Adzuna's terms want each of its adverts labelled "Jobs by Adzuna", both words linking to
+// ➤ Adzuna's site in the advert's country.
+const ADZUNA = { es: 'adzuna.es', de: 'adzuna.de', fr: 'adzuna.fr', nl: 'adzuna.nl', it: 'adzuna.it', at: 'adzuna.at', pl: 'adzuna.pl', be: 'adzuna.be', ch: 'adzuna.ch', gb: 'adzuna.co.uk' };
+function adzunaLabel(cc) {
+  const host = `https://www.${ADZUNA[cc] || 'adzuna.co.uk'}/`;
+  const tag = el('span', 'tag tag-outline');
+  const link = txt => { const a = el('a', null, txt); a.href = host; a.target = '_blank'; a.rel = 'noopener noreferrer'; return a; };
+  tag.append(link('Jobs'), document.createTextNode(' by '), link('Adzuna'));
+  return tag;
+}
+
 export function relativeDay(iso) {
   if (!iso) return '';
   const days = Math.round((Date.now() - new Date(iso).getTime()) / 864e5);
@@ -29,7 +40,7 @@ export function card(o, ctx) {
   li.append(el('p', 'offer__meta', [o.c, place].filter(Boolean).join(' · ')));
   if (o.sn) li.append(el('p', 'offer__snippet', o.sn));
   const tags = el('p', 'offer__tags');
-  tags.append(el('span', 'tag tag-outline', `via ${ctx.sourceName(o.s)}`));
+  tags.append(o.s === 'adzuna' ? adzunaLabel(o.cc) : el('span', 'tag tag-outline', `via ${ctx.sourceName(o.s)}`));
   if (o.y) tags.append(el('span', 'tag tag-neutral', `asks ${o.y}+ years`));
   if (o.lg?.length) tags.append(el('span', 'tag tag-neutral', `requires ${o.lg.map(ctx.languageName).join(', ')}`));
   if (o.dg?.length) tags.append(el('span', 'tag tag-neutral', `degree: ${o.dg.map(ctx.degreeName).join(' / ')}`));

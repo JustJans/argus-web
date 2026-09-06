@@ -19,6 +19,7 @@ export const text = html => decodeEntities(String(html || '')
   .replace(/<[^>]+>/g, ' '))
   .replace(/[ \t ]+/g, ' ')
   .replace(/\n\s*\n+/g, '\n')
+  .replace(/ +([.,;:!?])/g, '$1')
   .trim();
 
 const day = v => { const d = v ? new Date(v) : null; return d && !Number.isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : ''; };

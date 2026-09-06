@@ -3,7 +3,7 @@
 // ➤ fails is reported and skipped; the run fails only when every source failed, so a bad
 // ➤ hour at one API never publishes an empty site. --explain writes one line per dropped
 // ➤ advert with the reason, --limit N stops each source after N adverts (for a quick look).
-import { mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import yaml from 'js-yaml';
@@ -21,10 +21,16 @@ import * as sef from './adapters/sef.mjs';
 import * as mpsv from './adapters/mpsv.mjs';
 import * as uzt from './adapters/uzt.mjs';
 import * as nva from './adapters/nva.mjs';
+import * as adzuna from './adapters/adzuna.mjs';
+import { jobicy, remotive, arbeitnow } from './adapters/remote.mjs';
 import * as boards from './adapters/boards.mjs';
 import { ATS } from './adapters/boards.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
+// ➤ Keys for the sources that need one (Adzuna): builder/.env, one KEY=VALUE per line, never
+// ➤ in git; the environment itself wins when it already has the key.
+const envFile = join(ROOT, 'builder', '.env');
+if (existsSync(envFile)) for (const line of readFileSync(envFile, 'utf8').split(/\r?\n/)) { const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/); if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^["']|["']$/g, ''); }
 const args = process.argv.slice(2);
 const flag = (name, dflt) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : dflt; };
 const OUT = flag('--out', join(ROOT, 'builder', 'out'));
@@ -57,7 +63,7 @@ const failed = [];
 // ➤ is asked for.
 const ctx = { families, iscoUnits: [...gate.byIsco.keys()], ssykGroups: [...gate.bySsyk.keys()], companies, log, fail: (who, why) => { failed.push(`${who}: ${why}`); log(`FAILED ${who}: ${why}`); } };
 
-const adapters = [lanbide, feinaactiva, jcyl, sef, jobtech, mpsv, uzt, nva, boards];
+const adapters = [lanbide, feinaactiva, jcyl, sef, jobtech, mpsv, uzt, nva, adzuna, jobicy, remotive, arbeitnow, boards];
 const items = [];
 const dropped = [];
 const counts = { found: 0, outsideVertical: 0, outsideEurope: 0, hygiene: 0, noLink: 0 };

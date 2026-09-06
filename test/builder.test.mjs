@@ -20,6 +20,8 @@ import { toRaw as uztRaw, cityOf as ltCity } from '../builder/adapters/uzt.mjs';
 import { parseNva, parseCsv, cityOf as lvCity } from '../builder/adapters/nva.mjs';
 import { parseSef } from '../builder/adapters/sef.mjs';
 import { withoutContacts } from '../builder/normalise.mjs';
+import { toRaw as adzunaRaw, detailsUrl } from '../builder/adapters/adzuna.mjs';
+import { jobicy, remotive, arbeitnow } from '../builder/adapters/remote.mjs';
 
 const { ok, eq, done } = harness('builder');
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -33,8 +35,9 @@ const cc = compileCountries(countries);
 const ssykOf = code => Object.entries(codes.ssyk.concepts).find(([, c]) => c.ssyk === code)[0];
 
 // ── The catalogue ───────────────────────────────────────────────────────
-eq(catalogue.groups.map(g => g.id), ['engineers', 'architects-surveyors', 'technicians', 'supervisors', 'plant-operators', 'crews'], 'six groups, by ISCO minor group');
-eq(families.length, 37, 'thirty-seven families: the unit groups of 214-216 and 311-315 minus the two designer groups');
+eq(catalogue.groups.map(g => g.id), ['engineers', 'architects-surveyors', 'technicians', 'supervisors', 'plant-operators', 'crews', 'software-it', 'it-technicians'], 'eight groups, by ISCO minor group, the computing ones appended last');
+eq(families.length, 52, 'fifty-two families: the unit groups of 214-216, 251-252, 311-315 and 351-352 minus the two designer groups');
+eq(families.slice(0, 37).map(f => f.id).join(' '), '2141 2142 2143 2144 2145 2146 2149 2151 2152 2153 2161 2162 2164 2165 3111 3112 3113 3114 3115 3116 3117 3118 3119 3121 3122 3123 3131 3132 3133 3134 3135 3139 3151 3152 3153 3154 3155', 'the first thirty-seven keep their places: they are bits in every code out there');
 ok(families.every(f => /^\d{4}$/.test(f.id) && f.isco[0] === f.id && catalogue.groups.some(g => g.id === f.group) && f.label && f.isco_title), 'every family is an ISCO code with its group, a label and ISCO\'s own title');
 ok(families.every(f => codes.isco.units[f.id]?.labels?.en?.length), 'every family has ESCO job titles in English');
 eq(new Set(families.map(f => f.id)).size, families.length, 'ids are unique');
@@ -46,7 +49,8 @@ eq(familiesOf({ title: 'Telekomingenjör', codes: { ssyk: ssykOf('2143') }, lang
 eq(familiesOf({ title: 'Ingenjör', codes: { ssyk: ssykOf('2143') }, lang: 'sv' }, gate).sort(), ['2151', '2152', '2153'], 'and keeps them all when it names none');
 eq(familiesOf({ title: 'Mechanical Engineer', codes: { ssyk: ssykOf('3323') }, lang: 'sv' }, gate), [], 'a code outside the vertical is the source\'s word: out, whatever the title');
 eq(familiesOf({ title: 'Anything', codes: { isco: '2142' } }, gate), ['2142'], 'an ISCO code decides too');
-eq(familiesOf({ title: 'Mechanical Engineer', codes: { isco: '2512' } }, gate), [], 'an ISCO code outside the vertical is out');
+eq(familiesOf({ title: 'Mechanical Engineer', codes: { isco: '2512' } }, gate), ['2512'], 'an ISCO code in the computing groups is in since 2026-09-06');
+eq(familiesOf({ title: 'Anything', codes: { isco: '5120' } }, gate), [], 'a cook is out, whatever the title');
 eq(familiesOf({ title: 'Konstruktér/ka', codes: { isco: '31152' }, lang: 'cs' }, gate), ['3115'], 'a five-digit CZ-ISCO code decides by its first four digits');
 eq(familiesOf({ title: 'Automatikos inžinierius', codes: { isco: '214911' }, lang: 'lt' }, gate), ['2149'], 'a six-digit Lithuanian LPK code, the same way');
 
@@ -54,12 +58,14 @@ eq(familiesOf({ title: 'Automatikos inžinierius', codes: { isco: '214911' }, la
 eq(familiesOf({ title: 'Mechanical Engineer', codes: {}, lang: 'en' }, gate), ['2144'], 'no code: the title; the group that names it beats the groups that list it as an alternative');
 eq(familiesOf({ title: 'Naval Architect', codes: {}, lang: 'en' }, gate), ['2144'], 'a naval architect is a mechanical engineer in ISCO, not an architect: the longest title wins');
 eq(familiesOf({ title: 'Chief Engineer', codes: {}, lang: 'en' }, gate), ['3151'], 'a chief engineer is a ship\'s engineer');
-eq(familiesOf({ title: 'Senior Solution Architect', codes: {}, lang: 'en' }, gate), [], 'a solution architect is ICT: blocked');
-eq(familiesOf({ title: 'Software Engineer', codes: {}, lang: 'en' }, gate), [], 'so is a software engineer, whatever the word engineer says');
+eq(familiesOf({ title: 'Senior Solution Architect', codes: {}, lang: 'en' }, gate), ['2511'], 'a solution architect goes with the systems analysts, not with the building architects');
+eq(familiesOf({ title: 'Software Engineer', codes: {}, lang: 'en' }, gate), ['2512'], 'a software engineer is a software developer');
 eq(familiesOf({ title: 'Project Engineer', codes: {}, lang: 'en' }, gate), ['2149'], 'only the word engineer: engineers not elsewhere classified');
-eq(familiesOf({ title: 'Senior Backend Engineer', codes: {}, lang: 'en' }, gate), [], 'a backend engineer is software: out');
-eq(familiesOf({ title: 'AI Research Engineer - Computer Vision', codes: {}, lang: 'en' }, gate), [], 'so is an AI research engineer');
-eq(familiesOf({ title: 'Lead D365 F&O Solutions Architect Finance', codes: {}, lang: 'en' }, gate), [], 'and a solutions architect is not a building architect');
+eq(familiesOf({ title: 'Senior Backend Engineer', codes: {}, lang: 'en' }, gate), ['2512'], 'a backend engineer is a software developer');
+eq(familiesOf({ title: 'AI Research Engineer - Computer Vision', codes: {}, lang: 'en' }, gate), ['2512'], 'so is an AI research engineer');
+eq(familiesOf({ title: 'Lead D365 F&O Solutions Architect Finance', codes: {}, lang: 'en' }, gate), ['2511'], 'and a solutions architect is not a building architect');
+eq(familiesOf({ title: 'Head Chef', codes: {}, lang: 'en' }, gate), [], 'a chef is out');
+eq(familiesOf({ title: 'Welder', codes: {}, lang: 'en' }, gate), [], 'a welder is out');
 eq(familiesOf({ title: 'Advanced Mechanical Design Engineer (Thermal Runaway)', codes: {}, lang: 'en' }, gate), ['2149'], 'a mechanical design engineer stays in, as an engineer not elsewhere classified');
 eq(familiesOf({ title: 'Draughtsman', codes: {}, lang: 'en' }, gate), ['3118'], 'a British spelling ESCO lacks comes from the extra terms');
 eq(familiesOf({ title: 'INGENIERO/A MECÁNICO/A', codes: {}, lang: 'es' }, gate), ['2144'], 'Spanish, with gender marks');
@@ -73,17 +79,17 @@ eq(familiesOf({ title: "Enginyer/a d'automatització", codes: {}, lang: 'ca' }, 
 eq(familiesOf({ title: 'Ingénieur études et conception mécanique H/F', codes: {}, lang: 'fr' }, gate), ['2149'], 'French: the bare ingénieur alone falls into 2149');
 eq(familiesOf({ title: 'Fisioterapeuta', codes: {}, lang: 'es' }, gate), [], 'a physiotherapist is outside the vertical');
 eq(familiesOf({ title: "CAP D'OBRA - APARELLADOR/A - ARQUITECTE/A TÈCNIC/A", codes: {}, lang: 'ca' }, gate).sort(), ['2149', '3112', '3123'], 'a Catalan site manager and building surveyor: the longer "arquitecte tècnic" beats "arquitecte"');
-eq(familiesOf({ title: 'Ingeniero/a Informático/a para AUVASA (Valladolid)', codes: {}, lang: 'es' }, gate), [], 'a computing engineer is not ours, so the bare ingeniero does not rescue it');
+eq(familiesOf({ title: 'Ingeniero/a Informático/a para AUVASA (Valladolid)', codes: {}, lang: 'es' }, gate), ['2512'], 'a Spanish computing engineer is a software developer');
 eq(familiesOf({ title: 'COORDINADOR/A DE LLEURE', codes: {}, lang: 'ca' }, gate), [], 'a bare "coordinador" names no occupation of ours');
 eq(familiesOf({ title: 'TALLYMAN, SUPERVISOR/RA', codes: {}, lang: 'es' }, gate), [], 'nor does a bare "supervisor"');
 eq(familiesOf({ title: 'ARQUITECTO/TA TECNICO/CA - JEFE/FA DE OBRA', codes: {}, lang: 'es' }, gate).includes('3112') && !familiesOf({ title: 'ARQUITECTO/TA TECNICO/CA - JEFE/FA DE OBRA', codes: {}, lang: 'es' }, gate).includes('2161'), true, 'the /TA /CA /FA gender marks go too, so the building surveyor is read whole');
-eq(familiesOf({ title: 'TECNICO/A DE INFRAESTRUCTURAS IT', codes: {}, lang: 'es' }, gate), [], 'IT puts a title outside the vertical whatever else it says');
+eq(familiesOf({ title: 'ESPECIALISTA IT', codes: {}, lang: 'es' }, gate), ['2519'], 'a computing word with no occupation ESCO knows lands in the software group not elsewhere classified');
 ok(familiesOf({ title: "ENGINYER/A DE PONTS I CAMINS O D'OBRA CIVIL", codes: {}, lang: 'ca' }, gate).includes('2142'), 'the Catalan civil engineer');
 eq(matchableTitle("Enginyer/a d'automatització (m/f)"), 'enginyer d automatitzacio', 'gender marks and apostrophes go before the words are read');
 eq(familiesOf({ title: 'BŪVINŽENIERIS', codes: {}, lang: 'lv' }, gate), ['2142'], 'Latvian, by ESCO\'s Latvian titles');
 eq(familiesOf({ title: 'ELEKTROTEHNIĶIS (ELEKTRISKO IEKĀRTU SPECIĀLISTS)', codes: {}, lang: 'lv' }, gate), ['3113'], 'a Latvian electrical technician');
-eq(familiesOf({ title: 'PROGRAMMĒTĀJS', codes: {}, lang: 'lv' }, gate), [], 'a Latvian programmer is out');
-eq(familiesOf({ title: 'PROGRAMMĒŠANAS INŽENIERIS', codes: {}, lang: 'lv' }, gate), [], 'and so is a programming engineer, whatever the compound says');
+eq(familiesOf({ title: 'PROGRAMMĒTĀJS', codes: {}, lang: 'lv' }, gate), ['2519'], 'a Latvian programmer, by the computing words');
+eq(familiesOf({ title: 'PROGRAMMĒŠANAS INŽENIERIS', codes: {}, lang: 'lv' }, gate), ['2519'], 'a programming engineer is software, whatever the compound says');
 eq(familiesOf({ title: 'Stavební inženýr', codes: {}, lang: 'cs' }, gate), ['2142'], 'Czech, by ESCO\'s Czech titles (the feed carries codes; this is the fallback)');
 eq(familiesOf({ title: 'KOMUNĀLINŽENIERIS', codes: {}, lang: 'lv' }, gate), ['2149'], 'a Latvian compound with the engineer word inside falls into 2149');
 eq(familiesOf({ title: 'Bauingenieur (m/w/d)', codes: {}, lang: 'de' }, gate).length > 0, true, 'so does a German one');
@@ -232,6 +238,18 @@ eq(snippet('A'.repeat(300), 50).length, 50, 'a single overlong sentence is cut')
   eq(rows.length, 1, 'a row without a link is dropped');
   eq([rows[0].title, rows[0].location, rows[0].city, rows[0].posted, rows[0].expires, rows[0].url], ['INGENIERO/A DE PROCESOS', 'San Javier, Murcia, Spain', 'San Javier', '2026-09-04', '2026-10-03', 'https://sefoficinavirtual.carm.es/sefoficinavirtual/public/oferta/detalle-oferta.xhtml?id=57571'], 'Murcia: places title-cased, Spanish dates read');
   ok(rows[0].description.includes('Diseño de procesos.') && rows[0].description.includes('Experiencia: 12 meses'), 'the HTML body becomes text, the experience line rides along');
+}
+
+{
+  const r = adzunaRaw({ id: 5178901, title: 'Ingeniero de procesos', company: { display_name: 'Acme SL' }, location: { display_name: 'Getafe, Madrid', area: ['España', 'Comunidad de Madrid', 'Madrid', 'Getafe'] }, redirect_url: 'https://www.adzuna.es/land/ad/5178901?se=abc&utm_medium=api', description: 'Se busca ingeniero con 3 años.', created: '2026-09-05T08:00:00Z' }, 'es');
+  eq([r.title, r.company, r.location, r.city, r.country, r.url, r.posted, r.lang], ['Ingeniero de procesos', 'Acme SL', 'Getafe, Madrid', 'Getafe', 'es', 'https://www.adzuna.es/details/5178901', '2026-09-05', 'es'], 'Adzuna: the details page instead of the tracking bounce, the narrowest area as the city');
+  eq(detailsUrl('https://example.com/x', 1), 'https://example.com/x', 'a redirect that is not Adzuna\'s stays as it is');
+  const jb = jobicy.parse({ jobs: [{ id: 151870, url: 'https://jobicy.com/jobs/151870-x', jobTitle: 'DevOps Engineer', companyName: 'Alma', jobGeo: 'Italy', jobExcerpt: 'Short.', jobDescription: '<p>Long &amp; full.</p>', pubDate: '2026-09-06T06:05:03+00:00' }] });
+  eq([jb[0].title, jb[0].location, jb[0].remote, jb[0].description, jb[0].posted, jb[0].url], ['DevOps Engineer', 'Italy', true, 'Long & full.', '2026-09-06', 'https://jobicy.com/jobs/151870-x'], 'Jobicy: remote, the country as the place, the full text');
+  const rm = remotive.parse({ jobs: [{ id: 9, url: 'https://remotive.com/remote-jobs/software-dev/x-9', title: 'Backend Engineer', company_name: 'Acme', candidate_required_location: 'Europe', publication_date: '2026-09-04T10:00:00', description: '<p>Body</p>' }] });
+  eq([rm[0].title, rm[0].location, rm[0].remote, rm[0].posted, rm[0].description], ['Backend Engineer', 'Europe', true, '2026-09-04', 'Body'], 'Remotive: the required location kept as the place');
+  const ab = arbeitnow.parse({ data: [{ slug: 'x-1', company_name: 'Superchat', title: 'Tech Lead (m/f/d)', description: '&lt;p&gt;We&#39;re &lt;strong&gt;hiring&lt;/strong&gt;.&lt;/p&gt;', remote: false, url: 'https://www.arbeitnow.com/jobs/companies/superchat/x-1', location: 'Berlin', created_at: Date.UTC(2026, 8, 5, 12) / 1000 }] });
+  eq([ab[0].title, ab[0].company, ab[0].location, ab[0].description, ab[0].posted, ab[0].lang], ['Tech Lead (m/f/d)', 'Superchat', 'Berlin', "We're hiring.", '2026-09-05', 'de'], 'Arbeitnow: escaped HTML read as text, the epoch as a day');
 }
 
 done();

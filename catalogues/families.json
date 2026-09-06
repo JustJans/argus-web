@@ -1,5 +1,5 @@
 {
-  "_about": "Version 2 (2026-09-05). One family per ISCO-08 unit group of the vertical (minor groups 214-216 and 311-315, minus product/garment and graphic designers), grouped by minor group. id = the ISCO code; label = what the screen shows under the group heading; isco_title = ISCO/ESCO's own title; extra_terms = job titles ESCO lacks, per language (all of Catalan; a few British spellings). The gate reads the job titles per language from codes/isco.json (ESCO) and the SSYK correspondence from codes/ssyk-isco.json (JobTech). APPEND ONLY: the position of a family is its bit in the profile code.",
+  "_about": "Version 2 (2026-09-05; computing groups appended 2026-09-06). One family per ISCO-08 unit group of the vertical (minor groups 214-216, 251-252, 311-315 and 351-352, minus product/garment and graphic designers), grouped by minor group. id = the ISCO code; label = what the screen shows under the group heading; isco_title = ISCO/ESCO's own title; extra_terms = job titles ESCO lacks, per language (all of Catalan; the English of company boards; a few Spanish). The gate reads the job titles per language from codes/isco.json (ESCO) and the SSYK correspondence from codes/ssyk-isco.json (JobTech). APPEND ONLY: the position of a family is its bit in the profile code. Built by builder/tools/make-families.mjs.",
   "groups": [
     {
       "id": "engineers",
@@ -42,6 +42,22 @@
       "label": "Ship and aircraft crews",
       "isco": [
         "315"
+      ]
+    },
+    {
+      "id": "software-it",
+      "label": "Software and IT",
+      "isco": [
+        "251",
+        "252"
+      ]
+    },
+    {
+      "id": "it-technicians",
+      "label": "IT technicians",
+      "isco": [
+        "351",
+        "352"
       ]
     }
   ],
@@ -445,14 +461,14 @@
         "3123"
       ],
       "extra_terms": {
+        "es": [
+          "jefe de obra",
+          "jefa de obra"
+        ],
         "ca": [
           "cap d'obra",
           "encarregat d'obra",
           "encarregada d'obra"
-        ],
-        "es": [
-          "jefe de obra",
-          "jefa de obra"
         ]
       }
     },
@@ -578,6 +594,306 @@
       "isco_title": "Air traffic safety electronics technicians",
       "isco": [
         "3155"
+      ]
+    },
+    {
+      "id": "2511",
+      "group": "software-it",
+      "label": "Systems analysts",
+      "isco_title": "Systems analysts",
+      "isco": [
+        "2511"
+      ],
+      "extra_terms": {
+        "en": [
+          "solutions architect",
+          "solution architect",
+          "software architect",
+          "cloud architect",
+          "enterprise architect",
+          "data architect",
+          "it architect",
+          "technical architect"
+        ],
+        "ca": [
+          "analista de sistemes",
+          "analista funcional",
+          "consultor informàtic",
+          "consultora informàtica"
+        ]
+      }
+    },
+    {
+      "id": "2512",
+      "group": "software-it",
+      "label": "Software developers",
+      "isco_title": "Software developers",
+      "isco": [
+        "2512"
+      ],
+      "extra_terms": {
+        "en": [
+          "software engineer",
+          "backend developer",
+          "back-end developer",
+          "backend engineer",
+          "back-end engineer",
+          "frontend developer",
+          "front-end developer",
+          "frontend engineer",
+          "front-end engineer",
+          "full stack developer",
+          "full-stack developer",
+          "fullstack developer",
+          "full stack engineer",
+          "full-stack engineer",
+          "fullstack engineer",
+          "mobile developer",
+          "mobile engineer",
+          "ios developer",
+          "android developer",
+          "firmware engineer",
+          "devops engineer",
+          "site reliability engineer",
+          "platform engineer",
+          "cloud engineer",
+          "machine learning engineer",
+          "ml engineer",
+          "ai engineer",
+          "ai research engineer",
+          "compiler engineer",
+          "staff engineer",
+          "principal engineer"
+        ],
+        "es": [
+          "ingeniero de software",
+          "ingeniera de software",
+          "ingeniero informático",
+          "ingeniera informática",
+          "desarrollador de software",
+          "desarrolladora de software",
+          "programador",
+          "programadora",
+          "desarrollador",
+          "desarrolladora"
+        ],
+        "ca": [
+          "programador",
+          "programadora",
+          "desenvolupador",
+          "desenvolupadora",
+          "desenvolupador de software",
+          "enginyer de software",
+          "enginyera de software",
+          "enginyer informàtic",
+          "enginyera informàtica",
+          "analista programador",
+          "analista programadora"
+        ]
+      }
+    },
+    {
+      "id": "2513",
+      "group": "software-it",
+      "label": "Web and multimedia",
+      "isco_title": "Web and multimedia developers",
+      "isco": [
+        "2513"
+      ],
+      "extra_terms": {
+        "ca": [
+          "desenvolupador web",
+          "desenvolupadora web",
+          "dissenyador web",
+          "dissenyadora web"
+        ]
+      }
+    },
+    {
+      "id": "2514",
+      "group": "software-it",
+      "label": "Applications programmers",
+      "isco_title": "Applications programmers",
+      "isco": [
+        "2514"
+      ]
+    },
+    {
+      "id": "2519",
+      "group": "software-it",
+      "label": "Other software",
+      "isco_title": "Software and applications developers and analysts not elsewhere classified",
+      "isco": [
+        "2519"
+      ],
+      "extra_terms": {
+        "en": [
+          "qa engineer",
+          "test automation engineer",
+          "software tester",
+          "data engineer",
+          "analytics engineer"
+        ]
+      }
+    },
+    {
+      "id": "2521",
+      "group": "software-it",
+      "label": "Databases",
+      "isco_title": "Database designers and administrators",
+      "isco": [
+        "2521"
+      ],
+      "extra_terms": {
+        "en": [
+          "database administrator",
+          "dba"
+        ],
+        "ca": [
+          "administrador de bases de dades",
+          "administradora de bases de dades"
+        ]
+      }
+    },
+    {
+      "id": "2522",
+      "group": "software-it",
+      "label": "Systems administrators",
+      "isco_title": "Systems administrators",
+      "isco": [
+        "2522"
+      ],
+      "extra_terms": {
+        "en": [
+          "systems administrator",
+          "sysadmin",
+          "linux administrator"
+        ],
+        "ca": [
+          "administrador de sistemes",
+          "administradora de sistemes"
+        ]
+      }
+    },
+    {
+      "id": "2523",
+      "group": "software-it",
+      "label": "Networks",
+      "isco_title": "Computer network professionals",
+      "isco": [
+        "2523"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer de xarxes",
+          "enginyera de xarxes"
+        ]
+      }
+    },
+    {
+      "id": "2529",
+      "group": "software-it",
+      "label": "Security and other IT",
+      "isco_title": "Database and network professionals not elsewhere classified",
+      "isco": [
+        "2529"
+      ],
+      "extra_terms": {
+        "en": [
+          "security engineer",
+          "cybersecurity engineer",
+          "information security engineer",
+          "security analyst"
+        ]
+      }
+    },
+    {
+      "id": "3511",
+      "group": "it-technicians",
+      "label": "IT operations",
+      "isco_title": "Information and communications technology operations technicians",
+      "isco": [
+        "3511"
+      ]
+    },
+    {
+      "id": "3512",
+      "group": "it-technicians",
+      "label": "User support",
+      "isco_title": "Information and communications technology user support technicians",
+      "isco": [
+        "3512"
+      ],
+      "extra_terms": {
+        "en": [
+          "it support engineer",
+          "it support technician",
+          "helpdesk technician",
+          "service desk analyst"
+        ],
+        "es": [
+          "técnico informático",
+          "técnica informática",
+          "técnico de sistemas",
+          "técnica de sistemas",
+          "técnico de soporte",
+          "técnica de soporte"
+        ],
+        "ca": [
+          "tècnic informàtic",
+          "tècnica informàtica",
+          "tècnic de suport",
+          "tècnica de suport",
+          "tècnic de sistemes",
+          "tècnica de sistemes"
+        ]
+      }
+    },
+    {
+      "id": "3513",
+      "group": "it-technicians",
+      "label": "Networks and systems",
+      "isco_title": "Computer network and systems technicians",
+      "isco": [
+        "3513"
+      ],
+      "extra_terms": {
+        "en": [
+          "network technician",
+          "systems technician",
+          "it systems technician"
+        ],
+        "ca": [
+          "tècnic de xarxes",
+          "tècnica de xarxes"
+        ]
+      }
+    },
+    {
+      "id": "3514",
+      "group": "it-technicians",
+      "label": "Web",
+      "isco_title": "Web technicians",
+      "isco": [
+        "3514"
+      ]
+    },
+    {
+      "id": "3521",
+      "group": "it-technicians",
+      "label": "Broadcasting and audiovisual",
+      "isco_title": "Broadcasting and audiovisual technicians",
+      "isco": [
+        "3521"
+      ]
+    },
+    {
+      "id": "3522",
+      "group": "it-technicians",
+      "label": "Telecommunications",
+      "isco_title": "Telecommunications engineering technicians",
+      "isco": [
+        "3522"
       ]
     }
   ]

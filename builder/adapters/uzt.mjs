@@ -39,10 +39,15 @@ export function toRaw(r) {
 // ➤ One query per minor group of the vertical (the first three digits of the codes).
 export async function* fetchAll(ctx) {
   const minors = [...new Set((ctx.iscoUnits || []).map(u => String(u).slice(0, 3)))];
+  let failed = 0;
   for (const m of minors) {
     const url = `${API}?ar_aktuali_siandien="1"&profesijos_kodas.startswith("${m}")&limit(2000)&select(${FIELDS.join(',')})`;
-    const rows = (await getJson(url, { gapMs: 300 }))._data || [];
+    // ➤ The API answers a web page now and then instead of JSON: that group is skipped this
+    // ➤ time and the others still come; only a run with nothing at all counts as a failure.
+    let rows;
+    try { rows = (await getJson(url, { gapMs: 1000 }))._data || []; } catch (e) { failed++; ctx.log(`uzt ${m}: skipped (${e.message.slice(0, 60)})`); continue; }
     ctx.log(`uzt ${m}: ${rows.length}`);
     for (const r of rows) if (r.darbo_vietos_id) yield toRaw(r);
   }
+  if (failed && failed === minors.length) throw new Error('every group failed');
 }
