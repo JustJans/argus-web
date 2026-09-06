@@ -22,7 +22,10 @@ workflows wait in `ops/workflows/` until the repository's token can create them)
 Sources read today: Lanbide (Basque Country), Feina Activa (Catalonia), the Junta de
 Castilla y León, the SEF of Murcia, Arbetsförmedlingen (Sweden, by occupation code), the
 Czech Labour Office (by CZ-ISCO code), Lithuania's Employment Service (by LPK code), Latvia's
-NVA, and the company boards listed in `builder/config/companies.yml`. Spanish supply is thin
+NVA, Jobicy, Remotive and Arbeitnow (boards whose API terms allow sharing with a link back), Adzuna
+once its keys are in `builder/.env` (ADZUNA_APP_ID and ADZUNA_APP_KEY, from developer.adzuna.com;
+its terms allow publishing its listings labelled "Jobs by Adzuna"), and the company boards listed in
+`builder/config/companies.yml`. Spanish supply is thin
 on purpose until a licensed feed covers the private market; every source's licence is shown
 on the page. Feeds that need an account or a signed request (France Travail, Norway's NAV,
 Poland's CBOP) wait for the owner.
@@ -46,7 +49,9 @@ per dropped advert with the reason to `builder/out/explain.txt`.
 - **Scope:** classic engineering and technical occupations (ISCO-08 groups 214, 215, 216,
   311, 312, 313, 315), all of Europe. The families are those ISCO unit groups themselves, shown
   by minor group: engineers, architects/planners/surveyors, technicians, supervisors, plant
-  operators, ship and aircraft crews. Their job titles in twelve languages come from ESCO.
+  operators, ship and aircraft crews, and, since 2026-09-06, software and IT professionals and
+  IT technicians. Trades, service and manual jobs stay out. Their job titles in fifteen
+  languages come from ESCO.
 - **Sources:** only job data whose written terms allow republishing, each offer linking to
   the page it lives on — public employment services with open licences (France Travail,
   Sweden's JobTech, Norway's NAV, Czechia, Lithuania, Latvia, Spanish regions), documented

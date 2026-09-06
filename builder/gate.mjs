@@ -1,5 +1,6 @@
-// ➤ Which ISCO-08 unit groups an advert belongs to (the families of the catalogue), and the
-// ➤ hygiene rule. Three ways in, in order of trust: the source's own ISCO code; the source's
+// ➤ Which ISCO-08 unit groups an advert belongs to (the families of the catalogue: engineers,
+// ➤ architects, technicians, supervisors, plant operators, crews, and since 2026-09-06 software
+// ➤ and IT), and the hygiene rule. Three ways in, in order of trust: the source's own ISCO code; the source's
 // ➤ SSYK code through JobTech's official SSYK→ISCO-08 correspondence (several groups can come
 // ➤ out of one code: the title picks among them when it names one, else all stay); and the
 // ➤ title alone, against ESCO's job titles in the source's language and in English, by the
@@ -14,6 +15,9 @@ const T = titleRules(fold);
 // ➤ matches. Plain dictionary words.
 const ENGINEER_WORDS = ['engineer', 'ingeniero', 'ingeniera', 'enginyer', 'enginyera', 'ingénieur', 'ingénieure', 'ingenieur', 'ingenieurin', 'ingenjör', 'civilingenjör', 'ingeniør', 'sivilingeniør', 'insinööri', 'ingegnere', 'engenheiro', 'engenheira', 'inżynier', 'inženýr', 'inženýrka', 'inžinierius', 'inžinierė', 'inženieris', 'inženiere'];
 const GENERIC_FAMILY = '2149';
+// ➤ Where a computing title lands when ESCO names nothing more precise: software and
+// ➤ applications developers and analysts not elsewhere classified.
+const ICT_FAMILY = '2519';
 // ➤ Languages that compound their engineers (būvinženieris, Bauingenieur, byggingenjör): a word
 // ➤ ending in the engineer word is the bare word too. Folded forms, as the title is read.
 const COMPOUND_ENGINEER = /(?:^|[^a-z])[a-z]{3,}(?:ingenieur|ingenieurin|ingenjor|ingenior|insinoori|inzenieris|inzeniere|inzynier|inzenyr|ingeniero|ingeniera)(?![a-z])/;
@@ -30,11 +34,13 @@ const ROLE_WORDS = ['technician', 'técnico', 'técnica', 'tècnic', 'tècnica',
   'specialist', 'especialista', 'spécialiste', 'specialista', 'specialistka', 'specialistas', 'specialistė', 'speciālists', 'speciāliste', 'vadovas', 'vadovė', 'vadītājs', 'vadītāja', 'vedoucí', 'mistr', 'meistras', 'meistars', 'consultant', 'consultor', 'consultora', 'analyst', 'analista', 'designer', 'diseñador', 'diseñadora', 'dissenyador', 'dissenyadora', 'planner', 'planificador', 'planificadora', 'assistant', 'asistente', 'auxiliar'];
 const GENERIC_WORDS = new Set([...ENGINEER_WORDS, ...ROLE_WORDS].map(T.clean));
 const usableTitle = label => !GENERIC_WORDS.has(T.clean(label));
-// ➤ Words that put a title outside the vertical whatever else it says: computing (ISCO 25),
-// ➤ sales (24) and teaching (23), in the sources' languages and in the English of company
-// ➤ boards (a backend, cloud or machine-learning engineer is a software job). Read only when
-// ➤ the title, not a code, decides.
-const OUTSIDE_WORDS = /(?:^|[^a-z0-9])(?:informatic[oa]s?|informatica|it|ict|tic|software|programador|programadora|developer|desarrollador|desarrolladora|datos|dades|data|ciberseguridad|cybersecurity|security|backend|back end|frontend|front end|fullstack|full stack|mobile|devops|sre|cloud|ml|machine learning|ai|analytics|compiler|infrastructure|platform|web|api|firmware|app|apps|android|ios|javascript|typescript|python|java|kubernetes|saas|crm|erp|d365|sap|salesforce|solution|solutions|enterprise|database|sql|comercial|ventas|sales|profesor|profesora|professor|docente|teacher|lecturer|formador|formadora|programator|programatorka|programuotojas|programmetajs|pardavimu|pardosanas|tirdzniecibas|prekybos|obchodni|prodej|ucitel|ucitelka|mokytojas|skolotajs|duomenu|datu|programovani|programavimo|programmesanas|skaitlotaju|datoru|kompiuteriu|pocitacovy|pocitacova)(?![a-z0-9])/;
+// ➤ Words that put a title outside the vertical whatever else it says: sales (ISCO 24) and
+// ➤ teaching (23), in the sources' languages. Read only when the title, not a code, decides.
+const OUTSIDE_WORDS = /(?:^|[^a-z0-9])(?:comercial|ventas|sales|profesor|profesora|professor|docente|teacher|lecturer|formador|formadora|pardavimu|pardosanas|tirdzniecibas|prekybos|obchodni|prodej|ucitel|ucitelka|mokytojas|skolotajs)(?![a-z0-9])/;
+// ➤ The computing vocabulary of job titles, in the sources' languages and in the English of
+// ➤ company boards: a title that carries one and names no occupation ESCO knows is still a
+// ➤ software job, and lands in ICT_FAMILY rather than among the engineers.
+const ICT_WORDS = /(?:^|[^a-z0-9])(?:informatic[oa]s?|informatica|it|ict|tic|software|programador|programadora|developer|desarrollador|desarrolladora|datos|dades|data|ciberseguridad|cybersecurity|backend|back end|frontend|front end|fullstack|full stack|mobile|devops|sre|cloud|ml|machine learning|ai|analytics|compiler|web|api|firmware|app|apps|android|ios|javascript|typescript|python|java|kubernetes|saas|crm|erp|d365|sap|salesforce|solution|solutions|database|sql|programator|programatorka|programuotojas|programmetajs|duomenu|datu|programovani|programavimo|programmesanas|skaitlotaju|datoru|kompiuteriu|pocitacovy|pocitacova)(?![a-z0-9])/;
 
 // ➤ The languages a title is read in: the source's, plus English (many adverts everywhere
 // ➤ are in English); a Catalan source is also read in Spanish, which ESCO has and Catalan lacks.
@@ -80,7 +86,7 @@ export function compileFamilies(catalogue, codes = {}) {
   const blockers = {};
   for (const b of Object.values(codes.isco?.blockers || {})) for (const [lang, labels] of Object.entries(b.labels || {})) (blockers[lang] ||= []).push(...labels);
   for (const lang of Object.keys(blockers)) blockers[lang] = T.alternation(blockers[lang]);
-  return { families, byIsco, bySsyk, titles, blockers, generic: T.alternation(ENGINEER_WORDS), genericFamily: byIsco.has(GENERIC_FAMILY) ? byIsco.get(GENERIC_FAMILY) : null };
+  return { families, byIsco, bySsyk, titles, blockers, generic: T.alternation(ENGINEER_WORDS), genericFamily: byIsco.get(GENERIC_FAMILY) || null, ictFamily: byIsco.get(ICT_FAMILY) || null };
 }
 
 // ➤ What a cleaned title names, by ESCO's titles: the families that stand by the rule, and
@@ -113,7 +119,9 @@ export function familiesOf(raw, gate) {
   if (codes.isco || codes.ssyk) return [];
   if (OUTSIDE_WORDS.test(title)) return [];
   if (byTitle.families.length) return byTitle.families;
-  if (byTitle.blocked || !gate.genericFamily) return [];
+  if (byTitle.blocked) return [];
+  if (ICT_WORDS.test(title)) return gate.ictFamily ? [gate.ictFamily] : [];
+  if (!gate.genericFamily) return [];
   return T.matches(gate.generic, title).length || COMPOUND_ENGINEER.test(title) ? [gate.genericFamily] : [];
 }
 
