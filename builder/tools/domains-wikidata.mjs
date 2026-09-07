@@ -3,9 +3,9 @@
 // ➤ and by how many people it employs. No key, no account, two queries per country. What comes
 // ➤ out is a queue of domains for the hunter (builder/tools/hunt.mjs --file), which finds each
 // ➤ one's careers pages and how to read them. Domains already in the lists are left out.
-// ➤ The queue is ordered by what this site is for: the industries that employ engineers,
-// ➤ technicians and computing people first, the rest of the companies after them, in size
-// ➤ order within each. Nothing is dropped for its industry — the order is what changes.
+// ➤ Only the companies whose trade is one this site is for come out: engineering, industry,
+// ➤ energy, construction, transport, software and the rest of them, biggest first. A sports
+// ➤ club or a supermarket costs a visit and gives nothing, and the server has better to do.
 // ➤   node builder/tools/domains-wikidata.mjs [--countries es,de] [--each 800] [--min 200]
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -27,7 +27,7 @@ const countries = (flag('--countries', '') || Object.keys(iso).join(',')).split(
 
 // ➤ The industries where the site's occupations are done. Matched against the industry's own
 // ➤ name, so it survives Wikidata renumbering its items.
-const OURS = /engineer|manufactur|industrial|automotive|vehicle|aerospace|aviation|aeronaut|space|defen[cs]e|arms|shipbuild|marine|maritime|naval|rail|transport|logistics|energy|electric|electronic|semiconductor|nuclear|oil|gas|petrol|renewable|wind power|solar|utilit|water|mining|metal|steel|machin|robot|automation|chemical|pharmac|biotech|construction|building|architect|infrastructure|software|computer|information technology|internet|telecom|artificial intelligence|data|cyber|electronics|plastics|cement|glass|paper|environment/i;
+const OURS = /engineer|manufactur|industrial|automotive|vehicle|aerospace|aviation|aeronaut|space|defen[cs]e|arms|shipbuild|marine|maritime|naval|rail|transport|logistics|energy|electric|electronic|semiconductor|nuclear|oil|gas|petrol|renewable|wind power|solar|utilit|water|mining|metal|steel|machin|robot|automation|chemical|pharmac|biotech|construction|building|architect|infrastructure|software|computer|information technology|internet|telecom|artificial intelligence|data|cyber|electronics|plastics|cement|glass|paper|environment|video game|research|laborator/i;
 
 // ➤ Two queries a country: what a company does, and how many it employs. Neither is filled in
 // ➤ for every company, and together they name far more than either alone.
@@ -63,7 +63,9 @@ function pickSites(rows, cc) {
     const better = !before || (host.endsWith(`.${cc}`) && !before.host.endsWith(`.${cc}`)) || (host.length < before.host.length && before.host.endsWith(`.${cc}`) === host.endsWith(`.${cc}`));
     if (better) byName.set(r.name, { host, name: r.name, staff: r.staff, cc, industry: r.industry || '', ours: OURS.test(r.industry || '') });
   }
-  return [...byName.values()].sort((a, b) => (b.ours ? 1 : 0) - (a.ours ? 1 : 0) || b.staff - a.staff).slice(0, EACH);
+  // ➤ Only the companies whose trade is one of these: a sports club or a supermarket would
+  // ➤ cost a visit each and give nothing, and the server has better things to do.
+  return [...byName.values()].filter(r => r.ours).sort((a, b) => b.staff - a.staff).slice(0, EACH);
 }
 
 // ➤ What the lists already name: a domain there needs no hunting.
@@ -88,11 +90,11 @@ for (const cc of countries) {
   }
   const sites = pickSites(rows, cc).filter(s => !seen.has(s.host));
   for (const s of sites) { seen.add(s.host); picked.push(s); }
-  console.log(`${cc}: ${rows.length} companies known to Wikidata, ${sites.length} worth hunting, ${sites.filter(s => s.ours).length} in the site's industries`);
+  console.log(`${cc}: ${rows.length} companies known to Wikidata, ${sites.length} in the site's trades and worth hunting`);
 }
 picked.sort((a, b) => (b.ours ? 1 : 0) - (a.ours ? 1 : 0) || b.staff - a.staff);
 mkdirSync(dirname(OUT), { recursive: true });
 const clean = t => String(t || '').replace(/[,\n]/g, ' ').trim();
 writeFileSync(OUT, picked.map(s => `${s.host}, ${clean(s.name)}, ${clean(s.industry)}`).join('\n') + '\n');
-console.log(`\nwritten ${OUT}: ${picked.length} domains, ${picked.filter(s => s.ours).length} of them in the site's industries and hunted first`);
+console.log(`\nwritten ${OUT}: ${picked.length} domains in the site's trades, biggest employers first`);
 console.log(`next: node builder/tools/hunt.mjs --file ${OUT} --write`);
