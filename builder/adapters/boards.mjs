@@ -5,7 +5,7 @@
 // ➤ with Argus's own parsers (scan.mjs); this file only adds the posting date and the
 // ➤ remote flag the bot does not need. Recruitee and Personio have no parser in Argus yet:
 // ➤ theirs follow the fields their public API documents.
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import yaml from 'js-yaml';
@@ -84,7 +84,7 @@ export const ATS = {
     })),
   },
   workable: {
-    daily: true,   // ➤ about a thousand calls a day for an IP, then 429 for a day: read once a day
+    daily: true,   // ➤ about a thousand calls a day for an IP, then 429 for a day: read once a day (config/crawl.yml)
     licence: { name: 'Workable careers widget API', short: 'Workable', url: 'https://apply.workable.com/', licence: 'Public careers widget API', credit: '', needsKey: false },
     url: slug => `https://apply.workable.com/api/v1/widget/accounts/${encodeURIComponent(slug)}`,
     // ➤ The widget answer names the company and lists the jobs with their first location.
@@ -209,82 +209,14 @@ export async function readBoard(ats, slug, company, opts = {}) {
   return out;
 }
 
-// ➤ Yields RawOffers for every enabled company. The six ATS live on different hosts, so
-// ➤ they are read side by side, one board after another within each. A board that fails is
-// ➤ logged and skipped, never fatal: one dead board must not empty the pile; the boards the
-// ➤ scout found (found: true) are many, so they get one try and a short wait, and only
-// ➤ their count is logged.
-// ➤ The adverts of the ATS read once a day (Workable), kept between builds per board.
-const DAILY = join(dirname(dirname(dirname(fileURLToPath(import.meta.url)))), 'builder', 'state', 'boards-daily.json');
-const loadDaily = ats => { try { return JSON.parse(readFileSync(DAILY, 'utf8'))[ats] || {}; } catch { return {}; } };
-const saveDaily = (ats, boards) => { let all = {}; try { all = JSON.parse(readFileSync(DAILY, 'utf8')); } catch { /* first time */ } all[ats] = boards; mkdirSync(dirname(DAILY), { recursive: true }); writeFileSync(DAILY, JSON.stringify(all)); };
-
-export async function* fetchAll(ctx) {
-  const lanes = {};
-  for (const c of ctx.companies) {
-    if (c.enabled === false) continue;
-    const ats = Object.keys(ATS).find(k => c[k]);
-    if (!ats) { ctx.log(`boards: ${c.name} names no known ATS, skipped`); continue; }
-    (lanes[ats] ||= []).push(c);
-  }
-  // ➤ The lanes hand their adverts over as they come, and the builder takes them at once, so
-  // ➤ thousands of boards never sit in memory together.
-  const pending = [];
-  let wake = null;
-  const lanesDone = Promise.all(Object.entries(lanes).map(async ([ats, list]) => {
-    let found = 0, foundAdverts = 0, dead = 0, waiting = 0, blockedUntil = 0;
-    // ➤ An ATS with a daily quota is read once a day: a board's adverts wait in the state file
-    // ➤ between builds, and once the ATS says "too many requests" the boards not read yet show
-    // ➤ their last adverts, or wait for the next build.
-    const daily = ATS[ats].daily ? loadDaily(ats) : null;
-    // ➤ One host for every board (Greenhouse, Workable) or a host per board (Recruitee): "too
-    // ➤ many requests" from a shared host concerns the whole lane, from a board's own host
-    // ➤ that board only.
-    const shared = new URL(ATS[ats].url('one')).hostname === new URL(ATS[ats].url('two')).hostname;
-    const read = async (c, cached) => {
-      if (cached && Date.now() - Date.parse(cached.at) < 20 * 3600 * 1000) return cached.jobs;
-      if (blockedUntil) { if (cached) return cached.jobs; waiting++; return null; }
-      try {
-        // ➤ A board the scout found is read with one try, a short wait, a deadline, and at most
-        // ➤ 500 adverts: a few boards list thousands (survey platforms, agencies) and would crowd
-        // ➤ the pile.
-        const all = await deadline(readBoard(ats, String(c[ats]), c.name, c.found ? { tries: 1, timeoutMs: 10000 } : {}), c.found ? 120_000 : 300_000);
-        if (daily) daily[String(c[ats]).toLowerCase()] = { at: new Date().toISOString(), jobs: all.slice(0, 500) };
-        return all;
-      } catch (e) {
-        if (e.status !== 429 || !shared) throw e;
-        // ➤ A short wait is waited out once; a long one leaves the lane's other boards for the next build.
-        if (e.until - Date.now() <= 5 * 60_000 && !c.retried) { await new Promise(r => setTimeout(r, e.until - Date.now() + 500)); return read({ ...c, retried: true }, cached); }
-        blockedUntil = e.until;
-        ctx.log(`boards: ${ats}: ${e.message}; the boards not read yet show their last adverts or wait for the next build`);
-        if (cached) return cached.jobs;
-        waiting++; return null;
-      }
-    };
-    for (const c of list) {
-      // ➤ The lanes wait while the builder is behind: adverts pending are memory.
-      while (pending.length > 5000) await new Promise(r => setTimeout(r, 100));
-      try {
-        const all = await read(c, daily?.[String(c[ats]).toLowerCase()]);
-        if (!all) continue;
-        const jobs = c.found ? all.slice(0, 500) : all;
-        if (c.found) { found++; foundAdverts += jobs.length; } else ctx.log(`boards: ${c.name} (${ats}) ${jobs.length}`);
-        // ➤ The board's own company name wins over the slug the scout guessed; a name given by hand wins over both.
-        for (const p of jobs) pending.push({ source: ats, country: c.country || '', city: '', codes: {}, lang: c.lang || '', expires: '', ...p, company: c.found && p.company ? p.company : c.name, sourceId: `${c[ats]}:${p.sourceId}` });
-      } catch (e) {
-        if (e.message === 'took too long') ctx.log(`boards: ${c.name} (${ats}) took too long, left`);
-        if (c.found) dead++; else ctx.fail(`${c.name} (${ats})`, e.message);
-      }
-      if (wake) { wake(); wake = null; }
-    }
-    if (daily) saveDaily(ats, daily);
-    if (found || dead || waiting) ctx.log(`boards: ${ats}, ${found} boards the scout found answered with ${foundAdverts} adverts${dead ? `, ${dead} did not answer` : ''}${waiting ? `, ${waiting} wait for the next build` : ''}`);
-  }));
-  let done = false;
-  lanesDone.then(() => { done = true; if (wake) { wake(); wake = null; } });
-  while (!done || pending.length) {
-    if (pending.length) { yield pending.shift(); continue; }
-    await new Promise(r => { wake = r; });
-  }
-  await lanesDone;
+// ➤ One advert of a board, as the pile wants it: what the board said, with the company the
+// ➤ list names (the board's own name wins for a board the scout found, where the slug was a
+// ➤ guess) and an id that carries the slug, so two boards never share one.
+export function wrapBoardAdvert(ats, company, p) {
+  return {
+    source: ats, country: company.country || '', city: '', codes: {}, lang: company.lang || '', expires: '',
+    ...p,
+    company: company.found && p.company ? p.company : company.name,
+    sourceId: `${company[ats]}:${p.sourceId}`,
+  };
 }

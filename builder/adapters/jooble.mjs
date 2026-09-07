@@ -10,6 +10,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { getJson } from '../http.mjs';
+import { writeFileAtomic } from 'argus/server-bot/fs-atomic.mjs';
 import { text } from './boards.mjs';
 
 export const id = 'jooble';
@@ -53,7 +54,7 @@ export function toRaw(j, cc) {
 }
 
 const loadState = () => { try { return JSON.parse(readFileSync(STATE, 'utf8')); } catch { return { fetched_at: '', calls: {}, ads: {} }; } };
-const saveState = s => { mkdirSync(dirname(STATE), { recursive: true }); writeFileSync(STATE, JSON.stringify(s)); };
+const saveState = s => { mkdirSync(dirname(STATE), { recursive: true }); writeFileAtomic(STATE, JSON.stringify(s)); };
 
 // ➤ The day's fetch, when it is due: pages of each country's searches, stopped at the daily
 // ➤ budget or at Jooble's "too many requests".

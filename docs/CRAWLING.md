@@ -131,19 +131,25 @@ shards in eleven minutes.
      seen so the adapter knows where the vacancies live.
    - `scout-careers.mjs`: the slower road for a domain list: robots, sitemaps, a few pages.
    - `discover.mjs "Name"`: one company by name.
-2. **Freshness** (every build, every six hours): PES feeds and ATS boards whole; careers sites
-   through their sitemap or listing page, reading only the pages not read before
-   (`builder/state/careers.json`); an advert that leaves the sitemap has closed.
-   The boards and careers readers run in processes of their own and hand their adverts to
-   the builder one JSON line at a time (`builder/adapters/run.mjs`): a crash under the load
-   ends the reader, not the build; every read has a deadline; a line the builder cannot read
-   costs one advert, not the source.
-3. **Gate**: the source's occupation code when it has one, else the title against ESCO's
+2. **Reading** (`builder/crawl.mjs`, every hour): the crawler takes the sources whose last pass
+   is older than their cadence (`builder/config/crawl.yml`: a feed or an ATS board every six
+   hours, an employer's site once a day), reads each one whole and writes what it gave to that
+   source's own file in the store (`builder/state/adverts/<group>/<key>.json`, written to a
+   scratch file and renamed). A careers site keeps the pages it has already read, so a pass
+   costs one sitemap plus the pages that are new; an advert that leaves the sitemap has closed.
+   Every read has a deadline, "too many requests" pauses that group until the host says come
+   back, a source that fails waits six hours, then a day, then two, and is parked after a
+   fortnight. `builder/state/STOP` stops everything.
+3. **Publishing** (`builder/build-pile.mjs`, every three hours): the pile is built from the
+   store and nothing else, so a slow site never delays a publish and a publish never waits for
+   the network. A source nobody could read for ten days leaves the pile; a build that would
+   lose a third of the offers refuses to publish.
+4. **Gate**: the source's occupation code when it has one, else the title against ESCO's
    titles in fifteen languages; computing in, trades and service jobs out; hygiene words;
    Europe only.
-4. **Records**: contact details removed, excerpts of at most 640 characters, the employer's own
+5. **Records**: contact details removed, excerpts of at most 640 characters, the employer's own
    address, expiry by `validThrough`, deadline or absence.
-5. **Dedupe**: same address once; same employer and role once (the board copy wins over a
+6. **Dedupe**: same address once; same employer and role once (the board copy wins over a
    feed's), as Jobfeed merges "different advertisements of this job".
 
 ## Politeness and the law, as practised
@@ -158,7 +164,8 @@ shards in eleven minutes.
 - Employers' pages only, told from boards by the hiring organisation named on the pages.
 - Every advert links to the page it lives on; nothing personal kept; a takedown within 72 hours
   (see the Sources page).
-- The crawl of a site is bounded: at most 40 new pages a build, sitemaps first.
+- The crawl of a site is bounded: at most 200 new pages a pass and 6,000 across a run, sitemaps
+  first, and one pass a day per site.
 
 ## What the vendor-hosted careers sites give away without JavaScript (checked 2026-09-06)
 

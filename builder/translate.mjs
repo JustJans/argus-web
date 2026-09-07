@@ -8,6 +8,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname } from 'path';
 import { translateTitle } from 'argus/server-bot/notify.mjs';
 import { fold } from 'argus/server-bot/text.mjs';
+import { writeFileAtomic } from 'argus/server-bot/fs-atomic.mjs';
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -18,7 +19,7 @@ export function loadCache(path) {
 }
 export function saveCache(path, cache) {
   mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, JSON.stringify(Object.fromEntries(cache)));
+  writeFileAtomic(path, JSON.stringify(Object.fromEntries(cache)));
 }
 
 export async function translateTitles(records, { cache = new Map(), fetchImpl = fetch, gapMs = 150, maxNew = 800, log = () => {} } = {}) {

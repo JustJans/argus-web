@@ -1,0 +1,40 @@
+# ➤ How often each kind of source is read, and how hard the crawler may work. The crawler runs
+# ➤ every hour and takes the sources whose last pass is older than their cadence, so these
+# ➤ numbers are the whole schedule: raise a cadence to be gentler, lower it to be fresher.
+# ➤ A source that costs one call (an ATS board, a feed) can be read often; a site that costs a
+# ➤ sitemap and its new pages is read once a day.
+
+cadence_h:
+  default: 24
+  feeds: 6        # ➤ public employment services and the remote boards: one call each
+  via: 20         # ➤ the intermediaries throttle themselves as well
+  careers: 24     # ➤ employers' own sites: robots, sitemap and the pages that are new
+  greenhouse: 6
+  ashby: 6
+  lever: 6
+  smartrecruiters: 6
+  recruitee: 6
+  teamtailor: 6
+  personio: 6
+  workable: 24    # ➤ about a thousand calls a day for an IP, then a day of "too many requests"
+  workday: 12
+  oracle: 12
+
+# ➤ What one hourly run may spend.
+budget:
+  minutes: 55           # ➤ no source is started after minute 50
+  pages_a_run: 6000     # ➤ vacancy pages fetched, across every site
+  pages_a_site: 200     # ➤ per site and pass
+  renders_a_run: 200    # ➤ listing pages drawn by a browser (phase 5)
+  new_a_run: 3000       # ➤ sources never read before, so a discovery of thousands does not starve the day
+  lanes: 16
+  in_flight:            # ➤ per group, because an ATS serves every board from one host
+    default: 2
+    careers: 12
+    feeds: 2
+    via: 1
+    browser: 2
+
+# ➤ A source that fails waits this long before the next try, then is parked.
+backoff_h: [6, 24, 48]
+park_after_fails: 14
