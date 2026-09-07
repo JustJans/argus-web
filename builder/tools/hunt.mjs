@@ -151,12 +151,13 @@ function line(r) {
   return `${r.domain}: ${r.how ? `${r.how}, ` : ''}${r.error || 'nothing read'}${r.url ? ` [${r.url}]` : ''}`;
 }
 
-const OURS_AT_LEAST = 0.25;   // ➤ the share of a company's adverts that must be work of ours
+const OURS_AT_LEAST = 0.1;    // ➤ under this share of its adverts, a company is not one of ours
 const SEEN_AT_LEAST = 4;      // ➤ adverts read before that share means anything
 
 // ➤ hunted.yml: the readable sources, and the vendor sites waiting for their switch; a source
-// ➤ the other lists already name is left to them. A company whose adverts are mostly other
-// ➤ trades is not written down: the site would read it every day and take nothing from it.
+// ➤ the other lists already name is left to them. A company that does publish work of ours is
+// ➤ kept even when it publishes more of something else; one where it is a rounding error is
+// ➤ not, because the site would read it every day and take nothing from it.
 function write(results) {
   mkdirSync(dirname(HUNTED), { recursive: true });
   const file = existsSync(HUNTED) ? (yaml.load(readFileSync(HUNTED, 'utf8')) || {}) : {};
