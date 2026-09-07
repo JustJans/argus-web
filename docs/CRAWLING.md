@@ -239,7 +239,7 @@ spread across the whole list (2026-09-07):
 |---|---|---|
 | It lists its careers page, not its vacancies | 72% | The page is read as a list: its vacancy links are followed one step further |
 | It does publish the block, and the run had no page budget left | 18% | A pass with no budget is no longer recorded as a pass |
-| Addresses there are, none that look like a vacancy | 7% | Left alone: they turned out to be blogs and magazines, not employers |
+| Addresses there are, none that look like a vacancy | 7% | The address is the vacancy's number (rexx: `IT-Operations-Manager-de-j1186.html`) or a path no word list knows (`/o/`, `/offer/`, `/poste/`, `/pozicie/`): both are read now |
 | Empty, walled, dead, drawn by JavaScript, a feed | 1% each | A feed is read; a wall is left; JavaScript waits for a browser |
 
 So the readers, in the order they are tried: a **vacancies feed** (`/jobs.xml`, one read with the
@@ -247,6 +247,13 @@ places and the text), the **sitemap and the JobPosting block** of each page, the
 carries** (one step further, at most sixty a pass), the **ATS's own listing** when the page names
 one, and the **vendor's** (Workday and Oracle, behind `config/vendors.yml`). A page drawn by
 JavaScript is the rarest reason of all, which is why the browser is last rather than first.
+
+A page counts as a vacancy when its address carries a word for work in one of fifteen languages,
+when it is named after the vacancy's number the way rexx names it, or when it has the same shape
+as an address where a vacancy was already seen on that site — `/o/ict-medewerker-2-112` and
+`/o/dotnet-angular` are both `/o/W`, which is what Recruitee's own sites look like. A shape that
+is names alone (`/W`), names under a language (`/de/W`) or names under a site's reading
+(`/article/W`) describes every page there is, and teaches nothing.
 
 ## Where it can still grow
 
