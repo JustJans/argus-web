@@ -196,9 +196,10 @@ async function run() {
     }
   }));
 
-  // ➤ What the whole store holds now, for the daily line and the shrink guard.
+  // ➤ What the whole store holds now, for the daily line and the shrink alert: the size from
+  // ➤ the directory and the adverts from what each source last gave, so nothing is re-read.
   const size = storeSize();
-  st.totals = { at: new Date().toISOString(), sources: size.files, bytes: size.bytes, adverts: countAdverts() };
+  st.totals = { at: new Date().toISOString(), sources: size.files, bytes: size.bytes, adverts: countAdverts(st) };
   saveStatus(st);
   const per = Object.entries(tally.groups).map(([g, t]) => `${g} ${t.read}${t.failed ? `/${t.failed} failed` : ''}${t.added ? ` +${t.added}` : ''}${t.gone ? ` -${t.gone}` : ''}`).join(' · ');
   log(`run done in ${Math.round((Date.now() - started) / 1000)} s: ${tally.read} sources read, ${tally.failed} failed, ${tally.added} adverts new, ${tally.gone} closed, ${left()} still due`);
@@ -207,11 +208,11 @@ async function run() {
   if (stopped()) log('stopped by builder/state/STOP');
 }
 
-// ➤ How many adverts the store holds, counted once a run (the publisher's own count is the
-// ➤ one that matters; this is for the shrink alert).
-function countAdverts() {
+// ➤ How many adverts the store holds, from what each source last gave: reading a gigabyte of
+// ➤ files to count them would cost more than the count is worth (the publisher counts for real).
+function countAdverts(st) {
   let n = 0;
-  for (const data of eachSource()) n += (data.adverts || []).length;
+  for (const e of Object.values(st.sources || {})) n += e.n || 0;
   return n;
 }
 
