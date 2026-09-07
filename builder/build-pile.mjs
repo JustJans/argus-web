@@ -99,7 +99,7 @@ if (!args.includes('--no-translate')) {
   log(`titles: ${t.translated} in English (${t.asked} asked, ${t.fromCache} from the cache${t.limited ? ', translator rate-limited' : ''})`);
 }
 const generatedAt = new Date().toISOString();
-const { files, families: familiesIndex } = buildShards(kept, families);
+const { files, families: familiesIndex, latest } = buildShards(kept, families);
 
 const sources = {};
 for (const id of sourcesSeen) { const lic = licenceFor(id); if (lic) sources[id] = { ...lic, enabled: true, extracted_at: crawledAt || generatedAt }; }
@@ -119,7 +119,7 @@ if (!FORCE && wasKept && kept.length < wasKept * KEEP_AT_LEAST) {
 const index = {
   v: 1, generated_at: generatedAt, crawled_at: crawledAt || generatedAt,
   expires_at: new Date(Date.parse(crawledAt || generatedAt) + 48 * 3600 * 1000).toISOString(), catalogue_v: 2,
-  families: familiesIndex, sources,
+  families: familiesIndex, latest, sources,
   counts: { offers: kept.length, found: counts.found, by_country: perCountry, via: viaCount, sources: sourceFiles, companies: boardSources },
   status: { ok: kept.length > 0, seconds: Math.round((Date.now() - startedAt) / 1000) },
 };

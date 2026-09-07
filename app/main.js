@@ -206,7 +206,11 @@ function draw() {
   const shown = inDate.filter(o => matchesWords(o, words, countryName));
   const failed = loaded.failed.length ? ` (${loaded.failed.length} part${loaded.failed.length === 1 ? '' : 's'} failed to download)` : '';
   const narrowed = words.length || !isEmptyProfile(loaded.profile);
-  text('#results-status', narrowed ? `${n(shown.length)} of ${n(loaded.total)} offers match your filters${failed}.` : `${n(shown.length)} offers, newest first${failed}.`);
+  // ➤ With no occupation and no country named, the site shows the newest of the pile rather
+  // ➤ than downloading all of it: say so, and say what to do for the rest.
+  const onlyNewest = !loaded.profile.families.length && !loaded.profile.countries.length && index.latest?.files?.length;
+  const rest = onlyNewest ? ` of ${n(index.counts.offers)}; choose a country or an occupation for the rest` : '';
+  text('#results-status', narrowed ? `${n(shown.length)} of ${n(loaded.total)} offers match your filters${rest}${failed}.` : `${n(shown.length)} newest offers${rest}${failed}.`);
   // ➤ Zero results: every stage that dropped something, the date and the words included.
   const stages = { ...loaded.stages, 'posted date': loaded.offers.length - inDate.length, 'search words': inDate.length - shown.length };
   if (shown.length) renderList($('#list'), shown, ctx); else renderEmpty($('#list'), stages, loaded.total);

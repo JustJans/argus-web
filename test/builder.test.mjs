@@ -10,7 +10,8 @@ import { compileFamilies, familiesOf, hygieneReason, matchableTitle } from '../b
 import { compileCountries, placeOf, placeOfAdvert, normUrl, idFor, toRecord } from '../builder/normalise.mjs';
 import { snippet, requirements } from '../builder/excerpt.mjs';
 import { dedupe, roleKey } from '../builder/dedupe.mjs';
-import { buildShards } from '../builder/shard.mjs';
+import { buildShards, latestOf } from '../builder/shard.mjs';
+import { shardFiles } from '../app/lib/shards.js';
 import { parseLanbide, isoDay } from '../builder/adapters/lanbide.mjs';
 import { parseFeinaActiva } from '../builder/adapters/feinaactiva.mjs';
 import { parseJcyl } from '../builder/adapters/jcyl.mjs';
@@ -188,8 +189,17 @@ eq(snippet('A'.repeat(300), 50).length, 50, 'a single overlong sentence is cut')
     { id: 'b', f: ['2144', '3151'], cc: 'es', d: '2026-09-02' },
     { id: 'c', f: ['2144'], cc: '', d: '2026-09-03' },
   ];
-  const { files, families: idx } = buildShards(recs, families, '2026-09-03T00:00:00Z');
-  eq(Object.keys(files).sort(), ['offers/2144-es.json', 'offers/2144-zz.json', 'offers/3151-es.json'], 'one file per family and country, unknown country as zz');
+  const { files, families: idx, latest } = buildShards(recs, families, '2026-09-03T00:00:00Z');
+  eq(Object.keys(files).sort(), ['offers/2144-es.json', 'offers/2144-zz.json', 'offers/3151-es.json', 'offers/latest.json'], 'one file per family and country, unknown country as zz, and the newest of the lot');
+  // The newest part: what a visitor who has named nothing downloads instead of the whole pile.
+  eq(latest.files, ['offers/latest.json'], 'the newest offers get a part of their own');
+  eq(JSON.parse(files['offers/latest.json']).offers.map(o => o.id), ['c', 'b', 'a'], 'newest first, and an advert with two families only once');
+  eq(latestOf(recs, { max: 2, now: Date.parse('2026-09-03') }).offers.map(o => o.id), ['c', 'b'], 'no more than it was asked for');
+  eq(latestOf(recs, { days: 0, now: Date.parse('2026-09-03') }).offers.map(o => o.id), ['c'], 'and nothing older than the days it was given');
+  const index = { latest: { files: ['offers/latest.json'], n: 3 }, families: { 2144: { countries: { es: { files: ['offers/2144-es.json'] } } }, 3151: { countries: { es: { files: ['offers/3151-es.json'] } } } } };
+  eq(shardFiles(index, { families: [], countries: [], remote: true }), ['offers/latest.json'], 'a visitor who names neither an occupation nor a country downloads the newest part');
+  eq(shardFiles(index, { families: ['2144'], countries: [], remote: true }), ['offers/2144-es.json'], 'one who names an occupation downloads its parts');
+  eq(shardFiles(index, { families: [], countries: ['es'], remote: false }), ['offers/2144-es.json', 'offers/3151-es.json'], 'and one who names a country, that country');
   eq(JSON.parse(files['offers/2144-es.json']).offers.map(o => o.id), ['b', 'a'], 'newest first');
   eq(idx['2144'].countries.es.n, 2, 'the index counts');
   eq([idx['3151'].countries.es.files, idx['3151'].group], [['offers/3151-es.json'], 'crews'], 'and names the files and the group');

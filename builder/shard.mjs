@@ -5,8 +5,25 @@ import { mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 
 const MAX_BYTES = 4 * 1024 * 1024;
+const LATEST = 6000;        // ➤ the newest offers a visitor sees before naming anything
+const LATEST_DAYS = 21;     // ➤ how far back that goes
 
 export function shardKey(family, cc) { return `${family}-${cc || 'zz'}`; }
+
+// ➤ The newest offers of the whole pile, whatever their family or country: what the site shows
+// ➤ to a visitor who has named nothing, instead of every part there is.
+export function latestOf(records, { max = LATEST, days = LATEST_DAYS, now = Date.now() } = {}) {
+  const since = new Date(now - days * 864e5).toISOString().slice(0, 10);
+  const seen = new Set();
+  const out = [];
+  for (const rec of [...records].sort((a, b) => (b.d || '').localeCompare(a.d || '') || String(a.id).localeCompare(String(b.id)))) {
+    if (out.length >= max || (rec.d || '') < since) break;
+    if (seen.has(rec.id)) continue;
+    seen.add(rec.id);
+    out.push(rec);
+  }
+  return { offers: out, since };
+}
 
 // ➤ records → { files: {name: content}, families: index block }. The same offers give the same
 // ➤ bytes (no date inside a shard, a fixed order), so a publish moves only what changed.
@@ -37,7 +54,14 @@ export function buildShards(records, families) {
     if (!index[g.family]) index[g.family] = { label: g.family, countries: {} };
     index[g.family].countries[g.cc] = { files: names, n: g.offers.length, bytes: names.reduce((s, n) => s + files[n].length, 0) };
   }
-  return { files, families: index };
+  // ➤ The newest of the lot, in parts of their own.
+  const { offers: newest, since } = latestOf(records);
+  const latestFiles = [];
+  let part = [], size = 0;
+  const flush = () => { if (!part.length) return; const name = `offers/latest${latestFiles.length ? `-${latestFiles.length + 1}` : ''}.json`; files[name] = JSON.stringify({ v: 1, shard: 'latest', offers: part }); latestFiles.push(name); part = []; size = 0; };
+  for (const rec of newest) { const bytes = JSON.stringify(rec).length + 1; if (size + bytes > MAX_BYTES && part.length) flush(); part.push(rec); size += bytes; }
+  flush();
+  return { files, families: index, latest: { files: latestFiles, n: newest.length, since } };
 }
 
 export function writePile(outDir, files, indexJson, extras = {}) {

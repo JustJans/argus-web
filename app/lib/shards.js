@@ -3,6 +3,8 @@
 // ➤ country is not stated come only when no country was chosen), merged by advert id because
 // ➤ an advert with two families appears in two files.
 export function shardFiles(index, profile) {
+  // ➤ Nothing named, nothing to narrow by: the newest of the pile, not the whole of it.
+  if (!profile.families.length && !profile.countries.length && index.latest?.files?.length) return [...index.latest.files];
   const families = profile.families.length ? profile.families : Object.keys(index.families || {});
   const wanted = new Set([...profile.countries, ...(profile.remote ? ['xx'] : [])]);
   const files = [];
