@@ -19,4 +19,12 @@ queue=builder/state/found/hunt-queue.txt
 touch builder/state/hunted-done.txt
 
 node builder/tools/domains-wikidata.mjs
+
+# The hosts where Web Data Commons already saw an employer publishing vacancies are worth more
+# than a company picked out of a register, so they go first. The list is in the repository
+# because the quads it comes from are five gigabytes and live on one machine.
+if [ -s builder/config/hunt-wdc.txt ]; then
+  cat builder/config/hunt-wdc.txt "$queue" > "$queue.new" && mv "$queue.new" "$queue"
+fi
+
 node builder/tools/hunt.mjs --file "$queue" --take "$A_WEEK" --lanes "$LANES" --write
