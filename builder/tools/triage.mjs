@@ -9,8 +9,8 @@
 // ➤ vacancies) · odd (none of the above).
 import { writeFileSync } from 'fs';
 import { get, getText, deadline } from '../http.mjs';
-import { parseSitemap, looksLikeJob, jobPostings, detectPlatform } from '../lib/crawl.mjs';
-import { listed } from '../adapters/careers.mjs';
+import { parseSitemap, looksLikeJob, detectPlatform } from '../lib/crawl.mjs';
+import { listed, readSite } from '../adapters/careers.mjs';
 import { eachSource } from '../store.mjs';
 
 const args = process.argv.slice(2);
@@ -51,19 +51,19 @@ async function why(site) {
   const where = site.sitemap || site.listing;
   if (!where) return { label: 'odd', note: 'nowhere to read from' };
   const origin = new URL(where).origin;
-  // ➤ First, what the crawler itself sees: the same sitemaps, the same index children, the
-  // ➤ same idea of an address that looks like a vacancy.
+  // ➤ First, what the crawler itself does: the same sitemaps, the same descent from a page that
+  // ➤ lists rather than describes, the same reading of each page. A few pages are enough to say
+  // ➤ what kind of site this is, so it is given a small budget.
   let items = [];
   let listedFailed = '';
   try { items = await listed(site, opts); } catch (e) { listedFailed = e.message.slice(0, 40); }
   if (items.length) {
-    // ➤ It does list vacancies, so the pages must be missing the block.
     try {
-      const page = await getText(items[0].url, opts);
-      return jobPostings(page, items[0].url).length
-        ? { label: 'odd', note: `${items.length} pages, and they do carry a block` }
-        : { label: 'no-block', note: `${items.length} pages, no block` };
-    } catch (e) { return { label: 'no-block', note: `${items.length} pages, the first did not answer` }; }
+      const r = await readSite({ ...site, found: true }, {}, { pagesASite: 12, left: 12 }, () => {});
+      if (r.adverts.length) return { label: 'reads-now', note: `${r.adverts.length} adverts of ${r.listed} listed` };
+      if (!r.fetched) return { label: 'odd', note: `${items.length} listed, none of them read` };
+      return { label: 'no-block', note: `${r.fetched} pages read of ${items.length} listed, no block` };
+    } catch (e) { return { label: 'odd', note: `the reader stopped: ${e.message.slice(0, 40)}` }; }
   }
   // ➤ A vacancy feed nobody was reading: the whole list in one read.
   for (const path of FEEDS) {
