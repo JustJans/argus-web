@@ -16,7 +16,11 @@ and language rules, run client-side.
 pile by words and filters — country, occupations by ISCO group, date, level, languages,
 degrees, title words, deal-breakers — let your CV tick them, and carry them as a short code. Every advert past
 its deadline is hidden; the page says when the pile was last rebuilt. A home server rebuilds
-and publishes the pile every six hours with `ops/server-refresh.sh` (the GitHub Actions
+and publishes the pile every three hours with `ops/server-refresh.sh`, from what the crawler
+(`builder/crawl.mjs`, every hour) has read into the store: every source is visited on its own
+cadence, a feed or a company board every six hours and an employer's careers site once a day
+(`builder/config/crawl.yml`). `node builder/crawl.mjs --status` says what has been read and what
+is due; `touch builder/state/STOP` stops both. (The GitHub Actions
 workflows wait in `ops/workflows/` until the repository's token can create them).
 
 Sources read today: Lanbide (Basque Country), Feina Activa (Catalonia), the Junta de

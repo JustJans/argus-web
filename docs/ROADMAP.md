@@ -23,6 +23,14 @@ The structure is built for the changes already known. Each item names the seam.
   server as `builder/.env.example` shows; the next build reads them and shows their adverts in
   the intermediaries' section. Careerjet stays out: its API wants the visitor's IP with every
   search.
+- **The server's schedule**: `sh ops/install.sh` moves the old cache into the store and installs
+  `ops/crontab` (the crawler every hour, the publisher every three). `touch builder/state/STOP`
+  stops both; remove the file to start again.
+- **Reading and publishing**: `node builder/crawl.mjs [--minutes 55] [--only <group>] [--limit N]`
+  reads what is due into the store; `--source <group>/<key>` reads one; `--status` says what has
+  been read, what is due and what is failing; `--dry` shows the queue; `--purge` drops the files of
+  sources no list names. `node builder/build-pile.mjs` then builds the pile from the store without
+  asking the network. Cadences and budgets: `builder/config/crawl.yml`.
 - **One company by domain**: `node builder/tools/hunt.mjs acme.com [--write]` finds the careers
   pages, the platform and the adverts; Workday and Oracle sites read once `builder/config/vendors.yml`
   says so.

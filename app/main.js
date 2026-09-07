@@ -172,6 +172,9 @@ function activeGroups(p) {
 // ➤ the Today table, and the notice when the pile is old.
 function drawPile() {
   const hours = Math.round((Date.now() - new Date(index.generated_at).getTime()) / 36e5);
+  // ➤ The pile is built from what the crawler read, and the crawler may stop while the
+  // ➤ building goes on: the age that matters is the newest read, not the newest build.
+  const readHours = Math.round((Date.now() - new Date(index.crawled_at || index.generated_at).getTime()) / 36e5);
   const rebuilt = hours <= 0 ? 'rebuilt just now' : hours < 48 ? `rebuilt ${hours} h ago` : `rebuilt ${Math.round(hours / 24)} days ago`;
   const failed = index.status?.ok ? '' : ' (some sources failed this time)';
   const rows = Object.entries(index.counts?.by_country || {}).filter(([cc]) => cc !== 'zz').sort((a, b) => (a[0] === 'es' ? -1 : b[0] === 'es' ? 1 : b[1] - a[1]));
@@ -181,7 +184,7 @@ function drawPile() {
   const b = document.createElement('b'); b.textContent = n(index.counts.offers);
   stats.append(b, document.createTextNode(` offers · ${rows.map(([cc, c]) => `${countryName(cc)} ${n(c)}`).join(' · ')} · ${rebuilt}${failed}`));
   text('#generated', `${n(index.counts.offers)} offers, ${rebuilt}${failed}.`);
-  if (hours > STALE_HOURS) { text('#stale-text', `The pile was last rebuilt ${Math.round(hours / 24)} days ago; some offers may have closed since.`); $('#stale').hidden = false; }
+  if (readHours > STALE_HOURS) { text('#stale-text', `The sources were last read ${Math.round(readHours / 24)} days ago; some offers may have closed since.`); $('#stale').hidden = false; }
   const tbody = $('#countries tbody');
   tbody.replaceChildren();
   for (const [cc, c] of rows) {

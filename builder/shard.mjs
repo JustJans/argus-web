@@ -8,8 +8,9 @@ const MAX_BYTES = 4 * 1024 * 1024;
 
 export function shardKey(family, cc) { return `${family}-${cc || 'zz'}`; }
 
-// ➤ records → { files: {name: content}, families: index block }
-export function buildShards(records, families, generatedAt) {
+// ➤ records → { files: {name: content}, families: index block }. The same offers give the same
+// ➤ bytes (no date inside a shard, a fixed order), so a publish moves only what changed.
+export function buildShards(records, families) {
   const groups = new Map();
   for (const rec of records) {
     for (const f of rec.f) {
@@ -22,7 +23,7 @@ export function buildShards(records, families, generatedAt) {
   const index = {};
   for (const f of families) index[f.id] = { label: f.label, group: f.group, countries: {} };
   for (const [key, g] of groups) {
-    g.offers.sort((a, b) => (b.d || '').localeCompare(a.d || ''));
+    g.offers.sort((a, b) => (b.d || '').localeCompare(a.d || '') || String(a.id).localeCompare(String(b.id)));
     const parts = [];
     let part = [], size = 0;
     for (const rec of g.offers) {
@@ -32,7 +33,7 @@ export function buildShards(records, families, generatedAt) {
     }
     if (part.length) parts.push(part);
     const names = parts.map((p, i) => `offers/${key}${parts.length > 1 ? `-${i + 1}` : ''}.json`);
-    names.forEach((name, i) => { files[name] = JSON.stringify({ v: 1, shard: key, generated_at: generatedAt, offers: parts[i] }); });
+    names.forEach((name, i) => { files[name] = JSON.stringify({ v: 1, shard: key, offers: parts[i] }); });
     if (!index[g.family]) index[g.family] = { label: g.family, countries: {} };
     index[g.family].countries[g.cc] = { files: names, n: g.offers.length, bytes: names.reduce((s, n) => s + files[n].length, 0) };
   }

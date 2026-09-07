@@ -11,6 +11,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { getJson } from '../http.mjs';
+import { writeFileAtomic } from 'argus/server-bot/fs-atomic.mjs';
 
 export const id = 'adzuna';
 export const kind = 'via';
@@ -46,7 +47,7 @@ export function toRaw(r, cc) {
 }
 
 const loadState = () => { try { return JSON.parse(readFileSync(STATE, 'utf8')); } catch { return { fetched_at: '', calls: {}, ads: {} }; } };
-const saveState = s => { mkdirSync(dirname(STATE), { recursive: true }); writeFileSync(STATE, JSON.stringify(s)); };
+const saveState = s => { mkdirSync(dirname(STATE), { recursive: true }); writeFileAtomic(STATE, JSON.stringify(s)); };
 
 // ➤ The day's fetch, when it is due: pages of the newest adverts per country and category,
 // ➤ stopped at the daily budget or at Adzuna's "too many requests".
