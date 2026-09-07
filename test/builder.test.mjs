@@ -113,6 +113,9 @@ eq(placeOf('Stavanger', cc), { cc: 'no', city: 'Stavanger' }, 'a city alone name
 eq(placeOf('Remote - Europe', cc), { cc: 'xx', city: '' }, 'remote is its own place');
 eq(placeOf('Remote - USA', cc).cc, 'us', 'a remote job in a named country outside Europe is outside Europe');
 eq(placeOf('Remote, Germany', cc).cc, 'de', 'and one in a named European country is in it');
+eq(toRecord({ title: 'Fuel Chemist', company: 'A British Recruiter', location: 'Singapore', country: 'gb', url: 'https://x.example/1', description: 'x' }, ['f'], cc).cc, 'sg', 'where the advert says the work is beats where its source is');
+eq(toRecord({ title: 'Ingeniero', company: 'Acme', location: 'OIARTZUN, GIPUZKOA', country: 'es', url: 'https://x.example/2', description: 'x' }, ['f'], cc).cc, 'es', 'and a town nobody knows keeps the country its source declares');
+eq([toRecord({ title: 'A', url: 'https://x.example/3', posted: 'Mon Aug 24', description: 'x' }, ['f'], cc).d, toRecord({ title: 'A', url: 'https://x.example/4', posted: '2026-09-01T08:00:00Z', description: 'x' }, ['f'], cc).d], ['', '2026-09-01'], 'a day that is not a day is no day');
 eq(placeOf('Baltimore, MD', cc).cc, 'us', 'MD after a town is Maryland, not Moldova');
 eq(placeOf('Rockville, MD, US', cc).cc, 'us', 'a country outside Europe coded at the end wins over a European code');
 eq([placeOf('Chisinau, MD', cc).cc, placeOf('Chișinău, Moldova', cc).cc], ['md', 'md'], 'MD with a Moldovan city, or Moldova named, is Moldova');

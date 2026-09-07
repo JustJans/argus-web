@@ -105,8 +105,16 @@ export function placeOfAdvert(raw, compiledCountries) {
   return fromTitle.cc ? fromTitle : place;
 }
 
+// ➤ A day the pile can sort by, or none: a site that writes "Mon Aug 24" or "27 augustus 2026"
+// ➤ has named no day, and a card must not pretend otherwise.
+export const isoDay = v => (/^\d{4}-\d{2}-\d{2}/.test(String(v || '').trim()) ? String(v).trim().slice(0, 10) : '');
+
 export function toRecord(raw, families, compiledCountries, screens = null) {
-  const place = raw.country ? { cc: raw.country, city: raw.city || cityIn(raw.location || '', compiledCountries.find(c => c.iso === raw.country) || { cities: [], name: '' }) } : placeOfAdvert(raw, compiledCountries);
+  // ➤ What the advert says about where the work is beats what its source declares: a British
+  // ➤ recruiter's advert for Singapore is in Singapore. The declared country is the fallback.
+  const found = placeOfAdvert(raw, compiledCountries);
+  const place = found.cc || !raw.country ? found
+    : { cc: raw.country, city: raw.city || cityIn(raw.location || '', compiledCountries.find(c => c.iso === raw.country) || { cities: [], name: '' }) };
   if (raw.remote && !place.cc) place.cc = 'xx';
   const text = withoutContacts(raw.description);
   const years = extractRequiredYears(`${raw.title || ''}. ${text}`);
@@ -117,7 +125,7 @@ export function toRecord(raw, families, compiledCountries, screens = null) {
     c: String(raw.company || '').replace(/\s+/g, ' ').trim().slice(0, 80),
     l: normalizeLocation(String(raw.location || '').replace(/\s+/g, ' ').trim()).slice(0, 120),
     cc: place.cc, ci: place.city,
-    d: raw.posted || '',
+    d: isoDay(raw.posted),
     u: normUrl(raw.url),
     s: raw.source,
     f: families,
@@ -128,7 +136,7 @@ export function toRecord(raw, families, compiledCountries, screens = null) {
   if (k) rec.k = k;
   if (Number.isFinite(years) && years > 0) rec.y = years;
   if (raw.lang) rec.tl = raw.lang;
-  if (raw.expires) rec.x = raw.expires;
+  if (isoDay(raw.expires)) rec.x = isoDay(raw.expires);
   if (screens) {
     const dg = requiredDegrees(text, screens);
     const lg = requiredLanguages(text, screens);
