@@ -1,24 +1,13 @@
 # ➤ How often each kind of source is read, and how hard the crawler may work. The crawler runs
 # ➤ every hour and takes the sources whose last pass is older than their cadence, so these
 # ➤ numbers are the whole schedule: raise a cadence to be gentler, lower it to be fresher.
-# ➤ A source that costs one call (an ATS board, a feed) can be read often; a site that costs a
-# ➤ sitemap and its new pages is read once a day.
+# ➤ One pass a day over every source is what the site needs: it is what tells a vacancy that
+# ➤ has closed from one that is still open, and it brings the new ones. Reading a source four
+# ➤ times a day brought the same adverts four times and left less of the server for the sites
+# ➤ that cost a sitemap and its pages.
 
 cadence_h:
   default: 24
-  feeds: 6        # ➤ public employment services and the remote boards: one call each
-  via: 20         # ➤ the intermediaries throttle themselves as well
-  careers: 24     # ➤ employers' own sites: robots, sitemap and the pages that are new
-  greenhouse: 6
-  ashby: 6
-  lever: 6
-  smartrecruiters: 6
-  recruitee: 6
-  teamtailor: 6
-  personio: 6
-  workable: 24    # ➤ about a thousand calls a day for an IP, then a day of "too many requests"
-  workday: 12
-  oracle: 12
 
 # ➤ What one hourly run may spend.
 budget:

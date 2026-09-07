@@ -17,7 +17,7 @@ import { BOARD_HOSTS } from '../lib/crawl.mjs';
 
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 const flag = (name, dflt) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : dflt; };
-const EACH = Number(flag('--each', 800));        // ➤ companies kept per country
+const EACH = Number(flag('--each', 0)) || Infinity;  // ➤ companies kept per country; all of them unless asked
 const MIN = Number(flag('--min', 200));          // ➤ staff a company must have to be worth a look
 const OUT = join(ROOT, 'builder', 'state', 'found', 'hunt-queue.txt');
 const ENDPOINT = 'https://query.wikidata.org/sparql';
