@@ -23,7 +23,7 @@ cadence_h:
 # ➤ What one hourly run may spend.
 budget:
   minutes: 55           # ➤ no source is started after minute 50
-  pages_a_run: 6000     # ➤ vacancy pages fetched, across every site
+  pages_a_run: 12000    # ➤ vacancy pages fetched in one run, across every site (a ceiling, not a target)
   pages_a_site: 200     # ➤ per site and pass
   renders_a_run: 200    # ➤ listing pages drawn by a browser (phase 5)
   new_a_run: 3000       # ➤ sources never read before, so a discovery of thousands does not starve the day
