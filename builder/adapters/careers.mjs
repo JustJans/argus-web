@@ -31,7 +31,8 @@ const DESCRIPTION = 1500;          // ➤ characters kept per advert: only the s
 
 // ➤ A site is a feed, a sitemap or a listing page to read; the careers scouts may only give
 // ➤ a host and a few vacancy addresses seen, and the adapter then works out where to read
-// ➤ from. The hand-made list (careers.yml) comes first, then the hunter's (hunted.yml) and
+// ➤ from, in config (kept in the repository) and in state/found (what the server found on its
+// ➤ own). The hand-made list (careers.yml) comes first, then the hunter's (hunted.yml) and
 // ➤ the scout's (careers-found.yml), marked found; a site named earlier is left to that list.
 const keyOf = s => s.feed || s.sitemap || s.listing || s.host;
 
@@ -44,7 +45,7 @@ export function siteKey(site) {
 }
 
 export function loadSites() {
-  const read = f => { const p = join(ROOT, 'builder', 'config', f); return existsSync(p) ? (yaml.load(readFileSync(p, 'utf-8')) || {}).sites || [] : []; };
+  const read = f => ['config', 'state/found'].flatMap(dir => { const p = join(ROOT, 'builder', ...dir.split('/'), f); return existsSync(p) ? (yaml.load(readFileSync(p, 'utf-8')) || {}).sites || [] : []; });
   const hand = read('careers.yml');
   const seen = new Set(hand.map(keyOf));
   const out = [...hand];
@@ -78,8 +79,21 @@ export async function resolve(site, state, opts) {
       if (jobs.filter(j => j.url && j.location).length >= 3) { (state.resolved ||= {})[site.host] = { feed: origin + path }; return { ...site, feed: origin + path }; }
     } catch { /* no feed there */ }
   }
-  for (const sm of [...robots.sitemaps, `${origin}/sitemap.xml`].slice(0, 3)) {
-    try { const parsed = parseSitemap(await getText(sm, opts)); if (parsed.items.length) { (state.resolved ||= {})[site.host] = { sitemap: sm }; return { ...site, sitemap: sm }; } } catch { /* next */ }
+  // ➤ A big site names a sitemap per region ("/apac/en/", "/global/en/"): the one whose address
+  // ➤ shares the path the vacancies seen are under is the one that holds them, and a sitemap
+  // ➤ that names vacancies beats one that names anything else.
+  const candidates = [...new Set([...robots.sitemaps, `${origin}/sitemap.xml`])]
+    .sort((a, b) => (site.match && b.includes(site.match) ? 1 : 0) - (site.match && a.includes(site.match) ? 1 : 0))
+    .slice(0, 4);
+  for (const sm of candidates) {
+    try {
+      const parsed = parseSitemap(await getText(sm, opts));
+      if (!parsed.items.length) continue;
+      // ➤ An index whose children are all elsewhere is the wrong one: keep looking.
+      if (site.match && parsed.index && !parsed.items.some(i => i.url.includes(site.match))) continue;
+      (state.resolved ||= {})[site.host] = { sitemap: sm };
+      return { ...site, sitemap: sm };
+    } catch { /* next */ }
   }
   const first = (site.urls || [])[0];
   const listing = first ? first.replace(/[^/]*$/, '') : `${origin}/`;
@@ -109,7 +123,12 @@ export async function listed(site, opts) {
     const children = first.items.filter(i => !site.match || i.url.includes(site.match) || /job|vacan|career|stellen|emploi|empleo|vacature/i.test(i.url)).slice(0, SITEMAP_CAP);
     for (const c of children.length ? children : first.items.slice(0, SITEMAP_CAP)) { try { items.push(...parseSitemap(await getText(c.url, opts)).items); } catch { /* one child missing */ } }
   }
-  return items.filter(i => (site.match ? i.url.includes(site.match) : looksLikeJob(i.url)));
+  const jobbish = items.filter(i => looksLikeJob(i.url));
+  if (!site.match) return jobbish;
+  // ➤ The path was worked out from the addresses a scout happened to see; when nothing is under
+  // ➤ it, the site has moved its vacancies and what looks like a vacancy is better than nothing.
+  const under = items.filter(i => i.url.includes(site.match));
+  return under.length ? under : jobbish;
 }
 
 export function toRaw(job, site, url) {
