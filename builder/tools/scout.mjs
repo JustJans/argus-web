@@ -73,7 +73,19 @@ async function collect(log = console.log) {
 }
 
 // ➤ "dura-vermeer" → "Dura Vermeer", for boards whose API carries no company name.
-const pretty = slug => slug.replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+const WORDS_OF_THE_SITE = /^(careers?|external|site|jobs?|search|portal|opportunities|vacancies|recruiting|candidate|experience|hire|hiring|new|prod|corp)$/i;
+// ➤ The employer's name from a slug. A vendor's slug carries the tenant and the name of the
+// ➤ careers site ("dalcourmaclaren.wd3/Dalcour-Maclaren-Careers"): the site names the employer
+// ➤ when it is written in words, and the tenant does when it is not.
+const pretty = slug => {
+  const words = t => t.replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).trim();
+  const cut = String(slug).indexOf('/');
+  if (cut < 0) return words(slug);
+  const tenant = String(slug).slice(0, cut).split('.')[0];
+  const site = String(slug).slice(cut + 1);
+  const named = site.split(/[-_]+/).filter(w => w && !WORDS_OF_THE_SITE.test(w));
+  return named.length && /[-_]/.test(site) ? words(named.join(' ')) : words(tenant);
+};
 
 // ➤ Reads one board whole (pages where the ATS pages) and answers what the gate would keep.
 async function probe(ats, slug, gate, countries, europe) {
@@ -124,7 +136,9 @@ function writeFound(probed, collected_at, log = console.log) {
   for (const [key, v] of Object.entries(probed)) {
     if (!v.kept || handled.has(key)) continue;
     const [ats, slug] = [key.slice(0, key.indexOf(':')), key.slice(key.indexOf(':') + 1)];
-    found.push({ name: v.name, [ats]: slug, adverts: v.adverts, kept: v.kept, where: v.where });
+    // ➤ A name made from a vendor's slug before the slug was understood ("Acme.Wd3/Acme Careers")
+    // ➤ is not a name: it is made again here, where the rule lives.
+    found.push({ name: v.name && !v.name.includes('/') ? v.name : pretty(slug), [ats]: slug, adverts: v.adverts, kept: v.kept, where: v.where });
   }
   found.sort((a, b) => b.kept - a.kept);
   const head = `# Company boards the scout found (builder/tools/scout.mjs) on ${new Date().toISOString().slice(0, 10)}: every board whose public\n# API answered with at least one advert the gate keeps in Europe. The slugs asked came from Common Crawl's indexes\n# (${collected_at.slice(0, 10)}) and from three open-source lists, with thanks: OpenRoles (github.com/datascry/openroles, data\n# CC BY-SA 4.0), job-board-aggregator (github.com/Feashliaa/job-board-aggregator, data CC BY-NC 4.0) and JobSeek\n# (github.com/colophon-group/jobseek, data CC BY-NC 4.0). Read by the builder like companies.yml; a slug named there is\n# left to it. adverts/kept/where are what the scout saw that day, for the record.\n`;
