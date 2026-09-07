@@ -49,7 +49,14 @@ export function parseSitemap(xml) {
 
 // ➤ Addresses that look like vacancy pages, in the languages of the sites read.
 const JOBBY = /\/(?:[a-z]{2}\/)?(?:jobs?|jobb|joburi|job-?(?:detail|offer|posting|opening|listing)s?|vacanc(?:y|ies)|vacante|vacantes|vacature|vacatures|vakance|vakances|career|careers|carriere|carrieres|carreira|carreiras|cariere|karriere|karrier|kariera|karijera|stellen(?:angebot|anzeige|markt)?e?|stelle|offres?(?:-d-?emploi)?|emploi|empleo|ofertas?(?:-de-(?:empleo|trabajo))?|trabajo|trabalho|vaga|vagas|lavoro|posizion[ei]|lediga-jobb|ledige-stillinger|stilling|stillinger|tyopaikat|avoimet|rekry|praca|oferty|volna-mista|nabidka|kariera|allas|allasok|posao|zaposlitev|darbo|toopakkumised|position|positions|opening|openings|recruit|recrutement|rekrutacja)(?:[/?#.-]|$)/i;
-export const looksLikeJob = url => JOBBY.test(String(url || '').replace(/^https?:\/\/[^/]+/, '').toLowerCase());
+// ➤ Some portals put the whole title in the address and mark the vacancy with the number it
+// ➤ carries on their system, with no job word anywhere: rexx does it on 234 of the employers'
+// ➤ sites read here ("IT-Operations-Manager-de-j1186.html").
+const NUMBERED = /-[a-z]{2,3}-j\d+\.html$/;
+export const looksLikeJob = url => {
+  const path = String(url || '').replace(/^https?:\/\/[^/]+/, '').toLowerCase();
+  return JOBBY.test(path) || NUMBERED.test(path);
+};
 
 // ➤ Links on a page that look like vacancy pages of the same site: what a listing page
 // ➤ offers when the sitemap names only the listing.
