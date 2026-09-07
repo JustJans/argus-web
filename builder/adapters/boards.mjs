@@ -178,9 +178,10 @@ export function loadVendors() {
 
 // ➤ The company boards to read: the hand-made list (config/companies.yml), then the hunter's
 // ➤ (hunted.yml) and the scout's (companies-found.yml), marked found; a slug named earlier is
-// ➤ left to the earlier list. A vendor switched off in vendors.yml is left out.
+// ➤ left to the earlier list. Each list is read from config and from state/found, where the
+// ➤ server keeps what it found on its own. A vendor switched off in vendors.yml is left out.
 export function loadCompanies() {
-  const read = file => { const p = join(ROOT, 'builder', 'config', file); return existsSync(p) ? (yaml.load(readFileSync(p, 'utf-8')) || {}).companies || [] : []; };
+  const read = file => ['config', 'state/found'].flatMap(dir => { const p = join(ROOT, 'builder', ...dir.split('/'), file); return existsSync(p) ? (yaml.load(readFileSync(p, 'utf-8')) || {}).companies || [] : []; });
   const vendors = loadVendors();
   const slugOf = c => Object.keys(ATS).map(k => c[k] && `${k}:${String(c[k]).toLowerCase()}`).find(Boolean);
   const on = c => { const k = Object.keys(ATS).find(k => c[k]); return !k || !ATS[k].vendor || vendors[k] === true; };

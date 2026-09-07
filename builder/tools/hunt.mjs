@@ -3,13 +3,13 @@
 // ➤ reads the adverts with no API key: the ATS's public listing, the feed the site publishes
 // ➤ (jobs.xml), its sitemap and the JobPosting block of each page, or its listing pages. It
 // ➤ prints what it found and how many adverts the gate keeps in Europe; --write adds the
-// ➤ readable sources to builder/config/hunted.yml, which the builder reads like companies.yml
+// ➤ readable sources to builder/state/found/hunted.yml, which the builder reads like companies.yml
 // ➤ and careers.yml. Sites drawn by JavaScript read through the call their own page makes
 // ➤ once the vendor is on in config/vendors.yml (Workday, Oracle); iCIMS, Eightfold, Taleo and
 // ➤ softgarden are named and left.
 // ➤   node builder/tools/hunt.mjs vestas.com boskalis.com [--write]
-// ➤   node builder/tools/hunt.mjs --file domains.txt [--write]
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+// ➤   node builder/tools/hunt.mjs --file domains.txt [--take 300] [--lanes 6] [--write]
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import yaml from 'js-yaml';
@@ -22,7 +22,7 @@ import { compileCountries, placeOf } from '../normalise.mjs';
 import { parseSuccessFactors } from 'argus/server-bot/scan.mjs';
 
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
-const HUNTED = join(ROOT, 'builder', 'config', 'hunted.yml');
+const HUNTED = join(ROOT, 'builder', 'state', 'found', 'hunted.yml');
 // ➤ The usual addresses of a careers section, in the languages of the sites read.
 const PATHS = ['/careers', '/jobs', '/career', '/en/careers', '/en/jobs', '/join-us', '/empleo', '/trabaja-con-nosotros', '/karriere', '/jobs-karriere', '/stellenangebote', '/carrieres', '/recrutement', '/nous-rejoindre', '/vacatures', '/werken-bij', '/lediga-jobb', '/jobb', '/ledige-stillinger', '/kariera', '/praca', '/lavora-con-noi', '/carriere'];
 const PAGES_READ = 12;    // ➤ vacancy pages read on a site to judge it
@@ -151,6 +151,7 @@ function line(r) {
 // ➤ hunted.yml: the readable sources, and the vendor sites waiting for their switch; a source
 // ➤ the other lists already name is left to them.
 function write(results) {
+  mkdirSync(dirname(HUNTED), { recursive: true });
   const file = existsSync(HUNTED) ? (yaml.load(readFileSync(HUNTED, 'utf8')) || {}) : {};
   const companies = file.companies || [], sites = file.sites || [];
   const slugOf = c => Object.keys(ATS).map(k => c[k] && `${k}:${String(c[k]).toLowerCase()}`).find(Boolean);
@@ -172,16 +173,40 @@ function write(results) {
 }
 
 const args = process.argv.slice(2);
-const domains = args.includes('--file')
-  ? readFileSync(args[args.indexOf('--file') + 1], 'utf8').split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'))
-  : args.filter(a => !a.startsWith('--'));
-if (!domains.length) { console.log('usage: node builder/tools/hunt.mjs <domain> [<domain> ...] [--write] | --file <list> [--write]'); process.exit(1); }
+const flag = (name, dflt) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : dflt; };
+const LANES = Number(flag('--lanes', 6));
+const TAKE = Number(flag('--take', 0)) || 0;
+const DONE = join(ROOT, 'builder', 'state', 'hunted-done.txt');
+
+// ➤ A domain is written down as soon as it has been tried, whatever came of it: a list of six
+// ➤ thousand is hunted a slice at a time, over days, and never twice.
+const tried = new Set();
+try { for (const l of readFileSync(DONE, 'utf8').split(/\r?\n/)) if (l.trim()) tried.add(l.trim()); } catch { /* none yet */ }
+const noteDone = d => { tried.add(d); try { appendFileSync(DONE, d + '\n'); } catch { /* the note is a convenience */ } };
+
+// ➤ A list may name a company after its domain ("acme.com, Acme Ltd"): the domain is what is hunted.
+const wanted = args.includes('--file')
+  ? readFileSync(flag('--file', ''), 'utf8').split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#')).map(l => l.split(',')[0].trim())
+  : args.filter(a => !a.startsWith('--') && a.includes('.'));
+const domains = wanted.filter(d => !tried.has(d)).slice(0, TAKE || wanted.length);
+if (!domains.length) { console.log(wanted.length ? `nothing left: all ${wanted.length} have been hunted before` : 'usage: node builder/tools/hunt.mjs <domain> … | --file <list> [--take 300] [--lanes 6] [--write]'); process.exit(wanted.length ? 0 : 1); }
+console.log(`hunting ${domains.length} of ${wanted.length} domains, ${LANES} at a time`);
+
 const results = [];
-for (const d of domains) {
-  const r = await deadline(hunt(d), 300_000).catch(e => ({ domain: d, error: e.message }));
-  results.push(r);
-  console.log(line(r));
-}
+const queue = [...domains];
+await Promise.all(Array.from({ length: LANES }, async () => {
+  while (queue.length) {
+    const d = queue.shift();
+    const r = await deadline(hunt(d), 300_000).catch(e => ({ domain: d, error: e.message }));
+    results.push(r);
+    noteDone(d);
+    console.log(line(r));
+    // ➤ What was found is written as it goes: a run cut short keeps its work.
+    if (args.includes('--write') && results.length % 25 === 0) write(results);
+  }
+}));
 if (args.includes('--write')) console.log(`${write(results)} added to ${HUNTED}`);
+const gave = results.filter(r => r.jobs?.length).length;
+console.log(`${gave} of ${results.length} domains gave adverts`);
 // ➤ A read abandoned at its deadline must not keep the process alive.
 process.exit(0);
