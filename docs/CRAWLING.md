@@ -147,7 +147,8 @@ shards in eleven minutes.
 4. **Gate**: the source's occupation code when it has one, else the title against ESCO's
    titles in fifteen languages; computing in, trades and service jobs out; hygiene words;
    Europe only.
-5. **Records**: contact details removed, excerpts of at most 640 characters, the employer's own
+5. **Records**: no advert text at all — the title, the employer, the place, the day and the
+   link, plus what the screens read off the text (years, degrees, languages); the employer's own
    address, expiry by `validThrough`, deadline or absence.
 6. **Dedupe**: same address once; same employer and role once (the board copy wins over a
    feed's), as Jobfeed merges "different advertisements of this job".

@@ -8,7 +8,6 @@ import { dirname, join } from 'path';
 import { harness } from 'argus/server-bot/test-harness.mjs';
 import { compileFamilies, familiesOf, hygieneReason, matchableTitle } from '../builder/gate.mjs';
 import { compileCountries, placeOf, placeOfAdvert, normUrl, idFor, toRecord } from '../builder/normalise.mjs';
-import { snippet, requirements } from '../builder/excerpt.mjs';
 import { dedupe, roleKey } from '../builder/dedupe.mjs';
 import { buildShards, latestOf } from '../builder/shard.mjs';
 import { shardFiles } from '../app/lib/shards.js';
@@ -144,23 +143,12 @@ eq(idFor('https://a.example/1').length, 8, 'eight characters');
 eq(normUrl('https://cvvp.nva.gov.lv/#/pub/vakances/462167750'), 'https://cvvp.nva.gov.lv/#/pub/vakances/462167750', 'a route in the fragment is the address itself and stays');
 ok(idFor('https://cvvp.nva.gov.lv/#/pub/vakances/1') !== idFor('https://cvvp.nva.gov.lv/#/pub/vakances/2'), 'two routes, two ids');
 
-// ── Excerpts ────────────────────────────────────────────────────────────
-{
-  const body = 'We design offshore mooring systems. You will join a team of twelve. Requirements: 5+ years of experience in marine engineering. A master\'s degree in naval architecture is preferred. Fluent English required; Dutch is a plus. We offer a laptop.';
-  eq(snippet(body, 60), 'We design offshore mooring systems.', 'the opening sentences, cut on a sentence end');
-  const rq = requirements(body);
-  ok(rq.includes('5+ years') && rq.includes('degree') && rq.includes('Fluent English'), 'every requirement sentence is kept');
-  ok(!rq.includes('laptop'), 'and the perks are not');
-  ok(rq.includes('Dutch is a plus'), 'the sentence after a requirement rides along');
-}
-eq(snippet('A'.repeat(300), 50).length, 50, 'a single overlong sentence is cut');
-
 // ── The record ──────────────────────────────────────────────────────────
 {
   const raw = { source: 'lever', title: '  Marine   Engineer ', company: 'Damen', location: 'Gorinchem, Netherlands', url: 'https://jobs.lever.co/damen/1?utm_source=adzuna', description: 'Minimum 3 years of experience with ship design. You speak Dutch.', posted: '2026-09-01', codes: {}, lang: 'en' };
   const rec = toRecord(raw, ['2144'], cc);
   eq([rec.t, rec.c, rec.cc, rec.ci, rec.u, rec.s, rec.f, rec.y, rec.tl], ['Marine Engineer', 'Damen', 'nl', 'Gorinchem', 'https://jobs.lever.co/damen/1', 'lever', ['2144'], 3, 'en'], 'the fields, cleaned');
-  ok(rec.rq.includes('3 years'), 'the years sentence is in the requirements excerpt');
+  ok(!('sn' in rec) && !('rq' in rec), "none of the advert's text travels with the record");
   ok(!('k' in rec), 'no code when the source had none');
   const sv = toRecord({ source: 'jobtech', title: 'Maskiningenjör', company: 'AB', location: 'Göteborg, Sweden', country: 'se', city: 'Göteborg', url: 'https://arbetsformedlingen.se/platsbanken/annonser/1', description: '', posted: '2026-09-02', expires: '2026-10-01', codes: { ssyk: 'PRQn_9yw_NJA' }, lang: 'sv' }, ['2144'], cc);
   eq([sv.cc, sv.ci, sv.k, sv.x], ['se', 'Göteborg', 'ssyk:PRQn_9yw_NJA', '2026-10-01'], 'a feed that states the country keeps it, with its code and deadline');

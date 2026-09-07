@@ -37,7 +37,7 @@ the brand and About only, as the design shows; rows grow to 44px.
   `.filters.is-open`, `.btn.is-done` on Copy after copying.
 - **Classes the scripts add**: `check-row`, `check-row__count`, `filter-group`, `chev`,
   `offers`, `offer`, `offer__title`, `offer__date`, `offer__original`, `offer__meta`,
-  `offer__snippet`, `offer__tags`, `tag`, `tag-outline` (the source), `tag-neutral`, `more`,
+  `offer__tags`, `tag`, `tag-outline` (the source), `tag-neutral`, `more`,
   `btn`, `btn-secondary`, `empty`, `empty__n`, `debug`.
 - **Ticks** are real checkboxes and radios inside a `label.check-row`, the input on the left.
 - **No third-party fonts, scripts or images** anywhere (privacy promise). pdf.js is served

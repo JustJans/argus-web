@@ -1,12 +1,12 @@
-// ➤ From a source's RawOffer to the record the site serves: a stable id, the country and
-// ➤ city read off the location, the two excerpts, the years the text demands, and the
-// ➤ families the gate assigned. Nothing personal, nothing longer than 640 characters of text.
+// ➤ From a source's RawOffer to the record the site serves: a stable id, the country and city
+// ➤ read off the location, the years, degrees and languages the text demands, and the families
+// ➤ the gate assigned. None of the advert's own text travels: the site shows the title, the
+// ➤ employer and the place, and links to the page for the rest.
 import { createHash } from 'crypto';
 import { fold } from 'argus/server-bot/text.mjs';
 import { extractRequiredYears } from 'argus/server-bot/requirements.mjs';
 import { normalizeLocation } from 'argus/server-bot/scan.mjs';
 import { cleanTitle } from 'argus/server-bot/notify.mjs';
-import { snippet, requirements } from './excerpt.mjs';
 import { requiredDegrees, requiredLanguages } from './screens.mjs';
 
 // ➤ The address without its campaign tail, trailing slash or fragment: what makes two
@@ -89,7 +89,7 @@ function cityIn(raw, c) {
   return /^[A-Z]{2}$/.test(first) || fold(first) === fold(c.name) ? '' : first.slice(0, 40);
 }
 
-// ➤ E-mail addresses and phone numbers go before anything is excerpted: some feeds carry the
+// ➤ E-mail addresses and phone numbers go before the text is read: some feeds carry the
 // ➤ contact person in the advert text, and the site keeps nothing personal.
 export const withoutContacts = s => String(s || '').replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, ' ').replace(/(?:\+\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?){2,4}\d{2,4}(?!\d)/g, m => (m.replace(/\D/g, '').length >= 9 ? ' ' : m));
 
@@ -129,8 +129,6 @@ export function toRecord(raw, families, compiledCountries, screens = null) {
     u: normUrl(raw.url),
     s: raw.source,
     f: families,
-    sn: snippet(text),
-    rq: requirements(text),
   };
   const k = raw.codes?.isco ? String(raw.codes.isco).slice(0, 4) : raw.codes?.ssyk ? `ssyk:${raw.codes.ssyk}` : '';
   if (k) rec.k = k;

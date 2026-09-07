@@ -29,7 +29,9 @@ export function relativeDay(iso) {
 }
 
 // ➤ A card: the English title with the date at its right, the original title in small print
-// ➤ when they differ, employer and place, the excerpt, and the tags (the source outlined).
+// ➤ when they differ, employer and place, and the tags (the source outlined). The advert's own
+// ➤ text is not shown: the title, the employer and the place say what it is, and the link says
+// ➤ the rest.
 export function card(o, ctx) {
   const li = el('li', 'offer');
   const h = el('h3', 'offer__title');
@@ -40,7 +42,6 @@ export function card(o, ctx) {
   if (o.te) li.append(el('p', 'offer__original', o.t));
   const place = [o.ci, ctx.countryName(o.cc)].filter(Boolean).join(', ');
   li.append(el('p', 'offer__meta', [o.c, place].filter(Boolean).join(' · ')));
-  if (o.sn) li.append(el('p', 'offer__snippet', o.sn));
   const tags = el('p', 'offer__tags');
   tags.append(o.s === 'adzuna' ? adzunaLabel(o.cc) : el('span', 'tag tag-outline', `via ${ctx.sourceName(o.s)}`));
   if (o.y) tags.append(el('span', 'tag tag-neutral', `asks ${o.y}+ years`));
