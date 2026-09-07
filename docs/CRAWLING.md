@@ -118,11 +118,11 @@ shards in eleven minutes.
 | Crawling job boards | **No**, except boards whose API asks only for a link back (Jobicy, Remotive, Arbeitnow) | Boards' terms forbid it and the database right protects them (CJEU CV-Online v Melons); the owner's rule is written permission |
 | Paid feeds from boards | **No** | Contracts |
 | Adzuna's own API | **Yes**, when the keys exist: its terms allow publishing its listings labelled "Jobs by Adzuna" | 250 calls a day, 2,500 a month: a supplement, not the core |
-| Workday, Oracle and SuccessFactors career sites | **Not yet** | Internal endpoints (Workday, Oracle) or feeds meant for the site's own pages: the owner decides |
+| Workday and Oracle career sites | **Yes**, since the owner turned them on in `config/vendors.yml` | The reader asks the address the page itself asks for its list, as a browser does; robots.txt and the pace are the same as anywhere else |
 
 ## The pipeline, stage by stage
 
-1. **Discovery** (monthly, by hand for now):
+1. **Discovery** (`ops/server-discover.sh`, every day at 03:41; the scouts by hand):
    - `scout.mjs --collect --probe`: Common Crawl index → ATS slugs → every board read through
      its API → kept when the gate keeps an advert in Europe → `config/companies-found.yml`.
    - `scout-wdc.mjs`: Web Data Commons' JobPosting quads → per host: vacancy pages, hiring
@@ -130,6 +130,15 @@ shards in eleven minutes.
      employers with adverts of ours in Europe → `config/careers-found.yml`, with the addresses
      seen so the adapter knows where the vacancies live.
    - `scout-careers.mjs`: the slower road for a domain list: robots, sitemaps, a few pages.
+   - `domains-wikidata.mjs`: every company Wikidata places in one of the site's countries,
+     with an official website and a staff count — names, no key, no account — minus what the
+     lists already name → a queue of domains, biggest employers first.
+   - `hunt.mjs --file <queue> --take 400`: the daily slice of that queue. For each domain:
+     its careers pages, which platform serves them, and the adverts, with no API key. What is
+     readable is written to `builder/state/found/hunted.yml`, which the builder reads next to
+     `config/` and which is never committed, so the server's own discoveries never fight a
+     pull; every domain tried is written down, so a queue of thousands is worked through over
+     weeks and never twice.
    - `discover.mjs "Name"`: one company by name.
 2. **Reading** (`builder/crawl.mjs`, every hour): the crawler takes the sources whose last pass
    is older than their cadence (`builder/config/crawl.yml`: a feed or an ATS board every six

@@ -125,7 +125,13 @@ for (const [host, h] of Object.entries(hosts)) {
   // ➤ naming ASML), and neither is a board that names itself.
   const compact = host.replace(/[^a-z0-9]/g, '');
   const words = orgs[0][0].toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length >= 4 && !/^(gmbh|group|holding|limited|company|corporation|international|solutions|services|technologies|technology|systems|consulting|engineering|europe|global|jobportal|karriere|careers|jobs)$/.test(w));
-  if (!words.some(w => compact.includes(w))) continue;
+  // ➤ A company known by its initials (DXC, AXA, ESG, UMB) has no word that long: those
+  // ➤ letters are a whole label of the host instead (careers.dxc.com, jobs.esg.de), never a
+  // ➤ piece of another word. Legal forms (AG, BV, SA) are not the name.
+  const initials = orgs[0][0].toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').split(/[\s-]+/)
+    .filter(w => w.length >= 2 && w.length <= 4 && !/^(ag|sa|as|bv|nv|se|kg|ab|oy|dd|doo|srl|spa|sas|plc|ltd|inc|llc|aps|kft|sro|ohg|und|and|the|for|von|van|des|del|con|our|new|job|jobs|team|hr|it)$/.test(w));
+  const label = host.toLowerCase().split('.').flatMap(l => [l, ...l.split('-')]);
+  if (!words.some(w => compact.includes(w)) && !initials.some(w => label.includes(w))) continue;
   // ➤ A domain named after jobs themselves (artificialintelligencejobs.co.uk) is a board,
   // ➤ whatever organisation it names; a "jobs." or "careers." subdomain of an employer is not.
   const labels = host.split('.');
