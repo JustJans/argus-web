@@ -93,6 +93,9 @@ async function pass(src, st, budget, tally) {
   try {
     const { adverts, meta } = await readWithDeadline(src, data, { budget, log, fail: (who, why) => log(`FAILED ${who}: ${why}`) });
     const seconds = Math.round((Date.now() - started) / 1000);
+    // ➤ A source the run had no budget left to read is not a source that was read: it keeps
+    // ➤ what it had and comes back in the next run, not in a day.
+    if (meta.postponed) { entry.next = Date.now() + 60_000; tally.postponed++; return false; }
     const diff = compare(before, adverts);
     Object.assign(data, { v: 1, group: src.group, key: src.key, kind: src.kind, adverts, pass: { started: new Date(started).toISOString(), ended: new Date().toISOString(), ok: true, seconds, ...meta } });
     saveSource(data);
@@ -174,7 +177,7 @@ async function run() {
 
   const budget = { left: cfg.budget.pages_a_run, pagesASite: cfg.budget.pages_a_site };
   const most = Number(flag('--limit', 0)) || 0;   // ➤ read at most this many sources (for a look)
-  const tally = { read: 0, failed: 0, added: 0, gone: 0, paused: 0, groups: {} };
+  const tally = { read: 0, failed: 0, added: 0, gone: 0, paused: 0, postponed: 0, groups: {} };
   let lastSave = Date.now(), done = 0;
 
   await Promise.all(Array.from({ length: cfg.budget.lanes }, async () => {
@@ -203,7 +206,7 @@ async function run() {
   st.totals = { at: new Date().toISOString(), sources: size.files, bytes: size.bytes, adverts: countAdverts(st) };
   saveStatus(st);
   const per = Object.entries(tally.groups).map(([g, t]) => `${g} ${t.read}${t.failed ? `/${t.failed} failed` : ''}${t.added ? ` +${t.added}` : ''}${t.gone ? ` -${t.gone}` : ''}`).join(' · ');
-  log(`run done in ${Math.round((Date.now() - started) / 1000)} s: ${tally.read} sources read, ${tally.failed} failed, ${tally.added} adverts new, ${tally.gone} closed, ${left()} still due`);
+  log(`run done in ${Math.round((Date.now() - started) / 1000)} s: ${tally.read} sources read, ${tally.failed} failed, ${tally.added} adverts new, ${tally.gone} closed${tally.postponed ? `, ${tally.postponed} left for the next run (no page budget)` : ''}, ${left()} still due`);
   if (per) log(`run by group: ${per}`);
   dailyLine(st);
   if (stopped()) log('stopped by builder/state/STOP');

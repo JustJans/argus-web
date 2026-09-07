@@ -3,7 +3,7 @@
 // ➤ the vacancy pages) and the schema.org JobPosting block each vacancy page publishes for
 // ➤ search engines: the same fields an ATS would hand over. Pure functions here; the
 // ➤ fetching is in the adapter and the scout.
-import { text } from '../adapters/boards.mjs';
+import { text, decodeEntities } from '../adapters/boards.mjs';
 
 // ➤ robots.txt: the Disallow lines that bind everyone or us, the crawl delay, the sitemaps.
 export function parseRobots(txt, agent = 'argusweb') {
@@ -114,7 +114,9 @@ export function repairJson(json) {
 }
 export function jobPostings(html, pageUrl) {
   const out = [];
-  const str = v => (typeof v === 'string' ? v.trim() : Array.isArray(v) ? str(v[0]) : v && typeof v === 'object' ? str(v.name || v['@value'] || v.text) : '');
+  // ➤ Sites write the title and the company with HTML entities in them ("B2B &#8211; Pós-Venda"):
+  // ➤ what the visitor should read is the character, not the escape.
+  const str = v => (typeof v === 'string' ? decodeEntities(v).trim() : Array.isArray(v) ? str(v[0]) : v && typeof v === 'object' ? str(v.name || v['@value'] || v.text) : '');
   for (const m of String(html || '').matchAll(/<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)) {
     let parsed;
     const block = m[1].replace(/^\s*<!--|-->\s*$/g, '');

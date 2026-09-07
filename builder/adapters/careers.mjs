@@ -25,6 +25,7 @@ const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 const PAGES_A_SITE = 200;          // ➤ vacancy pages read in one pass, when the budget allows
 const SITEMAP_CAP = 6;             // ➤ child sitemaps read from an index
 const LISTING_PAGES = 10;          // ➤ pages of a listing followed through its "next" link
+const DEEPER_A_SITE = 60;         // ➤ vacancy pages followed from a list the site names
 const ALIVE_PAGES_A_SITE = 2000;   // ➤ pages one site keeps in its file: the newest by last change
 const DESCRIPTION = 1500;          // ➤ characters kept per advert: the record needs an excerpt
 
@@ -134,29 +135,45 @@ export async function readSite(given, store, budget = {}, log = () => {}) {
   const pages = (store.pages ||= {});
   const wanted = items.filter(i => !pages[i.url] || (i.lastmod && pages[i.url].lastmod && i.lastmod > pages[i.url].lastmod));
   const canRead = Math.max(0, Math.min(budget.pagesASite ?? PAGES_A_SITE, budget.left ?? PAGES_A_SITE));
-  let fetched = 0;
-  for (const i of wanted.sort((a, b) => String(b.lastmod).localeCompare(String(a.lastmod))).slice(0, canRead)) {
+  // ➤ A sitemap often names the careers page itself ("/jobs", "/kariera") and not the
+  // ➤ vacancies on it. A page with no JobPosting block that links to several vacancy pages of
+  // ➤ its own site is such a list, and those pages are read too: one step further, no more.
+  const queue = wanted.sort((a, b) => String(b.lastmod).localeCompare(String(a.lastmod))).slice(0, canRead).map(i => ({ url: i.url, lastmod: i.lastmod, from: '' }));
+  const seen = new Set([...items.map(i => i.url), ...queue.map(q => q.url)]);
+  let fetched = 0, deeper = 0;
+  while (queue.length && fetched < canRead) {
     if (budget.left !== undefined && budget.left <= 0) break;
     if (budget.left !== undefined) budget.left--;
+    const q = queue.shift();
+    fetched++;
     try {
-      const html = await getText(i.url, opts);
-      const job = jobPostings(html, i.url)[0] || null;
+      const html = await getText(q.url, opts);
+      const job = jobPostings(html, q.url)[0] || null;
       if (job?.description?.length > DESCRIPTION) job.description = job.description.slice(0, DESCRIPTION);
-      pages[i.url] = { lastmod: i.lastmod, job };
-      fetched++;
-    } catch { pages[i.url] = { lastmod: i.lastmod, job: null }; }
+      pages[q.url] = { lastmod: q.lastmod, job, ...(q.from ? { from: q.from } : {}) };
+      if (!job && !q.from && deeper < DEEPER_A_SITE) {
+        for (const u of jobLinks(html, q.url)) {
+          if (seen.has(u) || deeper >= DEEPER_A_SITE || !allowed(robots, new URL(u).pathname)) continue;
+          seen.add(u); deeper++;
+          queue.push({ url: u, lastmod: '', from: q.url });
+        }
+      }
+    } catch { pages[q.url] = { lastmod: q.lastmod, job: null, ...(q.from ? { from: q.from } : {}) }; }
   }
-  // ➤ Only what the list still names is alive; a site keeps the newest pages and no more.
-  const alive = new Set(items.map(i => i.url));
-  for (const u of Object.keys(pages)) if (!alive.has(u)) delete pages[u];
+  // ➤ Alive: what the list still names, and what a page it still names led to.
+  const listedNow = new Set(items.map(i => i.url));
+  for (const [u, p] of Object.entries(pages)) if (!listedNow.has(u) && !(p.from && listedNow.has(p.from))) delete pages[u];
   const urls = Object.keys(pages);
   if (urls.length > ALIVE_PAGES_A_SITE) {
     for (const u of urls.sort((a, b) => String(pages[b].lastmod).localeCompare(String(pages[a].lastmod))).slice(ALIVE_PAGES_A_SITE)) delete pages[u];
   }
-  const adverts = items.map(i => pages[i.url]?.job && toRaw(pages[i.url].job, site, i.url)).filter(Boolean);
-  if (!given.found || fetched) log(`careers: ${site.name || site.host}: ${items.length} listed, ${fetched} pages read, ${adverts.length} adverts`);
+  const adverts = Object.entries(pages).map(([url, p]) => p.job && toRaw(p.job, site, url)).filter(Boolean);
+  if (!given.found || fetched) log(`careers: ${site.name || site.host}: ${items.length} listed${deeper ? ` (+${deeper} from its lists)` : ''}, ${fetched} pages read, ${adverts.length} adverts`);
   // ➤ Whether this site publishes the block at all: a site that never does is a candidate for
   // ➤ the browser and the heuristic reader.
   const read = Object.values(pages).length;
-  return { adverts, listed: items.length, fetched, blocks: read ? Object.values(pages).some(p => p.job) : true };
+  // ➤ A site whose pages were all left unread because the run had spent its budget has not
+  // ➤ been read at all: it must come back at once, not tomorrow.
+  const postponed = !!wanted.length && !fetched && (budget.left ?? 1) <= 0;
+  return { adverts, listed: items.length, fetched, postponed, blocks: read ? Object.values(pages).some(p => p.job) : true };
 }
