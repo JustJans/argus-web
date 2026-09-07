@@ -134,9 +134,10 @@ function drawStaticLists() {
   for (const fold of $$('#filters-form > details')) remember(fold, fold.dataset.group);
 }
 
-// ➤ Puts a profile into the controls. A fold-out is open when the visitor left it open, when it
-// ➤ is open by default, or when something inside is set; it never closes on its own. A group
-// ➤ with something set carries a mark, and the panel's head counts them.
+// ➤ Puts a profile into the controls. A fold-out opens by itself only the first time it is
+// ➤ drawn (the ones open by default, and any the profile already filters by); after that the
+// ➤ visitor's own choice stands, so ticking a filter never unfolds the rest. A group with
+// ➤ something set carries a mark, and the panel's head counts them.
 function fillFilters(p) {
   countryOrder.length = 0; countryOrder.push(...p.countries);
   drawCountries(p);
@@ -157,7 +158,8 @@ function fillFilters(p) {
   for (const fold of $$('#filters-form > details')) {
     const g = fold.dataset.group;
     fold.classList.toggle('is-active', active.has(g));
-    fold.open = foldState.has(g) ? foldState.get(g) || active.has(g) : OPEN_BY_DEFAULT.has(g) || active.has(g);
+    if (!foldState.has(g)) foldState.set(g, OPEN_BY_DEFAULT.has(g) || active.has(g));
+    fold.open = foldState.get(g);
   }
   const label = active.size ? `Filters · ${active.size}` : 'Filters';
   text('#filters-count', label);
@@ -168,7 +170,8 @@ function activeGroups(p) {
   return new Set(Object.keys(on).filter(k => on[k]));
 }
 
-// ➤ The pile's numbers: the big count on the front, the one-line stats once there are results,
+// ➤ The pile's numbers: the big count on the front, the count and the age once there are results
+// ➤ (the countries are in the filters, where they are chosen),
 // ➤ the Today table, and the notice when the pile is old.
 function drawPile() {
   const hours = Math.round((Date.now() - new Date(index.generated_at).getTime()) / 36e5);
@@ -182,7 +185,7 @@ function drawPile() {
   const stats = $('#hero-stats');
   stats.replaceChildren();
   const b = document.createElement('b'); b.textContent = n(index.counts.offers);
-  stats.append(b, document.createTextNode(` offers · ${rows.map(([cc, c]) => `${countryName(cc)} ${n(c)}`).join(' · ')} · ${rebuilt}${failed}`));
+  stats.append(b, document.createTextNode(` offers · ${rebuilt}${failed}`));
   text('#generated', `${n(index.counts.offers)} offers, ${rebuilt}${failed}.`);
   if (readHours > STALE_HOURS) { text('#stale-text', `The sources were last read ${Math.round(readHours / 24)} days ago; some offers may have closed since.`); $('#stale').hidden = false; }
   const tbody = $('#countries tbody');

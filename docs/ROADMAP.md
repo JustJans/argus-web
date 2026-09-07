@@ -47,9 +47,8 @@ The structure is built for the changes already known. Each item names the seam.
 - Today the title rules run in the browser from Argus's own `text.mjs` and `filters.mjs`
   (bundled by `builder/build-site.mjs` into `v/<hash>/lib/engine.js`). Years, degree and language
   demands are read at build time (`builder/screens.mjs`) and travel as `y`, `dg`, `lg`.
-- When Argus ships a browser-safe engine entry (its `requirements.mjs` reads a file at
-  import today), `app/lib/gates.js` is the single place to swap the precomputed facts for
-  the engine's screens over the excerpts.
+- The years, degrees and languages are precomputed because no advert text travels to the
+  browser at all; `app/lib/gates.js` reads those facts and nothing else.
 
 ## The profile code
 - Version byte first; catalogues append-only; a new field means a new version with the old

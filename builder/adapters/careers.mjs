@@ -27,7 +27,7 @@ const SITEMAP_CAP = 6;             // ➤ child sitemaps read from an index
 const LISTING_PAGES = 10;          // ➤ pages of a listing followed through its "next" link
 const DEEPER_A_SITE = 60;         // ➤ vacancy pages followed from a list the site names
 const ALIVE_PAGES_A_SITE = 2000;   // ➤ pages one site keeps in its file: the newest by last change
-const DESCRIPTION = 1500;          // ➤ characters kept per advert: the record needs an excerpt
+const DESCRIPTION = 1500;          // ➤ characters kept per advert: only the screens read them
 
 // ➤ A site is a feed, a sitemap or a listing page to read; the careers scouts may only give
 // ➤ a host and a few vacancy addresses seen, and the adapter then works out where to read

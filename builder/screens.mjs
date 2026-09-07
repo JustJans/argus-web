@@ -3,7 +3,7 @@
 // ➤ advert DEMANDS, and which languages it REQUIRES. The rule is Argus's: a language or a
 // ➤ degree mentioned as "a plus" or "not required" does not count; only a demand does.
 import { fold } from 'argus/server-bot/text.mjs';
-import { sentences } from './excerpt.mjs';
+import { sentences } from './sentences.mjs';
 
 const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const words = list => new RegExp(`(?:^|[^a-z0-9])(?:${list.map(w => escapeRe(fold(w)).replace(/\s+/g, '\\s+')).join('|')})(?![a-z0-9])`);

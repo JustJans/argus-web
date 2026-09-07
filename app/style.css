@@ -85,7 +85,7 @@ select.input { width: auto; }
 .hero__count { margin: 16px 0 0; font-size: 16px; line-height: 24px; color: var(--n800); }
 .hero__count b { font-family: var(--font-heading); font-stretch: condensed; font-weight: 700; font-size: 32px; line-height: 1; color: var(--text); font-variant-numeric: tabular-nums; vertical-align: -3px; }
 .hero__stats { display: none; margin: 0; font-size: 13px; color: var(--n700); font-variant-numeric: tabular-nums; }
-.hero__stats b { font-family: var(--font-heading); font-stretch: condensed; font-weight: 700; font-size: 22px; color: var(--text); }
+.hero__stats b { font-family: var(--font-heading); font-stretch: condensed; font-weight: 700; font-size: 20px; line-height: 1; color: var(--text); }
 body.has-results .hero { padding: 40px 0 32px; flex-direction: row; justify-content: space-between; align-items: baseline; text-align: left; flex-wrap: wrap; gap: 24px; }
 body.has-results .hero__brand, body.has-results .hero__count { display: none; }
 body.has-results .hero__slogan { margin-left: -0.04em; font-size: 40px; line-height: 1; font-weight: 700; letter-spacing: .005em; color: var(--text); }
@@ -170,10 +170,9 @@ details[open] > summary > .chev { transform: rotate(90deg); }
 .offer__title a { color: var(--text); text-decoration: none; }
 .offer__title a:hover { text-decoration: underline; }
 .offer__date { grid-column: 2; font-size: 13px; line-height: 24px; color: var(--n700); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.offer__original, .offer__meta, .offer__snippet, .offer__tags { grid-column: 1 / -1; margin: 0; }
+.offer__original, .offer__meta, .offer__tags { grid-column: 1 / -1; margin: 0; }
 .offer__original { font-size: 13px; color: var(--n700); }
 .offer__meta { font-size: 14px; color: var(--n800); }
-.offer__snippet { font-size: 14px; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .offer__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .tag { display: inline-flex; align-items: center; font-size: 11px; letter-spacing: .02em; padding: 3px 10px; border-radius: 0; }
 .tag-neutral { background: var(--n100); color: var(--n800); }

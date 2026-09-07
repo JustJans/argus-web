@@ -20,7 +20,7 @@ export const decodeEntities = s => String(s || '')
   .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
   .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)))
   .replace(/&([a-zA-Z]+);/g, (m, name) => (name in ENTITIES ? ENTITIES[name] : m));
-// ➤ Four thousand characters are plenty: the record keeps excerpts, and thousands of boards
+// ➤ Four thousand characters are plenty: the record keeps no text at all, only what the screens
 // ➤ are read in one build.
 export const text = html => decodeEntities(String(html || '').slice(0, 20000)
   .replace(/<br\s*\/?>|<\/p>|<\/li>|<\/h\d>|<\/div>|<\/tr>/gi, '\n')
