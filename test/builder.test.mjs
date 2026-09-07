@@ -24,7 +24,7 @@ import { toRaw as adzunaRaw, detailsUrl } from '../builder/adapters/adzuna.mjs';
 import { toRaw as joobleRaw } from '../builder/adapters/jooble.mjs';
 import { parseJobFeed } from '../builder/adapters/jobfeed.mjs';
 import { jobicy, remotive, arbeitnow } from '../builder/adapters/remote.mjs';
-import { parseRobots, allowed, parseSitemap, looksLikeJob, jobPostings, careerLinks, nextLink, detectPlatform, feedName, repairJson } from '../builder/lib/crawl.mjs';
+import { parseRobots, allowed, parseSitemap, looksLikeJob, pathShape, jobLinks, jobPostings, careerLinks, nextLink, detectPlatform, feedName, repairJson } from '../builder/lib/crawl.mjs';
 import { toRaw as careersRaw } from '../builder/adapters/careers.mjs';
 import { deadline } from '../builder/http.mjs';
 
@@ -298,7 +298,13 @@ ok(idFor('https://cvvp.nva.gov.lv/#/pub/vakances/1') !== idFor('https://cvvp.nva
   eq(jobPostings('<script type="application/ld+json">{ this is not json at all }</script>', 'https://x.example/1'), [], 'a block that is truly broken is still left alone');
   eq(await deadline(Promise.resolve('fast'), 1000), 'fast', 'a read that answers in time is handed over');
   eq(await deadline(new Promise(r => setTimeout(() => r('slow'), 300)), 30).catch(e => e.message), 'took too long', 'a read that neither answers nor fails is given up at its deadline');
-  eq([looksLikeJob('https://x.example/vacancies/engineer-12'), looksLikeJob('https://x.example/de/karriere/stellenangebote/abc'), looksLikeJob('https://x.example/ofertas-de-empleo/123'), looksLikeJob('https://x.example/about-us'), looksLikeJob('https://x.example/blog/jobs-of-the-future')], [true, true, true, false, true], 'addresses that look like vacancy pages');
+  eq([looksLikeJob('https://x.example/vacancies/engineer-12'), looksLikeJob('https://x.example/de/karriere/stellenangebote/abc'), looksLikeJob('https://x.example/ofertas-de-empleo/123'), looksLikeJob('https://x.example/about-us'), looksLikeJob('https://x.example/blog/jobs-of-the-future'), looksLikeJob('https://x.example/IT-Operations-Manager-de-j1186.html'), looksLikeJob('https://x.example/about-de-j.html')], [true, true, true, false, true, true, false], 'addresses that look like vacancy pages');
+
+  // ➤ The shape of an address without its names: what a site's own vacancy addresses teach.
+  eq([pathShape('https://x.example/o/ict-medewerker-2-112'), pathShape('https://x.example/o/dotnet-angular'), pathShape('https://x.example/poste/0cl8xznbfe-it-asset-manager-hf/'), pathShape('https://x.example/senior-engineer-hamburg'), pathShape('https://x.example/'), pathShape('https://x.example/de/eine-lange-stellenbeschreibung')],
+    ['/o/W', '/o/W', '/poste/W', '', '', ''], 'the shape of an address, names taken out');
+  const shaped = jobLinks('<a href="/o/data-engineer">one</a><a href="/impressum">two</a>', 'https://x.example/vacancies', new Set(['/o/W']));
+  eq([shaped.length, shaped[0]], [1, 'https://x.example/o/data-engineer'], 'a link shaped like the site\'s vacancies is followed');
   const html = '<html><head><script type="application/ld+json">{"@context":"https://schema.org","@type":"JobPosting","title":"Mechanical Engineer","datePosted":"2026-09-02","validThrough":"2026-10-02T00:00","hiringOrganization":{"@type":"Organization","name":"Damen"},"jobLocation":{"@type":"Place","address":{"@type":"PostalAddress","addressLocality":"Gorinchem","addressCountry":"NL"}},"description":"<p>Design &amp; build.</p>","url":"https://x.example/vacancies/12"}</script></head></html>';
   const jobs = jobPostings(html, 'https://x.example/page');
   eq([jobs.length, jobs[0].title, jobs[0].company, jobs[0].location, jobs[0].country, jobs[0].posted, jobs[0].expires, jobs[0].description, jobs[0].url], [1, 'Mechanical Engineer', 'Damen', 'Gorinchem, NL', 'nl', '2026-09-02', '2026-10-02', 'Design & build.', 'https://x.example/vacancies/12'], 'a JobPosting block: the fields the pile keeps');
