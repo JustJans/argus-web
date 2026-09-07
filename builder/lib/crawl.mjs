@@ -65,10 +65,14 @@ export const looksLikeJob = url => {
 // ➤ nothing else ("/W"), or names under a language ("/de/W"), describes every page there is,
 // ➤ and is not used.
 const LANG = /^(de|en|nl|fr|es|it|pt|sv|no|nb|nn|da|fi|pl|cs|sk|hu|ro|bg|el|hr|sl|et|lv|lt|tr|ru|uk|ca|eu|gl|ga|is|mt|sr|bs|mk|sq|be|zh|ja|ko|ar|he|hi)$/;
+// ➤ A site that carries a hiring block on every page it has teaches the shape of its articles:
+// ➤ where a site keeps its reading is not where it keeps its vacancies.
+const CONTENT = /^(article|articles|news|newsroom|blog|blogs|post|posts|page|pages|story|stories|press|event|events|product|products|service|services|about|team|insight|insights)$/;
 export function pathShape(url) {
   let path;
   try { path = new URL(url).pathname; } catch { return ''; }
   const parts = path.split('/').filter(Boolean).map(p => (p.length > 8 || /\d/.test(p) ? 'W' : p.toLowerCase()));
+  if (parts.some(p => CONTENT.test(p))) return '';
   return parts.some(p => p !== 'W' && !LANG.test(p)) ? '/' + parts.join('/') : '';
 }
 
