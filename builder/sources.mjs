@@ -41,6 +41,15 @@ export function loadCrawlConfig() {
 
 export const sourceId = src => `${src.group}/${src.key}`;
 
+// ➤ Does one host serve every source of this group? Greenhouse and Workable answer for all
+// ➤ their boards, so "too many requests" from one concerns the lot; Recruitee, Personio,
+// ➤ Teamtailor and the employers' own sites live on a host each, so it concerns one source.
+export function sharesHost(group) {
+  const ats = ATS[group];
+  if (!ats) return false;
+  try { return new URL(ats.url('one')).hostname === new URL(ats.url('two')).hostname; } catch { return false; }
+}
+
 // ➤ The whole catalogue, read fresh every run so a source found last night joins today.
 export function allSources() {
   const out = [];

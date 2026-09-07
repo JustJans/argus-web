@@ -10,7 +10,7 @@ import { existsSync, readFileSync, mkdirSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { writeFileAtomic } from 'argus/server-bot/fs-atomic.mjs';
-import { allSources, sourceId, loadCrawlConfig } from './sources.mjs';
+import { allSources, sourceId, loadCrawlConfig, sharesHost } from './sources.mjs';
 import { loadSource, saveSource, dropSource, sweepTemps, storeSize, eachSource } from './store.mjs';
 import { readWithDeadline, compare } from './readers.mjs';
 
@@ -105,12 +105,13 @@ async function pass(src, st, budget, tally) {
     return true;
   } catch (e) {
     const at = Date.now();
-    // ➤ "Too many requests" is not a failure: the host said when to come back, and the whole
-    // ➤ group waits, because an ATS serves every board from one host.
+    // ➤ "Too many requests" is not a failure: the host said when to come back. When one host
+    // ➤ serves the whole group (an ATS), the group waits; when every source has its own host
+    // ➤ (the employers' sites), only that source does.
     if (e.status === 429 && e.until) {
-      (st.groups[src.group] ||= {}).pausedUntil = e.until;
       entry.next = e.until + jitter();
-      log(`${src.group}: ${e.message}; the group waits`);
+      if (sharesHost(src.group)) { (st.groups[src.group] ||= {}).pausedUntil = e.until; log(`${src.group}: ${e.message}; the group waits`); }
+      else if (!src.found) log(`${id}: ${e.message}`);
       tally.paused++;
       return false;
     }

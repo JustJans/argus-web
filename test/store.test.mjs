@@ -3,6 +3,7 @@ import { existsSync } from 'fs';
 import { harness } from 'argus/server-bot/test-harness.mjs';
 import { fileNameFor, sourcePath, loadSource, saveSource, dropSource, emptySource } from '../builder/store.mjs';
 import { compare } from '../builder/readers.mjs';
+import { sharesHost } from '../builder/sources.mjs';
 import { due, nextPass, adoptStore, cadenceMs } from '../builder/crawl.mjs';
 
 const { ok, eq, done } = harness('store');
@@ -28,6 +29,10 @@ const before = [{ url: 'a' }, { url: 'b' }, { url: 'c' }];
 eq(compare(before, [{ url: 'b' }, { url: 'c' }, { url: 'd' }]), { added: 1, gone: 1, same: 2 }, 'one advert new, one closed, two the same');
 eq(compare(before, before), { added: 0, gone: 0, same: 3 }, 'nothing changed');
 eq(compare([], [{ url: 'a' }]), { added: 1, gone: 0, same: 0 }, 'a source read for the first time is all new');
+
+// Who waits when a host says "too many requests".
+eq([sharesHost('greenhouse'), sharesHost('workable'), sharesHost('ashby')], [true, true, true], 'an ATS that answers for every board from one host: the group waits');
+eq([sharesHost('recruitee'), sharesHost('personio'), sharesHost('teamtailor'), sharesHost('careers'), sharesHost('feeds')], [false, false, false, false, false], 'a host per source: only that source waits');
 
 // When a source comes back.
 const site = { group: 'careers', key: 'x.example', kind: 'board' };
