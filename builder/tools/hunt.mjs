@@ -35,20 +35,23 @@ const countryList = read('catalogues/countries.json').countries;
 const countries = compileCountries(countryList);
 const europe = new Set(countryList.map(c => c.iso));
 
-// ➤ How many of the adverts the gate keeps in Europe, and where.
+// ➤ How much of what a company publishes is work this site is for, how much of that is in
+// ➤ Europe, and where. The first number is what says whether this is an employer of ours: an
+// ➤ engineering firm that also wants an administrator is one, a haulier is not.
 function judge(jobs, source) {
-  let kept = 0;
+  let kept = 0, work = 0;
   const by = {};
   for (const p of jobs) {
     const raw = { ...p, source, codes: {}, lang: '' };
     if (!/^https?:\/\//.test(String(raw.url || ''))) continue;
     if (!familiesOf(raw, gate).length || hygieneReason(raw)) continue;
+    work++;
     const place = placeOf(raw.location, countries);
     if (place.cc && place.cc !== 'xx' && !europe.has(place.cc)) continue;
     kept++;
     by[place.cc || 'zz'] = (by[place.cc || 'zz'] || 0) + 1;
   }
-  return { kept, where: Object.entries(by).sort((a, b) => b[1] - a[1]).map(([cc, n]) => `${cc} ${n}`).join(' ') };
+  return { kept, work, share: jobs.length ? work / jobs.length : 0, where: Object.entries(by).sort((a, b) => b[1] - a[1]).map(([cc, n]) => `${cc} ${n}`).join(' ') };
 }
 
 const pretty = domain => { const label = domain.replace(/^https?:\/\//, '').replace(/^www\./, '').split('.')[0]; return label.charAt(0).toUpperCase() + label.slice(1); };
@@ -144,12 +147,16 @@ async function hunt(domain) {
 function line(r) {
   const what = r.entry ? Object.values(r.entry)[0] : '';
   if (r.off) return `${r.domain}: ${r.how} ${what}: switched off in config/vendors.yml`;
-  if (r.jobs?.length) { const j = judge(r.jobs, r.how); return `${r.domain}: ${r.how} ${what}, ${r.jobs.length} adverts${r.listed ? ` of ${r.listed} listed` : ''}, ${j.kept} ours in Europe${j.where ? ` (${j.where})` : ''}`; }
+  if (r.jobs?.length) { const j = judge(r.jobs, r.how); return `${r.domain}: ${r.how} ${what}, ${r.jobs.length} adverts${r.listed ? ` of ${r.listed} listed` : ''}, ${Math.round(100 * j.share)}% work of ours, ${j.kept} in Europe${j.where ? ` (${j.where})` : ''}`; }
   return `${r.domain}: ${r.how ? `${r.how}, ` : ''}${r.error || 'nothing read'}${r.url ? ` [${r.url}]` : ''}`;
 }
 
+const OURS_AT_LEAST = 0.25;   // ➤ the share of a company's adverts that must be work of ours
+const SEEN_AT_LEAST = 4;      // ➤ adverts read before that share means anything
+
 // ➤ hunted.yml: the readable sources, and the vendor sites waiting for their switch; a source
-// ➤ the other lists already name is left to them.
+// ➤ the other lists already name is left to them. A company whose adverts are mostly other
+// ➤ trades is not written down: the site would read it every day and take nothing from it.
 function write(results) {
   mkdirSync(dirname(HUNTED), { recursive: true });
   const file = existsSync(HUNTED) ? (yaml.load(readFileSync(HUNTED, 'utf8')) || {}) : {};
@@ -163,8 +170,10 @@ function write(results) {
     const key = ats ? `${ats}:${String(r.entry[ats]).toLowerCase()}` : r.entry.feed || r.entry.sitemap || r.entry.listing;
     if (known.has(key)) continue;
     known.add(key);
-    const name = r.jobs.find(j => j.company)?.company || pretty(r.domain);
-    (ats ? companies : sites).push({ name, ...r.entry, hunted: new Date().toISOString().slice(0, 10), adverts: r.jobs.length, kept: judge(r.jobs, r.how).kept });
+    const j = judge(r.jobs || [], r.how);
+    if (!r.off && r.jobs.length >= SEEN_AT_LEAST && j.share < OURS_AT_LEAST) continue;
+    const name = r.jobs.find(j2 => j2.company)?.company || pretty(r.domain);
+    (ats ? companies : sites).push({ name, ...r.entry, hunted: new Date().toISOString().slice(0, 10), adverts: r.jobs.length, ours: j.work, kept: j.kept });
     added++;
   }
   const head = '# ➤ Sources the hunter found (builder/tools/hunt.mjs --write): companies read through their\n# ➤ ATS\'s public listing, and sites read through their feed, sitemap or listing page. Read by the\n# ➤ builder like companies.yml and careers.yml; a source those name is left to them. adverts and\n# ➤ kept are what the hunter saw that day, for the record.\n';
