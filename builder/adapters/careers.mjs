@@ -70,6 +70,14 @@ export async function resolve(site, state, opts) {
   // ➤ A host that does not answer its robots.txt at all is dead for the day: no sitemaps
   // ➤ are tried on it (each would wait its whole timeout).
   try { const r = await get(`${origin}/robots.txt`, opts); if (r.ok) robots = parseRobots(await r.text()); } catch (e) { throw new Error(`no answer (${e.message.slice(0, 40)})`); }
+  // ➤ A vacancies feed first, where the site publishes one: the whole list with its places and
+  // ➤ its text in a single read, which is kinder to the site than a page per vacancy.
+  for (const path of ['/jobs.xml', '/jobs.rss']) {
+    try {
+      const jobs = parseSuccessFactors(await getText(origin + path, opts), site.name || '');
+      if (jobs.filter(j => j.url && j.location).length >= 3) { (state.resolved ||= {})[site.host] = { feed: origin + path }; return { ...site, feed: origin + path }; }
+    } catch { /* no feed there */ }
+  }
   for (const sm of [...robots.sitemaps, `${origin}/sitemap.xml`].slice(0, 3)) {
     try { const parsed = parseSitemap(await getText(sm, opts)); if (parsed.items.length) { (state.resolved ||= {})[site.host] = { sitemap: sm }; return { ...site, sitemap: sm }; } } catch { /* next */ }
   }
