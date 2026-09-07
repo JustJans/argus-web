@@ -24,7 +24,7 @@ import { toRaw as adzunaRaw, detailsUrl } from '../builder/adapters/adzuna.mjs';
 import { toRaw as joobleRaw } from '../builder/adapters/jooble.mjs';
 import { parseJobFeed } from '../builder/adapters/jobfeed.mjs';
 import { jobicy, remotive, arbeitnow } from '../builder/adapters/remote.mjs';
-import { parseRobots, allowed, parseSitemap, looksLikeJob, jobPostings, careerLinks, nextLink, detectPlatform, feedName } from '../builder/lib/crawl.mjs';
+import { parseRobots, allowed, parseSitemap, looksLikeJob, jobPostings, careerLinks, nextLink, detectPlatform, feedName, repairJson } from '../builder/lib/crawl.mjs';
 import { toRaw as careersRaw } from '../builder/adapters/careers.mjs';
 import { deadline } from '../builder/http.mjs';
 
@@ -286,6 +286,15 @@ eq(snippet('A'.repeat(300), 50).length, 50, 'a single overlong sentence is cut')
   const sm = parseSitemap('<?xml version="1.0"?><urlset><url><loc>https://x.example/vacancies/engineer-12</loc><lastmod>2026-09-01T10:00:00+00:00</lastmod></url><url><loc> https://x.example/about </loc></url></urlset>');
   eq([sm.index, sm.items.length, sm.items[0].url, sm.items[0].lastmod, sm.items[1].lastmod], [false, 2, 'https://x.example/vacancies/engineer-12', '2026-09-01', ''], 'a sitemap: addresses and lastmod, trimmed');
   eq(parseSitemap('<sitemapindex><sitemap><loc>https://x.example/sitemap-jobs.xml</loc></sitemap></sitemapindex>').index, true, 'a sitemap index is told apart');
+  // A block written by hand, with a real newline inside a string: search engines forgive it, so this does too.
+  const handwritten = '<script type="application/ld+json">{ "@context": "https://schema.org/", "@type": "JobPosting", "title": "ICT Servicedeskmedewerker",\n "description": "Line one\nline two", "datePosted": "27 augustus 2026", "hiringOrganization": { "name": "igen" },\n "jobLocation": { "address": { "addressLocality": "Apeldoorn", "addressCountry": "NL" } } }</script>';
+  const fixed = jobPostings(handwritten, 'https://igen.example/vacature')[0];
+  eq([fixed.title, fixed.company, fixed.location, fixed.country], ['ICT Servicedeskmedewerker', 'igen', 'Apeldoorn, NL', 'nl'], 'a block with newlines inside its strings is still read');
+  eq(fixed.description.split('\n'), ['Line one', 'line two'], 'and the text comes back whole, line break and all');
+  eq(fixed.posted, '', 'a day written in words is no day at all');
+  eq(jobPostings('<script type="application/ld+json">{"@type":"JobPosting","title":"Site Engineer","datePosted":"2026-09-01T08:00:00Z"}</script>', 'https://x.example/1')[0].posted, '2026-09-01', 'a day written the way the schema asks is kept');
+  eq(JSON.parse(repairJson('{"a":"b\\nc"}')).a, 'b\nc', 'what was already good JSON is untouched');
+  eq(jobPostings('<script type="application/ld+json">{ this is not json at all }</script>', 'https://x.example/1'), [], 'a block that is truly broken is still left alone');
   eq(await deadline(Promise.resolve('fast'), 1000), 'fast', 'a read that answers in time is handed over');
   eq(await deadline(new Promise(r => setTimeout(() => r('slow'), 300)), 30).catch(e => e.message), 'took too long', 'a read that neither answers nor fails is given up at its deadline');
   eq([looksLikeJob('https://x.example/vacancies/engineer-12'), looksLikeJob('https://x.example/de/karriere/stellenangebote/abc'), looksLikeJob('https://x.example/ofertas-de-empleo/123'), looksLikeJob('https://x.example/about-us'), looksLikeJob('https://x.example/blog/jobs-of-the-future')], [true, true, true, false, true], 'addresses that look like vacancy pages');

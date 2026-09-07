@@ -66,6 +66,10 @@ export function jobLinks(html, pageUrl) {
   return [...out];
 }
 
+// ➤ The day a site names, when it names one the way the schema asks (2026-09-07, or a whole
+// ➤ timestamp): a date written in words belongs to no calendar the pile can sort by.
+const day = v => (/^\d{4}-\d{2}-\d{2}/.test(String(v || '').trim()) ? String(v).trim().slice(0, 10) : '');
+
 // ➤ The older way of marking a vacancy up: microdata (itemtype JobPosting, itemprop fields).
 // ➤ Read leniently: a property is its content attribute, else the text inside its tag.
 function microdataPostings(html, pageUrl) {
@@ -85,19 +89,36 @@ function microdataPostings(html, pageUrl) {
   const location = [prop('addressLocality'), prop('addressRegion'), country].filter(Boolean).join(', ');
   return [{
     title, company: prop('hiringOrganization'), location, country: /^[A-Za-z]{2}$/.test(country) ? country.toLowerCase() : '',
-    url: pageUrl, description: prop('description'), posted: prop('datePosted').slice(0, 10), expires: prop('validThrough').slice(0, 10), remote: /remote/i.test(location),
+    url: pageUrl, description: prop('description'), posted: day(prop('datePosted')), expires: day(prop('validThrough')), remote: /remote/i.test(location),
   }];
 }
 
 // ➤ Every JobPosting on a page, with the fields the pile keeps: the JSON-LD blocks, else the
 // ➤ microdata. Nested organisations and places are read leniently: sites follow the schema
 // ➤ loosely.
+// ➤ Plenty of sites write the block by hand and leave a real newline or tab inside a string,
+// ➤ which strict JSON refuses and search engines forgive. The control characters inside
+// ➤ strings are escaped and the block is read after all; everything outside a string is left
+// ➤ exactly as it was, so a block that is truly broken still fails.
+export function repairJson(json) {
+  const ESCAPED = { '\n': '\\n', '\r': '\\r', '\t': '\\t' };
+  let out = '', inString = false, escaped = false;
+  for (const ch of String(json)) {
+    if (escaped) { out += ch; escaped = false; continue; }
+    if (ch === '\\') { out += ch; escaped = true; continue; }
+    if (ch === '"') { inString = !inString; out += ch; continue; }
+    if (inString && ch < ' ') { out += ESCAPED[ch] || ' '; continue; }
+    out += ch;
+  }
+  return out;
+}
 export function jobPostings(html, pageUrl) {
   const out = [];
   const str = v => (typeof v === 'string' ? v.trim() : Array.isArray(v) ? str(v[0]) : v && typeof v === 'object' ? str(v.name || v['@value'] || v.text) : '');
   for (const m of String(html || '').matchAll(/<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)) {
     let parsed;
-    try { parsed = JSON.parse(m[1].replace(/^\s*<!--|-->\s*$/g, '')); } catch { continue; }
+    const block = m[1].replace(/^\s*<!--|-->\s*$/g, '');
+    try { parsed = JSON.parse(block); } catch { try { parsed = JSON.parse(repairJson(block)); } catch { continue; } }
     const nodes = [].concat(parsed?.['@graph'] || parsed || []).flatMap(n => [n, ...[].concat(n?.mainEntity || [])]);
     for (const node of nodes) {
       const type = [].concat(node?.['@type'] || []);
@@ -111,7 +132,7 @@ export function jobPostings(html, pageUrl) {
       out.push({
         title, company: str(node.hiringOrganization), location, country: /^[A-Za-z]{2}$/.test(country) ? country.toLowerCase() : '',
         url: str(node.url) || pageUrl, description: text(node.description || ''),
-        posted: str(node.datePosted).slice(0, 10), expires: str(node.validThrough).slice(0, 10),
+        posted: day(str(node.datePosted)), expires: day(str(node.validThrough)),
         remote: node.jobLocationType === 'TELECOMMUTE' || /remote/i.test(location),
       });
     }
