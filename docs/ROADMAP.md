@@ -31,6 +31,9 @@ The structure is built for the changes already known. Each item names the seam.
   been read, what is due and what is failing; `--dry` shows the queue; `--purge` drops the files of
   sources no list names. `node builder/build-pile.mjs` then builds the pile from the store without
   asking the network. Cadences and budgets: `builder/config/crawl.yml`.
+- **Why a site gives nothing**: `node builder/tools/triage.mjs [--limit 300] [--out file.tsv]`
+  labels the silent sites (no block, feed, unrecognised, JavaScript, vendor, wall, dead, empty)
+  by asking the crawler's own reader, so the next reader is built for the biggest reason.
 - **One company by domain**: `node builder/tools/hunt.mjs acme.com [--write]` finds the careers
   pages, the platform and the adverts; Workday and Oracle sites read once `builder/config/vendors.yml`
   says so.

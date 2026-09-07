@@ -16,19 +16,20 @@ const HOSTS = join(ROOT, 'builder', 'state', 'wdc-hosts.json');
 const SLUGS = join(ROOT, 'builder', 'state', 'scout-slugs.json');
 const DRY = process.argv.includes('--dry');
 
-if (!existsSync(HOSTS)) { console.log(`no ${HOSTS}: run builder/tools/scout-wdc.mjs first`); process.exit(1); }
-const hosts = JSON.parse(readFileSync(HOSTS, 'utf8'));
+const URLS = join(ROOT, 'builder', 'state', 'wdc-vendor-urls.json');
+if (!existsSync(HOSTS) && !existsSync(URLS)) { console.log(`no ${HOSTS}: run builder/tools/scout-wdc.mjs or builder/tools/vendor-urls.mjs first`); process.exit(1); }
 const file = existsSync(SLUGS) ? JSON.parse(readFileSync(SLUGS, 'utf8')) : { crawls: [], collected_at: new Date().toISOString(), slugs: {} };
 const found = {};
-for (const [host, v] of Object.entries(hosts)) {
-  if (!/myworkdayjobs\.com$|oraclecloud\.com$/.test(host)) continue;
-  for (const url of v.urls || []) {
-    const p = detectPlatform(url);
-    if (!p.ats) continue;
-    (found[p.ats] ||= new Set()).add(p.slug);
-    break;
+const take = url => { const p = detectPlatform(url); if (p.ats) (found[p.ats] ||= new Set()).add(p.slug); };
+// ➤ The hosts the careers scout kept, and the one address per vendor host that vendor-urls.mjs
+// ➤ reads out of the same files for every host, kept or not.
+if (existsSync(HOSTS)) {
+  for (const [host, v] of Object.entries(JSON.parse(readFileSync(HOSTS, 'utf8')))) {
+    if (!/myworkdayjobs\.com$|oraclecloud\.com$/.test(host)) continue;
+    for (const url of v.urls || []) { take(url); break; }
   }
 }
+if (existsSync(URLS)) for (const url of Object.values(JSON.parse(readFileSync(URLS, 'utf8')))) take(url);
 const vendors = loadVendors();
 for (const [ats, set] of Object.entries(found)) {
   const before = new Set(file.slugs[ats] || []);

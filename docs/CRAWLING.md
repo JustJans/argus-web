@@ -218,12 +218,32 @@ Left out: Careerjet, whose API wants each search made live with the visitor's IP
 browser (`user_ip`, `user_agent` are required parameters), which the static site cannot and
 will not do; and Indeed and LinkedIn, which sell nothing of the kind.
 
+## The ways a site is read, and how they were chosen
+
+A site that lists no vacancy is not a site with no vacancies. `builder/tools/triage.mjs` asks
+the crawler's own reader why a site gave nothing and labels it, so the next reader is built for
+the biggest reason rather than the most interesting one. Of 300 of the 6,108 silent sites,
+spread across the whole list (2026-09-07):
+
+| Why it gave nothing | Share | What was done |
+|---|---|---|
+| It lists its careers page, not its vacancies | 72% | The page is read as a list: its vacancy links are followed one step further |
+| It does publish the block, and the run had no page budget left | 18% | A pass with no budget is no longer recorded as a pass |
+| Addresses there are, none that look like a vacancy | 7% | Left alone: they turned out to be blogs and magazines, not employers |
+| Empty, walled, dead, drawn by JavaScript, a feed | 1% each | A feed is read; a wall is left; JavaScript waits for a browser |
+
+So the readers, in the order they are tried: a **vacancies feed** (`/jobs.xml`, one read with the
+places and the text), the **sitemap and the JobPosting block** of each page, the **list a page
+carries** (one step further, at most sixty a pass), the **ATS's own listing** when the page names
+one, and the **vendor's** (Workday and Oracle, behind `config/vendors.yml`). A page drawn by
+JavaScript is the rarest reason of all, which is why the browser is last rather than first.
+
 ## Where it can still grow
 
 - The .com hosts of Web Data Commons (26,207), told apart by the countries their postings name.
 - Common Crawl's own pages (WARC records) for hosts without a sitemap: read the archived copy
   first, ask the live site only for what changed.
 - A monthly cron for the scouts on the server; the lists are committed for now.
-- Workday and Oracle sites: the readers exist, `config/vendors.yml` switches them on; the
-  scout collects their tenants from Common Crawl. iCIMS, Eightfold, Taleo and softgarden would
+- Workday and Oracle are on: their tenants came from the addresses Web Data Commons had already
+  seen (`builder/tools/vendor-urls.mjs`, `vendor-slugs.mjs`), and the probe kept 109 of 157. iCIMS, Eightfold, Taleo and softgarden would
   need a browser (Playwright on the server) for their lists.
