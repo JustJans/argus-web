@@ -1,25 +1,22 @@
 #!/bin/sh
-# Looks for employers the lists do not name yet, once a day. Wikidata gives the queue (every
-# company it places in one of the site's countries, with a website and a staff count: names, no
-# key, no account) and the hunter takes a slice of it, finding each company's careers pages and
-# how to read them. What it finds goes to builder/state/found/hunted.yml, which the builder
-# reads next to config/ and which is never committed, so a pull never fights it. The queue is
-# asked for again when it is nearly all hunted. Nothing happens while builder/state/STOP exists.
+# Looks for employers the lists do not name yet. Once a week is enough: the big sweep has
+# already been done, so what a Sunday finds is what appeared during the week. Wikidata gives
+# the names — every company it places in one of the site's countries with a website, by what
+# the company does and by how many it employs — and the hunter finds each one's careers pages
+# and how to read them. Domains already hunted are left out, so the queue is what is new.
+# What it finds goes to builder/state/found/hunted.yml, which the builder reads next to
+# config/ and never commits, so a pull never fights it. Nothing happens while
+# builder/state/STOP exists.
+#   sh ops/server-discover.sh [how many at most] [how many at a time]
 set -e
 cd "$(dirname "$0")/.."
 [ -e builder/state/STOP ] && { echo "[$(date -u +%FT%TZ)] STOP is in place"; exit 0; }
 echo "[$(date -u +%FT%TZ)] discover at $(git rev-parse --short HEAD)"
 
-A_DAY=400                                        # domains hunted per run
+A_WEEK=${1:-2000}                                # domains hunted in one run, at most
+LANES=${2:-6}                                    # domains looked at at a time
 queue=builder/state/found/hunt-queue.txt
-done=builder/state/hunted-done.txt
-touch "$done"
+touch builder/state/hunted-done.txt
 
-left=0
-[ -s "$queue" ] && left=$(awk -F, 'NR==FNR{d[$1];next}!($1 in d)' "$done" "$queue" | grep -c . || true)
-echo "$left domains left in the queue"
-if [ "$left" -lt 100 ]; then
-  node builder/tools/domains-wikidata.mjs
-fi
-
-node builder/tools/hunt.mjs --file "$queue" --take "$A_DAY" --lanes 6 --write
+node builder/tools/domains-wikidata.mjs
+node builder/tools/hunt.mjs --file "$queue" --take "$A_WEEK" --lanes "$LANES" --write
