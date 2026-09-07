@@ -1,7 +1,8 @@
-# The home server's schedule. Install it with:  crontab ops/crontab
+# The home server's schedule. Install it with:  sh ops/install.sh  (it keeps every other line)
 # Stop everything with:  touch builder/state/STOP     Start again with:  rm builder/state/STOP
 # The crawler reads sources into the store every hour; the publisher builds and pushes the
-# site from the store every three hours; the scouts look for new sources once a day. Each
-# has its own lock, so a slow run is skipped rather than piled on top of the last one.
-7 * * * *    cd $HOME/argus-web && /usr/bin/flock -n builder/state/crawl.lock   ops/server-crawl.sh    >> builder/state/crawl.log 2>&1
-23 */3 * * * cd $HOME/argus-web && /usr/bin/flock -n builder/state/publish.lock ops/server-refresh.sh  >> builder/state/publish.log 2>&1
+# site from the store every three hours. Each has its own lock, so a slow run is skipped
+# rather than piled on top of the last one. The scripts are run through sh, because a
+# checkout does not always keep the executable bit.
+7 * * * *    cd $HOME/argus-web && /usr/bin/flock -n builder/state/crawl.lock   /bin/sh ops/server-crawl.sh    >> builder/state/crawl.log 2>&1
+23 */3 * * * cd $HOME/argus-web && /usr/bin/flock -n builder/state/publish.lock /bin/sh ops/server-refresh.sh  >> builder/state/publish.log 2>&1
