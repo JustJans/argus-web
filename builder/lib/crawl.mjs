@@ -58,15 +58,30 @@ export const looksLikeJob = url => {
   return JOBBY.test(path) || NUMBERED.test(path);
 };
 
+// ➤ The shape of an address with its names taken out: "/o/ict-medewerker-2-112" and
+// ➤ "/o/dotnet-angular" are both "/o/W". A site whose vacancies were seen at addresses of one
+// ➤ shape names the rest of them the same way, in whatever language, so a handful of known
+// ➤ vacancy addresses opens a site no word list would have opened. A shape that is names and
+// ➤ nothing else ("/W"), or names under a language ("/de/W"), describes every page there is,
+// ➤ and is not used.
+const LANG = /^(de|en|nl|fr|es|it|pt|sv|no|nb|nn|da|fi|pl|cs|sk|hu|ro|bg|el|hr|sl|et|lv|lt|tr|ru|uk|ca|eu|gl|ga|is|mt|sr|bs|mk|sq|be|zh|ja|ko|ar|he|hi)$/;
+export function pathShape(url) {
+  let path;
+  try { path = new URL(url).pathname; } catch { return ''; }
+  const parts = path.split('/').filter(Boolean).map(p => (p.length > 8 || /\d/.test(p) ? 'W' : p.toLowerCase()));
+  return parts.some(p => p !== 'W' && !LANG.test(p)) ? '/' + parts.join('/') : '';
+}
+
 // ➤ Links on a page that look like vacancy pages of the same site: what a listing page
-// ➤ offers when the sitemap names only the listing.
-export function jobLinks(html, pageUrl) {
+// ➤ offers when the sitemap names only the listing. shapes: the site's own vacancy shapes.
+export function jobLinks(html, pageUrl, shapes) {
   const base = new URL(pageUrl);
   const out = new Set();
   for (const m of String(html || '').matchAll(/<a\s[^>]*href\s*=\s*["']([^"'#]+)["']/gi)) {
     let u;
     try { u = new URL(text(m[1]), base); } catch { continue; }
-    if (u.host !== base.host || u.href === base.href || !looksLikeJob(u.href)) continue;
+    if (u.host !== base.host || u.href === base.href) continue;
+    if (!looksLikeJob(u.href) && !(shapes && shapes.has(pathShape(u.href)))) continue;
     if (u.pathname.replace(/\/$/, '') === base.pathname.replace(/\/$/, '')) continue;
     out.add(u.href.split('#')[0]);
   }

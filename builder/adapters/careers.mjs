@@ -11,7 +11,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import yaml from 'js-yaml';
 import { get, getText } from '../http.mjs';
-import { parseRobots, allowed, parseSitemap, looksLikeJob, jobPostings, jobLinks, nextLink } from '../lib/crawl.mjs';
+import { parseRobots, allowed, parseSitemap, looksLikeJob, pathShape, jobPostings, jobLinks, nextLink } from '../lib/crawl.mjs';
 import { parseSuccessFactors } from 'argus/server-bot/scan.mjs';
 
 export const id = 'careers';
@@ -103,14 +103,18 @@ export async function resolve(site, state, opts) {
 
 // ➤ The vacancy addresses a site lists: its sitemap, the children of its sitemap index, or
 // ➤ the links on its listing page and the pages its "next" link leads to.
+// ➤ The addresses the scout saw a vacancy at say what this site's vacancy pages look like.
+const shapesOf = site => new Set((site.urls || []).map(pathShape).filter(Boolean));
+
 export async function listed(site, opts) {
+  const shapes = shapesOf(site);
   if (!site.sitemap) {
     const seen = new Set();
     let url = site.listing;
     for (let page = 0; url && page < LISTING_PAGES; page++) {
       const html = await getText(url, opts);
       const before = seen.size;
-      for (const u of jobLinks(html, url)) seen.add(u);
+      for (const u of jobLinks(html, url, shapes)) seen.add(u);
       const next = nextLink(html, url);
       url = next && !seen.has(next) && seen.size > before ? next : '';
     }
@@ -123,7 +127,7 @@ export async function listed(site, opts) {
     const children = first.items.filter(i => !site.match || i.url.includes(site.match) || /job|vacan|career|stellen|emploi|empleo|vacature/i.test(i.url)).slice(0, SITEMAP_CAP);
     for (const c of children.length ? children : first.items.slice(0, SITEMAP_CAP)) { try { items.push(...parseSitemap(await getText(c.url, opts)).items); } catch { /* one child missing */ } }
   }
-  const jobbish = items.filter(i => looksLikeJob(i.url));
+  const jobbish = items.filter(i => looksLikeJob(i.url) || shapes.has(pathShape(i.url)));
   if (!site.match) return jobbish;
   // ➤ The path was worked out from the addresses a scout happened to see; when nothing is under
   // ➤ it, the site has moved its vacancies and what looks like a vacancy is better than nothing.
@@ -179,7 +183,7 @@ export async function readSite(given, store, budget = {}, log = () => {}) {
       if (job?.description?.length > DESCRIPTION) job.description = job.description.slice(0, DESCRIPTION);
       pages[q.url] = { lastmod: q.lastmod, job, ...(q.from ? { from: q.from } : {}) };
       if (!job && !q.from && deeper < DEEPER_A_SITE) {
-        for (const u of jobLinks(html, q.url)) {
+        for (const u of jobLinks(html, q.url, shapesOf(site))) {
           if (seen.has(u) || deeper >= DEEPER_A_SITE || !allowed(robots, new URL(u).pathname)) continue;
           seen.add(u); deeper++;
           queue.push({ url: u, lastmod: '', from: q.url });
