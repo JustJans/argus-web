@@ -35,7 +35,7 @@ the brand and Sources only, as the design shows; rows grow to 44px.
   `#families-pick` carry `data-group="families:<group id>"`), `.is-active` on a fold-out with
   something set, `#cv-status[data-state]`, `body.has-results`, `body.filters-open`,
   `.filters.is-open`, `.btn.is-done` on Copy after copying.
-- **Classes the scripts add**: `check-row`, `check-row__count`, `filter-group`, `chev`,
+- **Classes the scripts add**: `check-row`, `filter-group`, `chev`,
   `offers`, `offer`, `offer__title`, `offer__date`, `offer__original`, `offer__meta`,
   `offer__tags`, `tag`, `tag-outline` (the source), `tag-neutral`, `more`,
   `btn`, `btn-secondary`, `empty`, `empty__n`, `debug`.
