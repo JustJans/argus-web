@@ -13,7 +13,7 @@ const V = 'abc123def0';
 
 eq(rewriteAssetLinks('<link rel="stylesheet" href="style.css"><script type="module" src="main.js"></script>', 'index.html', V, isAsset),
   `<link rel="stylesheet" href="v/${V}/style.css"><script type="module" src="v/${V}/main.js"></script>`, 'the first page points into the version folder');
-eq(rewriteAssetLinks('<link href="../style.css"><script src="notes.js"></script>', 'legal/about.html', V, isAsset),
+eq(rewriteAssetLinks('<link href="../style.css"><script src="notes.js"></script>', 'legal/sources.html', V, isAsset),
   `<link href="../v/${V}/style.css"><script src="../v/${V}/legal/notes.js"></script>`, 'a page in a folder climbs out to the version folder');
 eq(rewriteAssetLinks('<link href="/argus-web/style.css">', '404.html', V, isAsset),
   `<link href="/argus-web/v/${V}/style.css">`, 'an absolute address keeps its prefix (the 404 page is served from any depth)');
