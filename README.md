@@ -105,4 +105,6 @@ dependency from its repository at a tagged version.
 
 ## Licence
 
-MIT. See [LICENSE](LICENSE).
+Source-available, not open source: the code is here to be read, and only the
+copyright holder may run it. See [LICENSE](LICENSE), which also lists the data
+files and adverts that keep their own terms.

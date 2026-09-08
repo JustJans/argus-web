@@ -1,21 +1,45 @@
-MIT License
+Copyright (c) 2026 JustJans (github.com/JustJans). All rights reserved.
 
-Copyright (c) 2026 Argus Web contributors
+This is source-available software, not open source. The code is published so
+that anyone can read it and check what the site does with their data. No
+permission to use it is given.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+What is allowed
+  Reading this code, and quoting short parts of it when discussing or
+  reviewing it.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+What is not allowed, without the copyright holder's written permission
+  Running, deploying or hosting this software, in whole or in part, in public
+  or in private, for yourself or for anyone else.
+  Copying, modifying, translating or building on it.
+  Distributing, publishing, selling or sublicensing it, or anything derived
+  from it.
+
+The only instance of this software authorised to run is the one the copyright
+holder operates at https://justjans.github.io/argus-web/.
+
+Two things this licence cannot undo. Versions published before it under the MIT
+licence stay under that licence for whoever obtained them; this one covers this
+version onward. And while this repository is public on GitHub, GitHub's Terms of
+Service let its users view it and fork it within GitHub; nothing here grants
+more than that, and nothing beyond GitHub.
+
+Not covered by this licence
+  builder/config/companies-found.yml — board slugs unioned with three
+    open-source lists that keep their own terms: OpenRoles (CC BY-SA 4.0),
+    job-board-aggregator (CC BY-NC 4.0), JobSeek (CC BY-NC 4.0). The file's
+    header credits them.
+  builder/config/careers-found.yml — hosts read from Web Data Commons'
+    extraction of Common Crawl, under those projects' terms.
+  catalogues/codes/isco.json and catalogues/families.json — occupation titles
+    from ESCO, © European Union, reused with attribution.
+  The job adverts this software collects — they belong to the sources that
+    published them; app/legal/sources.html names each source and its terms.
+  The packages named in package.json — each under its own licence.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
