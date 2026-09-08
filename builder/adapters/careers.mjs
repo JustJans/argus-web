@@ -91,16 +91,22 @@ export async function resolve(site, state, opts) {
   const candidates = [...new Set([...robots.sitemaps, `${origin}/sitemap.xml`])]
     .sort((a, b) => (site.match && b.includes(site.match) ? 1 : 0) - (site.match && a.includes(site.match) ? 1 : 0))
     .slice(0, 4);
+  let elsewhere = '';
   for (const sm of candidates) {
     try {
       const parsed = parseSitemap(await getText(sm, opts));
       if (!parsed.items.length) continue;
-      // ➤ An index whose children are all elsewhere is the wrong one: keep looking.
-      if (site.match && parsed.index && !parsed.items.some(i => i.url.includes(site.match))) continue;
+      // ➤ An index whose children are all elsewhere is not the one this site's vacancies were
+      // ➤ seen under — but it may be where they have moved to, so it is held back rather than
+      // ➤ thrown away, and used if nothing better answers.
+      if (site.match && parsed.index && !parsed.items.some(i => i.url.includes(site.match))) { elsewhere ||= sm; continue; }
       (state.resolved ||= {})[site.host] = { sitemap: sm };
       return { ...site, sitemap: sm };
     } catch { /* next */ }
   }
+  // ➤ Every sitemap named vacancies somewhere else: the site has moved them, and where they
+  // ➤ are now beats where they used to be.
+  if (elsewhere) { (state.resolved ||= {})[site.host] = { sitemap: elsewhere }; return { ...site, sitemap: elsewhere, match: '' }; }
   const first = (site.urls || [])[0];
   const listing = first ? first.replace(/[^/]*$/, '') : `${origin}/`;
   (state.resolved ||= {})[site.host] = { listing };
