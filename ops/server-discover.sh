@@ -1,5 +1,6 @@
 #!/bin/sh
-# Looks for employers the lists do not name yet. Once a week is enough: the big sweep has
+# The Sunday round: look for employers the lists do not name yet, then work out what is wrong
+# with the ones already on the list that bring nothing. Once a week is enough: the big sweep has
 # already been done, so what a Sunday finds is what appeared during the week. Wikidata gives
 # the names — every company it places in one of the site's countries with a website, by what
 # the company does and by how many it employs — and the hunter finds each one's careers pages
@@ -28,3 +29,9 @@ if [ -s builder/config/hunt-wdc.txt ]; then
 fi
 
 node builder/tools/hunt.mjs --file "$queue" --take "$A_WEEK" --lanes "$LANES" --write
+
+# Then the ones already on the list that are giving nothing, or failing: each goes down the
+# same ladder of questions until one answers, and the answer is kept with its date. A source the
+# ladder finds alive has its failures wiped, so no useful site is ever lost to a run of silly
+# failures — only a host that answers nothing, or a wall, keeps its strikes.
+node builder/tools/triage.mjs --all --out builder/state/triage.tsv
