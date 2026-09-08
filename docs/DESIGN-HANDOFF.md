@@ -3,7 +3,7 @@
 The site follows the "Industry" design system from the Claude Design project *Rediseño Argus
 Web* (2026-09-05): steel blue (#5980a6) on a light technical ground (#f2f2f3), condensed
 headings over a plain body face, square corners, hairline borders, and "+" registration marks
-at the corners of the framed objects (the search plate, the stale notice, the About cards).
+at the corners of the framed objects (the search plate, the stale notice, the three steps).
 `app/style.css` is the one stylesheet: the tokens sit in `:root` at the top; everything reads
 from them. One light theme, on purpose. No font is fetched: the headings ask for Barlow
 Condensed and the body for Barlow, and use them only where the visitor has them installed;
@@ -13,13 +13,13 @@ system fonts otherwise. This keeps the privacy promise (no third-party requests)
 
 | Page | File | What it does |
 |---|---|---|
-| Home / list | `app/index.html` + `app/main.js` | Nav (brand, Privacy, Sources, About, GitHub mark). Hero: the brand large, the slogan "No account. No middlemen. No nonsense.", the count of offers today; once there are results the hero shrinks to one line (`body.has-results`): slogan left, "3,153 offers · Spain 81 · Sweden 3,072 · rebuilt 4 h ago" right, and How it works and Today make room. Left, the filters as fold-outs (`details.filter-group`, chevron turns when open, a 6px accent mark on the summary when something inside is set, the head reads "Filters · n" and holds Clear): Country (ticks with counts, Spain first, in the order ticked; "Remote is fine too"); Occupations, one fold-out per ISCO group inside; Posted; Level and a years cap; Languages; Degrees and the highest one; Title words; Deal-breakers and words to avoid. Right, the search plate (`.plate.blueprint`): words and the Search button; "Read my CV" (a PDF or text file read on the device, ticking occupations, degrees and languages; the status line carries `data-state` idle/reading/ticked/none/error); the code line (the filters packed, appearing as they change; paste another and Search loads it; Copy turns into "Copied"). Below: How it works (three numbered steps), Today (table and a note). State in the address: `#p=<code>&q=<words>`, or `#all=1` for the whole pile. |
+| Home / list | `app/index.html` + `app/main.js` | Nav (brand, Privacy, Sources, GitHub mark). Hero: the brand large, the slogan "No account. No middlemen. No nonsense.", the count of offers today; once there are results the hero shrinks to one line (`body.has-results`): slogan left, "3,153 offers · Spain 81 · Sweden 3,072 · rebuilt 4 h ago" right, and How it works and Today make room. Left, the filters as fold-outs (`details.filter-group`, chevron turns when open, a 6px accent mark on the summary when something inside is set, the head reads "Filters · n" and holds Clear): Country (ticks with counts, Spain first, in the order ticked; "Remote is fine too"); Occupations, one fold-out per ISCO group inside; Posted; Level and a years cap; Languages; Degrees and the highest one; Title words; Deal-breakers and words to avoid. Right, the search plate (`.plate.blueprint`): words and the Search button; "Read my CV" (a PDF or text file read on the device, ticking occupations, degrees and languages; the status line carries `data-state` idle/reading/ticked/none/error); the code line (the filters packed, appearing as they change; paste another and Search loads it; Copy turns into "Copied"). Below: How it works (three numbered steps), Today (table and a note). State in the address: `#p=<code>&q=<words>`, or `#all=1` for the whole pile. |
 | Not found | `app/404.html` | The big 404, a line, a primary button back to the list. |
-| Privacy, Sources, About | `app/legal/*.html` | Title, subtitle, rule. About: three framed steps (your device → your code → the source) and two paragraphs. Sources: today's sources as a table from the pile's index. Privacy: three statements and the fine print. |
+| Privacy, Sources | `app/legal/*.html` | Title, subtitle, rule. Sources: today's sources as a table from the pile's index. Privacy: three statements and the fine print. |
 
 Phones (≤ 760px): one column; the filters become a full-screen panel with a sticky head
 (Filters · n, Clear, Done) opened by the Filters button in the search plate; the nav keeps
-the brand and About only, as the design shows; rows grow to 44px.
+the brand and Sources only, as the design shows; rows grow to 44px.
 
 ## The contract with the scripts
 

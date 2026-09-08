@@ -139,10 +139,8 @@ details[open] > summary > .chev { transform: rotate(90deg); }
 .code-line .hint { flex-basis: 100%; font-size: 13px; line-height: 20px; color: var(--n700); margin: -4px 0 0; }
 
 /* How it works, Today */
-.how ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
-.how li { display: flex; gap: 16px; align-items: baseline; font-size: 16px; line-height: 24px; }
-.how .num { font-size: 13px; letter-spacing: .08em; font-weight: 600; color: var(--a700); font-variant-numeric: tabular-nums; }
 .how .rule { margin-bottom: 32px; }
+.how .fine { margin: 24px 0 0; text-align: center; }
 .table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .today .table { max-width: 420px; }
 .table th { text-align: left; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in srgb, var(--text) 60%, transparent); padding: 7px; border-bottom: 1px solid var(--divider); }
@@ -194,7 +192,7 @@ details[open] > summary > .chev { transform: rotate(90deg); }
 .subtitle { margin: 12px 0 0; font-size: 16px; color: var(--n800); }
 .rule--page { margin: 24px 0 32px; }
 .steps { display: grid; grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1fr) 40px minmax(0, 1fr); gap: 0 8px; align-items: stretch; margin: 8px 0 0; }
-.step { padding: 24px 20px; display: flex; flex-direction: column; gap: 16px; min-height: 200px; }
+.step { padding: 24px 20px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; min-height: 200px; }
 .step__kicker { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--a700); }
 .step > svg { color: var(--accent); }
 .step__code { font-family: var(--mono); font-size: 22px; line-height: 44px; color: var(--accent); letter-spacing: -.01em; }
@@ -212,7 +210,7 @@ details[open] > summary > .chev { transform: rotate(90deg); }
   .page, .page--narrow { padding: 0 20px 40px; }
   .nav { gap: 12px; padding-top: 14px; }
   .nav-brand { font-size: 18px; }
-  .nav a:not(.nav-brand):not(.nav__about) { display: none; }
+  .nav a:not(.nav-brand):not(.nav__keep) { display: none; }
   .hero { padding: 40px 0 28px; gap: 12px; }
   .hero__brand { font-size: 44px; }
   .hero__slogan { font-size: 15px; }
@@ -238,7 +236,6 @@ details[open] > summary > .chev { transform: rotate(90deg); }
   .check-row input { width: 18px; height: 18px; }
   #families-pick .filter-group > summary { font-size: 14px; min-height: 40px; }
   body.filters-open { overflow: hidden; }
-  .how ol { display: flex; flex-direction: column; gap: 16px; }
   .how .rule { margin-bottom: 28px; }
   .offer { grid-template-columns: minmax(0, 1fr); }
   .offer__date { grid-column: 1; line-height: 18px; }

@@ -94,10 +94,10 @@ function chevron() {
 }
 const remember = (fold, key) => fold.addEventListener('toggle', () => foldState.set(key, fold.open));
 
-// ➤ Countries with adverts, Spain first, plus any the profile names without adverts today (count 0).
+// ➤ Countries with adverts, the fullest first, plus any the profile names without adverts today (count 0).
 function drawCountries(profile) {
   const counts = index.counts?.by_country || {};
-  const rows = Object.entries(counts).filter(([cc]) => cc !== 'zz').sort((a, b) => (a[0] === 'es' ? -1 : b[0] === 'es' ? 1 : b[1] - a[1]));
+  const rows = Object.entries(counts).filter(([cc]) => cc !== 'zz').sort((a, b) => b[1] - a[1]);
   for (const cc of profile.countries) if (!counts[cc]) rows.push([cc, 0]);
   const pick = $('#countries-pick');
   pick.replaceChildren();
@@ -180,7 +180,7 @@ function drawPile() {
   const readHours = Math.round((Date.now() - new Date(index.crawled_at || index.generated_at).getTime()) / 36e5);
   const rebuilt = hours <= 0 ? 'rebuilt just now' : hours < 48 ? `rebuilt ${hours} h ago` : `rebuilt ${Math.round(hours / 24)} days ago`;
   const failed = index.status?.ok ? '' : ' (some sources failed this time)';
-  const rows = Object.entries(index.counts?.by_country || {}).filter(([cc]) => cc !== 'zz').sort((a, b) => (a[0] === 'es' ? -1 : b[0] === 'es' ? 1 : b[1] - a[1]));
+  const rows = Object.entries(index.counts?.by_country || {}).filter(([cc]) => cc !== 'zz').sort((a, b) => b[1] - a[1]);
   text('#hero-count', n(index.counts.offers));
   const stats = $('#hero-stats');
   stats.replaceChildren();
