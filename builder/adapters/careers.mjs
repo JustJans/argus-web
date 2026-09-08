@@ -117,7 +117,8 @@ export async function listed(site, opts) {
     const seen = new Set();
     let url = site.listing;
     for (let page = 0; url && page < LISTING_PAGES; page++) {
-      const html = await getText(url, opts);
+      let html;
+      try { html = await getText(url, opts); } catch (e) { if (page || /^\d{3} for /.test(e.message)) break; throw e; }
       const before = seen.size;
       for (const u of jobLinks(html, url, shapes)) seen.add(u);
       const next = nextLink(html, url);
