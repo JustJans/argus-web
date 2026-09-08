@@ -151,6 +151,14 @@ function line(r) {
   return `${r.domain}: ${r.how ? `${r.how}, ` : ''}${r.error || 'nothing read'}${r.url ? ` [${r.url}]` : ''}`;
 }
 
+// ➤ What is kept of a domain once it has been looked at and its line printed: never the
+// ➤ adverts, which are thousands per run and are of no use after the count.
+function slim(r) {
+  const jobs = r.jobs || [];
+  const j = judge(jobs, r.how);
+  return { domain: r.domain, entry: r.entry, off: r.off, how: r.how, adverts: jobs.length, share: j.share, ours: j.work, kept: j.kept, name: jobs.find(x => x.company)?.company || '' };
+}
+
 const OURS_AT_LEAST = 0.1;    // ➤ under this share of its adverts, a company is not one of ours
 const SEEN_AT_LEAST = 4;      // ➤ adverts read before that share means anything
 
@@ -166,15 +174,13 @@ function write(results) {
   const known = new Set([...loadCompanies().map(slugOf), ...companies.map(slugOf), ...loadSites().map(s => s.feed || s.sitemap || s.listing || s.host), ...sites.map(s => s.feed || s.sitemap || s.listing)]);
   let added = 0;
   for (const r of results) {
-    if (!r.entry || (!r.jobs?.length && !r.off)) continue;
+    if (!r.entry || (!r.adverts && !r.off)) continue;
     const ats = Object.keys(ATS).find(k => r.entry[k]);
     const key = ats ? `${ats}:${String(r.entry[ats]).toLowerCase()}` : r.entry.feed || r.entry.sitemap || r.entry.listing;
     if (known.has(key)) continue;
     known.add(key);
-    const j = judge(r.jobs || [], r.how);
-    if (!r.off && r.jobs.length >= SEEN_AT_LEAST && j.share < OURS_AT_LEAST) continue;
-    const name = r.jobs.find(j2 => j2.company)?.company || pretty(r.domain);
-    (ats ? companies : sites).push({ name, ...r.entry, hunted: new Date().toISOString().slice(0, 10), adverts: r.jobs.length, ours: j.work, kept: j.kept });
+    if (!r.off && r.adverts >= SEEN_AT_LEAST && r.share < OURS_AT_LEAST) continue;
+    (ats ? companies : sites).push({ name: r.name || pretty(r.domain), ...r.entry, hunted: new Date().toISOString().slice(0, 10), adverts: r.adverts, ours: r.ours, kept: r.kept });
     added++;
   }
   const head = '# ➤ Sources the hunter found (builder/tools/hunt.mjs --write): companies read through their\n# ➤ ATS\'s public listing, and sites read through their feed, sitemap or listing page. Read by the\n# ➤ builder like companies.yml and careers.yml; a source those name is left to them. adverts and\n# ➤ kept are what the hunter saw that day, for the record.\n';
@@ -208,15 +214,15 @@ await Promise.all(Array.from({ length: LANES }, async () => {
   while (queue.length) {
     const d = queue.shift();
     const r = await deadline(hunt(d), 300_000).catch(e => ({ domain: d, error: e.message }));
-    results.push(r);
     noteDone(d);
     console.log(line(r));
+    results.push(slim(r));
     // ➤ What was found is written as it goes: a run cut short keeps its work.
     if (args.includes('--write') && results.length % 25 === 0) write(results);
   }
 }));
 if (args.includes('--write')) console.log(`${write(results)} added to ${HUNTED}`);
-const gave = results.filter(r => r.jobs?.length).length;
+const gave = results.filter(r => r.adverts).length;
 console.log(`${gave} of ${results.length} domains gave adverts`);
 // ➤ A read abandoned at its deadline must not keep the process alive.
 process.exit(0);
