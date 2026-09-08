@@ -74,12 +74,11 @@ function stateFromForm(profile = profileFromForm()) {
 }
 
 // ➤ One row per choice: the tick on the left, the label, today's count on the right.
-function row(container, { name, value, label, count, radio = false }) {
+function row(container, { name, value, label, radio = false }) {
   const l = document.createElement('label'); l.className = 'check-row';
   const i = document.createElement('input'); i.type = radio ? 'radio' : 'checkbox'; i.name = name; i.value = value;
   const s = document.createElement('span'); s.textContent = label;
   l.append(i, s);
-  if (count !== undefined) { const c = document.createElement('span'); c.className = 'check-row__count'; c.textContent = n(count); l.append(c); }
   container.append(l);
   return i;
 }
@@ -101,12 +100,12 @@ function drawCountries(profile) {
   for (const cc of profile.countries) if (!counts[cc]) rows.push([cc, 0]);
   const pick = $('#countries-pick');
   pick.replaceChildren();
-  for (const [cc, c] of rows) row(pick, { name: 'c', value: cc, label: countryName(cc), count: c });
+  for (const [cc] of rows) row(pick, { name: 'c', value: cc, label: countryName(cc) });
 }
 
 // ➤ Inside "Occupations", one fold-out per group (Engineers, Technicians, crews…) with the families
-// ➤ that have adverts in the countries ticked, so the numbers always mean "in what you chose";
-// ➤ a family the profile names stays listed even at zero.
+// ➤ that have adverts in the countries ticked, the fullest first; a family the profile names stays
+// ➤ listed even at zero. The counts order the list and decide what is listed; they are not shown.
 function drawFamilyCounts(profile) {
   const chosen = new Set(profile.countries);
   const count = id => Object.entries(index.families?.[id]?.countries || {}).filter(([cc]) => !chosen.size || chosen.has(cc)).reduce((s, [, e]) => s + (e.n || 0), 0);
@@ -121,7 +120,7 @@ function drawFamilyCounts(profile) {
     const summary = document.createElement('summary'); summary.append(chevron(), document.createTextNode(g.label));
     const checks = document.createElement('div'); checks.className = 'checks';
     fold.append(summary, checks);
-    for (const [f, c] of rows) row(checks, { name: 'f', value: f.id, label: f.label, count: c });
+    for (const [f] of rows) row(checks, { name: 'f', value: f.id, label: f.label });
     pick.append(fold);
   }
 }
@@ -190,11 +189,16 @@ function drawPile() {
   if (readHours > STALE_HOURS) { text('#stale-text', `The sources were last read ${Math.round(readHours / 24)} days ago; some offers may have closed since.`); $('#stale').hidden = false; }
   const tbody = $('#countries tbody');
   tbody.replaceChildren();
-  for (const [cc, c] of rows) {
+  // ➤ Two countries a row, read across (1 2 / 3 4), so the table is half as tall.
+  for (let i = 0; i < rows.length; i += 2) {
     const tr = document.createElement('tr');
-    const td1 = document.createElement('td'); td1.textContent = countryName(cc);
-    const td2 = document.createElement('td'); td2.className = 'num'; td2.textContent = n(c);
-    tr.append(td1, td2); tbody.append(tr);
+    for (const pair of [rows[i], rows[i + 1]]) {
+      const name = document.createElement('td');
+      const num = document.createElement('td'); num.className = 'num';
+      if (pair) { name.textContent = countryName(pair[0]); num.textContent = n(pair[1]); }
+      tr.append(name, num);
+    }
+    tbody.append(tr);
   }
   $('#countries').hidden = rows.length === 0;
 }
