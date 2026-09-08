@@ -64,11 +64,12 @@ export async function resolve(site, state, opts) {
     const parts = (paths[0] || '').split('/').slice(0, -1);
     for (let n = parts.length; n > 1; n--) { const prefix = parts.slice(0, n).join('/') + '/'; if (paths.every(p => p.startsWith(prefix))) { site = { ...site, match: prefix }; break; } }
   }
-  // ➤ A remembered way in is kept only while it works. A site whose last pass brought nothing
-  // ➤ is worked out again from scratch, so a feed it has published since, a sitemap that has
+  // ➤ A remembered way in is kept only while it works, and working means it brought adverts.
+  // ➤ A site whose last pass brought nothing, or failed on the very address it remembers, is
+  // ➤ worked out again from scratch, so a feed it has published since, a sitemap that has
   // ➤ moved, or a way of reading that did not exist when it was first looked at, all reach it
   // ➤ on the next pass instead of never.
-  const worked = !(state.pass?.ok && !(state.adverts || []).length);
+  const worked = !!state.pass?.ok && (state.adverts || []).length > 0;
   const known = worked ? state.resolved?.[site.host] : null;
   if (known) return { ...site, ...known };
   const origin = `https://${site.host}`;
