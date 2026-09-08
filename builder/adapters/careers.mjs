@@ -126,7 +126,8 @@ export async function listed(site, opts) {
     }
     return [...seen].filter(u => !site.match || u.includes(site.match)).map(url => ({ url, lastmod: '' }));
   }
-  const first = parseSitemap(await getText(site.sitemap, opts));
+  let first;
+  try { first = parseSitemap(await getText(site.sitemap, opts)); } catch (e) { if (/^\d{3} for /.test(e.message)) return []; throw e; }
   let items = first.items;
   if (first.index) {
     items = [];
