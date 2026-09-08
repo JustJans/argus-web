@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Public job portal for engineers and technicians in Europe: the CV is read in the browser, the profile becomes a code, the offers are filtered on the visitor's device.",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "engines": { "node": ">=20" },
   "scripts": {
