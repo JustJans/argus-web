@@ -108,7 +108,13 @@ export async function resolve(site, state, opts) {
   // ➤ are now beats where they used to be.
   if (elsewhere) { (state.resolved ||= {})[site.host] = { sitemap: elsewhere }; return { ...site, sitemap: elsewhere, match: '' }; }
   const first = (site.urls || [])[0];
-  const listing = first ? first.replace(/[^/]*$/, '') : `${origin}/`;
+  const guess = first ? first.replace(/[^/]*$/, '') : `${origin}/`;
+  // ➤ A guessed list that no longer answers is worth less than the front page, which still
+  // ➤ names where the vacancies went.
+  let listing = guess;
+  if (guess !== `${origin}/`) {
+    try { const r = await get(guess, opts); if (!r.ok) listing = `${origin}/`; } catch { listing = `${origin}/`; }
+  }
   (state.resolved ||= {})[site.host] = { listing };
   return { ...site, listing };
 }
@@ -131,7 +137,9 @@ export async function listed(site, opts) {
       const next = nextLink(html, url);
       url = next && !seen.has(next) && seen.size > before ? next : '';
     }
-    return [...seen].filter(u => !site.match || u.includes(site.match)).map(url => ({ url, lastmod: '' }));
+    const found = [...seen];
+    const under = site.match ? found.filter(u => u.includes(site.match)) : found;
+    return (under.length ? under : found.filter(looksLikeJob)).map(url => ({ url, lastmod: '' }));
   }
   let first;
   try { first = parseSitemap(await getText(site.sitemap, opts)); } catch (e) { if (/^\d{3} for /.test(e.message)) return []; throw e; }
