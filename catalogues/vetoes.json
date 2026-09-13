@@ -1,0 +1,15 @@
+{
+  "_about": "One-tap deal-breakers: each chip adds its title terms to the visitor's negatives. Terms are whole words, accent-free. The position is the index in the profile code. APPEND ONLY.",
+  "vetoes": [
+    { "id": "sales", "label": "Sales", "terms": ["sales", "comercial", "vendedor", "vendedora", "vendeur", "vendeuse", "commercial", "vertrieb", "verkoop", "saljare", "selger", "account manager", "business developer"] },
+    { "id": "internships", "label": "Internships", "terms": ["intern", "internship", "trainee", "becario", "becaria", "practicas", "stagiaire", "stage", "praktikant", "praktikum", "werkstudent", "stagiair", "praktikant", "laerling"] },
+    { "id": "software", "label": "Pure software", "terms": ["developer", "software engineer", "programador", "programadora", "developpeur", "entwickler", "ontwikkelaar", "utvecklare", "utvikler", "full stack", "frontend", "backend", "devops", "data scientist"] },
+    { "id": "management", "label": "Management", "terms": ["manager", "director", "directora", "head of", "chief", "jefe", "jefa", "directeur", "directrice", "leiter", "leiterin", "hoofd", "sjef", "leder"] },
+    { "id": "teaching", "label": "Teaching", "terms": ["teacher", "lecturer", "profesor", "profesora", "docente", "enseignant", "enseignante", "lehrer", "lehrerin", "dozent", "docent", "larare", "laerer"] },
+    { "id": "night-shifts", "label": "Night shifts", "terms": ["night shift", "nights", "turno de noche", "nocturno", "nocturna", "nuit", "nachtschicht", "nachtdienst", "nattskift", "nattjobb"] },
+    { "id": "seagoing", "label": "Seagoing", "terms": ["roustabout", "roughneck", "seafarer", "onboard", "on board", "embarcado", "embarque", "embarque", "navigant", "offshore rotation", "rotation"] },
+    { "id": "defence", "label": "Defence", "terms": ["defence", "defense", "military", "militar", "militaire", "armee", "bundeswehr", "defensie", "forsvaret", "forsvar", "weapons", "armamento"] },
+    { "id": "temp-agency", "label": "Temp agencies", "terms": ["temporary", "temporal", "ett", "interim", "zeitarbeit", "uitzend", "bemanning", "vikariat", "vikar"] },
+    { "id": "consulting", "label": "Consultancies", "terms": ["consultant", "consultor", "consultora", "consultoria", "consulting", "berater", "beraterin", "adviseur", "konsult", "konsulent"] }
+  ]
+}

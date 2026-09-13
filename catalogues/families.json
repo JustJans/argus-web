@@ -1,0 +1,900 @@
+{
+  "_about": "Version 2 (2026-09-05; computing groups appended 2026-09-06). One family per ISCO-08 unit group of the vertical (minor groups 214-216, 251-252, 311-315 and 351-352, minus product/garment and graphic designers), grouped by minor group. id = the ISCO code; label = what the screen shows under the group heading; isco_title = ISCO/ESCO's own title; extra_terms = job titles ESCO lacks, per language (all of Catalan; the English of company boards; a few Spanish). The gate reads the job titles per language from codes/isco.json (ESCO) and the SSYK correspondence from codes/ssyk-isco.json (JobTech). APPEND ONLY: the position of a family is its bit in the profile code. Built by builder/tools/make-families.mjs.",
+  "groups": [
+    {
+      "id": "engineers",
+      "label": "Engineers",
+      "isco": [
+        "214",
+        "215"
+      ]
+    },
+    {
+      "id": "architects-surveyors",
+      "label": "Architects, planners and surveyors",
+      "isco": [
+        "216"
+      ]
+    },
+    {
+      "id": "technicians",
+      "label": "Technicians",
+      "isco": [
+        "311"
+      ]
+    },
+    {
+      "id": "supervisors",
+      "label": "Supervisors",
+      "isco": [
+        "312"
+      ]
+    },
+    {
+      "id": "plant-operators",
+      "label": "Plant operators",
+      "isco": [
+        "313"
+      ]
+    },
+    {
+      "id": "crews",
+      "label": "Ship and aircraft crews",
+      "isco": [
+        "315"
+      ]
+    },
+    {
+      "id": "software-it",
+      "label": "Software and IT",
+      "isco": [
+        "251",
+        "252"
+      ]
+    },
+    {
+      "id": "it-technicians",
+      "label": "IT technicians",
+      "isco": [
+        "351",
+        "352"
+      ]
+    }
+  ],
+  "families": [
+    {
+      "id": "2141",
+      "group": "engineers",
+      "label": "Industrial and production",
+      "isco_title": "Industrial and production engineers",
+      "isco": [
+        "2141"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer industrial",
+          "enginyera industrial",
+          "enginyer de producció",
+          "enginyera de producció",
+          "enginyer d'organització industrial",
+          "enginyer d'automatització",
+          "enginyera d'automatització",
+          "enginyer de manteniment",
+          "enginyera de manteniment"
+        ]
+      }
+    },
+    {
+      "id": "2142",
+      "group": "engineers",
+      "label": "Civil",
+      "isco_title": "Civil engineers",
+      "isco": [
+        "2142"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer civil",
+          "enginyera civil",
+          "enginyer de camins",
+          "enginyera de camins",
+          "enginyer de ponts i camins",
+          "enginyera de ponts i camins",
+          "enginyer d'obra civil",
+          "enginyera d'obra civil"
+        ]
+      }
+    },
+    {
+      "id": "2143",
+      "group": "engineers",
+      "label": "Environmental",
+      "isco_title": "Environmental engineers",
+      "isco": [
+        "2143"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer ambiental",
+          "enginyera ambiental"
+        ]
+      }
+    },
+    {
+      "id": "2144",
+      "group": "engineers",
+      "label": "Mechanical",
+      "isco_title": "Mechanical engineers",
+      "isco": [
+        "2144"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer mecànic",
+          "enginyera mecànica"
+        ]
+      }
+    },
+    {
+      "id": "2145",
+      "group": "engineers",
+      "label": "Chemical",
+      "isco_title": "Chemical engineers",
+      "isco": [
+        "2145"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer químic",
+          "enginyera química"
+        ]
+      }
+    },
+    {
+      "id": "2146",
+      "group": "engineers",
+      "label": "Mining and metallurgy",
+      "isco_title": "Mining engineers, metallurgists and related professionals",
+      "isco": [
+        "2146"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer de mines",
+          "enginyera de mines"
+        ]
+      }
+    },
+    {
+      "id": "2149",
+      "group": "engineers",
+      "label": "Other engineers",
+      "isco_title": "Engineering professionals not elsewhere classified",
+      "isco": [
+        "2149"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer de qualitat",
+          "enginyera de qualitat",
+          "enginyer de projectes",
+          "enginyera de projectes",
+          "arquitecte tècnic",
+          "arquitecta tècnica",
+          "aparellador",
+          "aparelladora"
+        ]
+      }
+    },
+    {
+      "id": "2151",
+      "group": "engineers",
+      "label": "Electrical",
+      "isco_title": "Electrical engineers",
+      "isco": [
+        "2151"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer elèctric",
+          "enginyera elèctrica"
+        ]
+      }
+    },
+    {
+      "id": "2152",
+      "group": "engineers",
+      "label": "Electronics",
+      "isco_title": "Electronics engineers",
+      "isco": [
+        "2152"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer electrònic",
+          "enginyera electrònica"
+        ]
+      }
+    },
+    {
+      "id": "2153",
+      "group": "engineers",
+      "label": "Telecommunications",
+      "isco_title": "Telecommunications engineers",
+      "isco": [
+        "2153"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer de telecomunicacions",
+          "enginyera de telecomunicacions"
+        ]
+      }
+    },
+    {
+      "id": "2161",
+      "group": "architects-surveyors",
+      "label": "Building architects",
+      "isco_title": "Building architects",
+      "isco": [
+        "2161"
+      ],
+      "extra_terms": {
+        "ca": [
+          "arquitecte",
+          "arquitecta"
+        ]
+      }
+    },
+    {
+      "id": "2162",
+      "group": "architects-surveyors",
+      "label": "Landscape architects",
+      "isco_title": "Landscape architects",
+      "isco": [
+        "2162"
+      ],
+      "extra_terms": {
+        "ca": [
+          "arquitecte paisatgista",
+          "arquitecta paisatgista"
+        ]
+      }
+    },
+    {
+      "id": "2164",
+      "group": "architects-surveyors",
+      "label": "Town and traffic planners",
+      "isco_title": "Town and traffic planners",
+      "isco": [
+        "2164"
+      ],
+      "extra_terms": {
+        "ca": [
+          "urbanista"
+        ]
+      }
+    },
+    {
+      "id": "2165",
+      "group": "architects-surveyors",
+      "label": "Surveyors and cartographers",
+      "isco_title": "Cartographers and surveyors",
+      "isco": [
+        "2165"
+      ],
+      "extra_terms": {
+        "ca": [
+          "topògraf",
+          "topògrafa",
+          "enginyer geomàtic",
+          "enginyera geomàtica"
+        ]
+      }
+    },
+    {
+      "id": "3111",
+      "group": "technicians",
+      "label": "Chemical and physical science",
+      "isco_title": "Chemical and physical science technicians",
+      "isco": [
+        "3111"
+      ]
+    },
+    {
+      "id": "3112",
+      "group": "technicians",
+      "label": "Civil engineering",
+      "isco_title": "Civil engineering technicians",
+      "isco": [
+        "3112"
+      ],
+      "extra_terms": {
+        "ca": [
+          "tècnic d'obra",
+          "tècnica d'obra",
+          "arquitecte tècnic",
+          "arquitecta tècnica",
+          "aparellador",
+          "aparelladora"
+        ]
+      }
+    },
+    {
+      "id": "3113",
+      "group": "technicians",
+      "label": "Electrical engineering",
+      "isco_title": "Electrical engineering technicians",
+      "isco": [
+        "3113"
+      ],
+      "extra_terms": {
+        "ca": [
+          "tècnic elèctric",
+          "tècnica elèctrica"
+        ]
+      }
+    },
+    {
+      "id": "3114",
+      "group": "technicians",
+      "label": "Electronics engineering",
+      "isco_title": "Electronics engineering technicians",
+      "isco": [
+        "3114"
+      ],
+      "extra_terms": {
+        "ca": [
+          "tècnic electrònic",
+          "tècnica electrònica"
+        ]
+      }
+    },
+    {
+      "id": "3115",
+      "group": "technicians",
+      "label": "Mechanical engineering",
+      "isco_title": "Mechanical engineering technicians",
+      "isco": [
+        "3115"
+      ],
+      "extra_terms": {
+        "ca": [
+          "tècnic mecànic",
+          "tècnica mecànica"
+        ]
+      }
+    },
+    {
+      "id": "3116",
+      "group": "technicians",
+      "label": "Chemical engineering",
+      "isco_title": "Chemical engineering technicians",
+      "isco": [
+        "3116"
+      ],
+      "extra_terms": {
+        "ca": [
+          "tècnic químic",
+          "tècnica química"
+        ]
+      }
+    },
+    {
+      "id": "3117",
+      "group": "technicians",
+      "label": "Mining and metallurgy",
+      "isco_title": "Mining and metallurgical technicians",
+      "isco": [
+        "3117"
+      ]
+    },
+    {
+      "id": "3118",
+      "group": "technicians",
+      "label": "Draughtspersons",
+      "isco_title": "Draughtspersons",
+      "isco": [
+        "3118"
+      ],
+      "extra_terms": {
+        "en": [
+          "draughtsman",
+          "draftsman",
+          "cad technician",
+          "cad drafter",
+          "cad draughtsman"
+        ],
+        "ca": [
+          "delineant",
+          "delineant projectista",
+          "projectista"
+        ]
+      }
+    },
+    {
+      "id": "3119",
+      "group": "technicians",
+      "label": "Other technicians",
+      "isco_title": "Physical and engineering science technicians not elsewhere classified",
+      "isco": [
+        "3119"
+      ],
+      "extra_terms": {
+        "ca": [
+          "tècnic industrial",
+          "tècnica industrial"
+        ]
+      }
+    },
+    {
+      "id": "3121",
+      "group": "supervisors",
+      "label": "Mining",
+      "isco_title": "Mining supervisors",
+      "isco": [
+        "3121"
+      ]
+    },
+    {
+      "id": "3122",
+      "group": "supervisors",
+      "label": "Manufacturing",
+      "isco_title": "Manufacturing supervisors",
+      "isco": [
+        "3122"
+      ],
+      "extra_terms": {
+        "ca": [
+          "encarregat de producció",
+          "encarregada de producció",
+          "cap de producció"
+        ]
+      }
+    },
+    {
+      "id": "3123",
+      "group": "supervisors",
+      "label": "Construction",
+      "isco_title": "Construction supervisors",
+      "isco": [
+        "3123"
+      ],
+      "extra_terms": {
+        "es": [
+          "jefe de obra",
+          "jefa de obra"
+        ],
+        "ca": [
+          "cap d'obra",
+          "encarregat d'obra",
+          "encarregada d'obra"
+        ]
+      }
+    },
+    {
+      "id": "3131",
+      "group": "plant-operators",
+      "label": "Power plants",
+      "isco_title": "Power production plant operators",
+      "isco": [
+        "3131"
+      ]
+    },
+    {
+      "id": "3132",
+      "group": "plant-operators",
+      "label": "Water and waste plants",
+      "isco_title": "Incinerator and water treatment plant operators",
+      "isco": [
+        "3132"
+      ]
+    },
+    {
+      "id": "3133",
+      "group": "plant-operators",
+      "label": "Chemical plants",
+      "isco_title": "Chemical processing plant controllers",
+      "isco": [
+        "3133"
+      ]
+    },
+    {
+      "id": "3134",
+      "group": "plant-operators",
+      "label": "Oil and gas refineries",
+      "isco_title": "Petroleum and natural gas refining plant operators",
+      "isco": [
+        "3134"
+      ]
+    },
+    {
+      "id": "3135",
+      "group": "plant-operators",
+      "label": "Metal production",
+      "isco_title": "Metal production process controllers",
+      "isco": [
+        "3135"
+      ]
+    },
+    {
+      "id": "3139",
+      "group": "plant-operators",
+      "label": "Other plants",
+      "isco_title": "Process control technicians not elsewhere classified",
+      "isco": [
+        "3139"
+      ]
+    },
+    {
+      "id": "3151",
+      "group": "crews",
+      "label": "Ships' engineers",
+      "isco_title": "Ships’ engineers",
+      "isco": [
+        "3151"
+      ],
+      "extra_terms": {
+        "ca": [
+          "oficial de màquines",
+          "cap de màquines"
+        ]
+      }
+    },
+    {
+      "id": "3152",
+      "group": "crews",
+      "label": "Deck officers and pilots",
+      "isco_title": "Ships' deck officers and pilots",
+      "isco": [
+        "3152"
+      ],
+      "extra_terms": {
+        "ca": [
+          "oficial de pont",
+          "capità de vaixell",
+          "patró de vaixell"
+        ]
+      }
+    },
+    {
+      "id": "3153",
+      "group": "crews",
+      "label": "Aircraft pilots",
+      "isco_title": "Aircraft pilots and related associate professionals",
+      "isco": [
+        "3153"
+      ],
+      "extra_terms": {
+        "ca": [
+          "pilot d'aviació",
+          "pilot comercial"
+        ]
+      }
+    },
+    {
+      "id": "3154",
+      "group": "crews",
+      "label": "Air traffic controllers",
+      "isco_title": "Air traffic controllers",
+      "isco": [
+        "3154"
+      ],
+      "extra_terms": {
+        "ca": [
+          "controlador aeri",
+          "controladora aèria"
+        ]
+      }
+    },
+    {
+      "id": "3155",
+      "group": "crews",
+      "label": "Air traffic safety electronics",
+      "isco_title": "Air traffic safety electronics technicians",
+      "isco": [
+        "3155"
+      ]
+    },
+    {
+      "id": "2511",
+      "group": "software-it",
+      "label": "Systems analysts",
+      "isco_title": "Systems analysts",
+      "isco": [
+        "2511"
+      ],
+      "extra_terms": {
+        "en": [
+          "solutions architect",
+          "solution architect",
+          "software architect",
+          "cloud architect",
+          "enterprise architect",
+          "data architect",
+          "it architect",
+          "technical architect"
+        ],
+        "ca": [
+          "analista de sistemes",
+          "analista funcional",
+          "consultor informàtic",
+          "consultora informàtica"
+        ]
+      }
+    },
+    {
+      "id": "2512",
+      "group": "software-it",
+      "label": "Software developers",
+      "isco_title": "Software developers",
+      "isco": [
+        "2512"
+      ],
+      "extra_terms": {
+        "en": [
+          "software engineer",
+          "backend developer",
+          "back-end developer",
+          "backend engineer",
+          "back-end engineer",
+          "frontend developer",
+          "front-end developer",
+          "frontend engineer",
+          "front-end engineer",
+          "full stack developer",
+          "full-stack developer",
+          "fullstack developer",
+          "full stack engineer",
+          "full-stack engineer",
+          "fullstack engineer",
+          "mobile developer",
+          "mobile engineer",
+          "ios developer",
+          "android developer",
+          "firmware engineer",
+          "devops engineer",
+          "site reliability engineer",
+          "platform engineer",
+          "cloud engineer",
+          "machine learning engineer",
+          "ml engineer",
+          "ai engineer",
+          "ai research engineer",
+          "compiler engineer",
+          "staff engineer",
+          "principal engineer"
+        ],
+        "es": [
+          "ingeniero de software",
+          "ingeniera de software",
+          "ingeniero informático",
+          "ingeniera informática",
+          "desarrollador de software",
+          "desarrolladora de software",
+          "programador",
+          "programadora",
+          "desarrollador",
+          "desarrolladora"
+        ],
+        "ca": [
+          "programador",
+          "programadora",
+          "desenvolupador",
+          "desenvolupadora",
+          "desenvolupador de software",
+          "enginyer de software",
+          "enginyera de software",
+          "enginyer informàtic",
+          "enginyera informàtica",
+          "analista programador",
+          "analista programadora"
+        ]
+      }
+    },
+    {
+      "id": "2513",
+      "group": "software-it",
+      "label": "Web and multimedia",
+      "isco_title": "Web and multimedia developers",
+      "isco": [
+        "2513"
+      ],
+      "extra_terms": {
+        "ca": [
+          "desenvolupador web",
+          "desenvolupadora web",
+          "dissenyador web",
+          "dissenyadora web"
+        ]
+      }
+    },
+    {
+      "id": "2514",
+      "group": "software-it",
+      "label": "Applications programmers",
+      "isco_title": "Applications programmers",
+      "isco": [
+        "2514"
+      ]
+    },
+    {
+      "id": "2519",
+      "group": "software-it",
+      "label": "Other software",
+      "isco_title": "Software and applications developers and analysts not elsewhere classified",
+      "isco": [
+        "2519"
+      ],
+      "extra_terms": {
+        "en": [
+          "qa engineer",
+          "test automation engineer",
+          "software tester",
+          "data engineer",
+          "analytics engineer"
+        ]
+      }
+    },
+    {
+      "id": "2521",
+      "group": "software-it",
+      "label": "Databases",
+      "isco_title": "Database designers and administrators",
+      "isco": [
+        "2521"
+      ],
+      "extra_terms": {
+        "en": [
+          "database administrator",
+          "dba"
+        ],
+        "ca": [
+          "administrador de bases de dades",
+          "administradora de bases de dades"
+        ]
+      }
+    },
+    {
+      "id": "2522",
+      "group": "software-it",
+      "label": "Systems administrators",
+      "isco_title": "Systems administrators",
+      "isco": [
+        "2522"
+      ],
+      "extra_terms": {
+        "en": [
+          "systems administrator",
+          "sysadmin",
+          "linux administrator"
+        ],
+        "ca": [
+          "administrador de sistemes",
+          "administradora de sistemes"
+        ]
+      }
+    },
+    {
+      "id": "2523",
+      "group": "software-it",
+      "label": "Networks",
+      "isco_title": "Computer network professionals",
+      "isco": [
+        "2523"
+      ],
+      "extra_terms": {
+        "ca": [
+          "enginyer de xarxes",
+          "enginyera de xarxes"
+        ]
+      }
+    },
+    {
+      "id": "2529",
+      "group": "software-it",
+      "label": "Security and other IT",
+      "isco_title": "Database and network professionals not elsewhere classified",
+      "isco": [
+        "2529"
+      ],
+      "extra_terms": {
+        "en": [
+          "security engineer",
+          "cybersecurity engineer",
+          "information security engineer",
+          "security analyst"
+        ]
+      }
+    },
+    {
+      "id": "3511",
+      "group": "it-technicians",
+      "label": "IT operations",
+      "isco_title": "Information and communications technology operations technicians",
+      "isco": [
+        "3511"
+      ]
+    },
+    {
+      "id": "3512",
+      "group": "it-technicians",
+      "label": "User support",
+      "isco_title": "Information and communications technology user support technicians",
+      "isco": [
+        "3512"
+      ],
+      "extra_terms": {
+        "en": [
+          "it support engineer",
+          "it support technician",
+          "helpdesk technician",
+          "service desk analyst"
+        ],
+        "es": [
+          "técnico informático",
+          "técnica informática",
+          "técnico de sistemas",
+          "técnica de sistemas",
+          "técnico de soporte",
+          "técnica de soporte"
+        ],
+        "ca": [
+          "tècnic informàtic",
+          "tècnica informàtica",
+          "tècnic de suport",
+          "tècnica de suport",
+          "tècnic de sistemes",
+          "tècnica de sistemes"
+        ]
+      }
+    },
+    {
+      "id": "3513",
+      "group": "it-technicians",
+      "label": "Networks and systems",
+      "isco_title": "Computer network and systems technicians",
+      "isco": [
+        "3513"
+      ],
+      "extra_terms": {
+        "en": [
+          "network technician",
+          "systems technician",
+          "it systems technician"
+        ],
+        "ca": [
+          "tècnic de xarxes",
+          "tècnica de xarxes"
+        ]
+      }
+    },
+    {
+      "id": "3514",
+      "group": "it-technicians",
+      "label": "Web",
+      "isco_title": "Web technicians",
+      "isco": [
+        "3514"
+      ]
+    },
+    {
+      "id": "3521",
+      "group": "it-technicians",
+      "label": "Broadcasting and audiovisual",
+      "isco_title": "Broadcasting and audiovisual technicians",
+      "isco": [
+        "3521"
+      ]
+    },
+    {
+      "id": "3522",
+      "group": "it-technicians",
+      "label": "Telecommunications",
+      "isco_title": "Telecommunications engineering technicians",
+      "isco": [
+        "3522"
+      ]
+    }
+  ]
+}

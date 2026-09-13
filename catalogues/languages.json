@@ -1,0 +1,23 @@
+{
+  "_about": "Languages a visitor can speak, in a fixed order (the position is the bit in the profile code). names: how each language is called in the languages adverts are written in, lower case and accent-free, used to read 'German required' in a body and 'Languages: English, Spanish' in a CV. APPEND ONLY.",
+  "languages": [
+    { "code": "en", "label": "English", "names": ["english", "ingles", "anglais", "englisch", "engels", "engelska", "engelsk", "inglese", "angielski", "angles", "englanti"] },
+    { "code": "es", "label": "Spanish", "names": ["spanish", "espanol", "castellano", "espagnol", "spanisch", "spaans", "spanska", "spansk", "spagnolo", "espanhol", "castella", "hiszpanski"] },
+    { "code": "fr", "label": "French", "names": ["french", "frances", "francais", "franzosisch", "frans", "franska", "fransk", "francese", "francuski", "ranska"] },
+    { "code": "de", "label": "German", "names": ["german", "aleman", "allemand", "deutsch", "duits", "tyska", "tysk", "tedesco", "alemao", "alemany", "niemiecki", "saksa"] },
+    { "code": "nl", "label": "Dutch", "names": ["dutch", "neerlandes", "holandes", "neerlandais", "niederlandisch", "nederlands", "nederlandska", "nederlandsk", "olandese", "flemish", "vlaams", "flamenco", "flamand"] },
+    { "code": "sv", "label": "Swedish", "names": ["swedish", "sueco", "suedois", "schwedisch", "zweeds", "svenska", "svensk", "svedese", "ruotsi"] },
+    { "code": "no", "label": "Norwegian", "names": ["norwegian", "noruego", "norvegien", "norwegisch", "noors", "norska", "norsk", "norvegese"] },
+    { "code": "da", "label": "Danish", "names": ["danish", "danes", "danois", "danisch", "deens", "danska", "dansk", "danese"] },
+    { "code": "fi", "label": "Finnish", "names": ["finnish", "fines", "finlandes", "finnois", "finnisch", "fins", "finska", "finsk", "suomi", "finlandese"] },
+    { "code": "it", "label": "Italian", "names": ["italian", "italiano", "italien", "italienisch", "italiaans", "italienska", "italiensk", "wloski"] },
+    { "code": "pt", "label": "Portuguese", "names": ["portuguese", "portugues", "portugais", "portugiesisch", "portugees", "portugisiska", "portugisisk", "portoghese"] },
+    { "code": "pl", "label": "Polish", "names": ["polish", "polaco", "polonais", "polnisch", "pools", "polska", "polsk", "polacco", "polski"] },
+    { "code": "cs", "label": "Czech", "names": ["czech", "checo", "tcheque", "tschechisch", "tsjechisch", "tjeckiska", "tsjekkisk", "ceco", "cestina", "czeski"] },
+    { "code": "ro", "label": "Romanian", "names": ["romanian", "rumano", "roumain", "rumanisch", "roemeens", "rumanska", "rumensk", "rumeno", "romana", "rumunski"] },
+    { "code": "el", "label": "Greek", "names": ["greek", "griego", "grec", "griechisch", "grieks", "grekiska", "gresk", "greco", "ellinika"] },
+    { "code": "hu", "label": "Hungarian", "names": ["hungarian", "hungaro", "hongrois", "ungarisch", "hongaars", "ungerska", "ungarsk", "ungherese", "magyar"] }
+  ],
+  "required": ["required", "mandatory", "must", "fluent", "fluency", "native", "proficient", "proficiency", "essential", "excellent", "imprescindible", "obligatorio", "necesario", "necesaria", "nivel alto", "dominio", "bilingue", "requis", "requise", "exige", "exigee", "obligatoire", "courant", "courante", "maitrise", "imperatif", "erforderlich", "vorausgesetzt", "zwingend", "fliessend", "verhandlungssicher", "sehr gute", "vereist", "verplicht", "vloeiend", "uitstekend", "noodzakelijk", "kravs", "krav", "flytande", "mycket goda", "kreves", "flytende", "ma beherske", "requerido", "indispensable", "obligatori", "necessari"],
+  "softened": ["a plus", "plus", "valued", "valuable", "valorable", "deseable", "se valorara", "se valora", "souhaite", "souhaitee", "apprecie", "appreciee", "atout", "wunschenswert", "von vorteil", "pluspunt", "een pre", "meriterande", "fordel", "nice to have", "preferred", "advantage", "asset", "not required", "not necessary", "no es necesario", "no necesario", "no requerido", "non requis", "pas necessaire", "nicht erforderlich", "nicht notwendig", "niet vereist", "niet nodig", "inte ett krav", "ikke et krav", "ikke nodvendig", "bonus", "beneficial", "desirable", "welcome"]
+}
