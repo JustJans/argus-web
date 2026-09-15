@@ -1,0 +1,9 @@
+{
+  "_about": "What a level filters out of titles: a junior does not want the senior and lead adverts, a mid-level does not want the directors. Terms are whole words, accent-free, in the seven languages the adverts come in. The levels are indexed by position in the profile code (2 bits). APPEND ONLY within a level.",
+  "levels": [
+    { "id": "any", "label": "Any level", "negatives": [] },
+    { "id": "junior", "label": "Junior", "negatives": ["senior", "lead", "principal", "head of", "chief", "director", "directora", "manager", "expert", "experto", "experta", "jefe", "jefa", "responsable de", "directeur", "directrice", "chef de", "referent", "leiter", "leiterin", "teamleiter", "hoofd", "ledande", "chef", "sjef", "leder", "supervisor", "coordinador", "coordinadora", "coordinateur", "koordinator", "erfahren", "erfaren", "ervaren"] },
+    { "id": "mid", "label": "Mid-level", "negatives": ["principal", "head of", "chief", "director", "directora", "directeur", "directrice", "leiter", "hoofd", "sjef", "junior", "graduate", "trainee", "becario", "becaria", "praktikant", "stagiair"] },
+    { "id": "senior", "label": "Senior", "negatives": ["junior", "graduate", "trainee", "becario", "becaria", "praktikant", "stagiair", "apprentice", "apprenti"] }
+  ]
+}
