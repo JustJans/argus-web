@@ -76,7 +76,6 @@ select.input { width: auto; }
 .nav-brand { font-family: var(--font-heading); font-stretch: condensed; font-weight: 600; font-size: 20px; text-transform: uppercase; letter-spacing: .04em; margin-right: auto; color: var(--text); text-decoration: none; }
 .nav a { color: inherit; text-decoration: none; font-size: 14px; }
 .nav a:hover, .nav a[aria-current="page"] { color: var(--accent); }
-.nav__github { display: inline-flex; align-items: center; }
 
 /* Hero: tall and centred on the front, one line once there are results */
 .hero { padding: 72px 0 48px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; }
