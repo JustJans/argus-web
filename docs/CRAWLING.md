@@ -163,8 +163,10 @@ shards in eleven minutes.
    catch-alls (2149, 2519); computing in, trades, service, sales and marketing jobs out;
    hygiene words; Europe only.
 5. **Records**: no advert text at all — the title, the employer, the place, the day and the
-   link, plus what the screens read off the text (years, degrees, languages); the employer's own
-   address, expiry by `validThrough`, deadline or absence.
+   link, plus what the screens read off the text (years, degrees, languages) and the ESCO
+   occupations the title names; the employer's own address, expiry by `validThrough`, deadline
+   or absence. Titles in another language get an English and a Spanish translation, a few
+   thousand new ones a build, each asked once ever (`builder/state/titles-en.json`, `titles-es.json`).
 6. **Dedupe**: same address once; same employer and role once (the board copy wins over a
    feed's), as Jobfeed merges "different advertisements of this job".
 

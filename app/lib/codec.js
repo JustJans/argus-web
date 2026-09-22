@@ -140,7 +140,7 @@ export function decodeProfile(code, cats) {
   const r = new Reader(body);
   const version = r.byte();
   if (version < 2) throw new Error('this code is from an earlier version of the page; make a new one');
-  if (version > VERSION) throw new Error(`this code is from a newer version of the page (${version}) than this one reads (${VERSION})`);
+  if (version > VERSION) throw new Error('this code is from a newer version of the page');
   const flags = r.byte();
   const families = r.bits(cats.families, FAMILY_BYTES);
   const packed = r.byte();

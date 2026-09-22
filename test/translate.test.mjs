@@ -14,14 +14,17 @@ const answers = {
   'Ingeniero mecánico': 'Mechanical engineer', 'Ingeniero de procesos': 'Process engineer',
   'Maskiningenjör': 'Mechanical engineer', 'Charpentier naval': 'Shipwright',
 };
+// ➤ The same titles asked in Spanish.
+const spanish = { 'Naval Architect': 'Arquitecto naval', 'Maskiningenjör': 'Ingeniero mecánico' };
 let calls = [];
 const fake = async url => {
   const u = new URL(url);
   const q = u.searchParams.getAll('q'), sl = u.searchParams.get('sl');
   calls.push({ sl, q });
   if (q.includes('LIMIT')) return { status: 429, ok: false, json: async () => [] };
-  if (sl === 'auto') return { status: 200, ok: true, json: async () => q.map(t => [answers[t] || t, answers[t] ? 'xx' : 'en']) };
-  return { status: 200, ok: true, json: async () => q.map(t => answers[t] || t) };
+  const table = u.searchParams.get('tl') === 'es' ? spanish : answers;
+  if (sl === 'auto') return { status: 200, ok: true, json: async () => q.map(t => [table[t] || t, table[t] ? 'xx' : 'en']) };
+  return { status: 200, ok: true, json: async () => q.map(t => table[t] || t) };
 };
 
 {
@@ -47,6 +50,14 @@ const fake = async url => {
   eq(calls.find(c => c.sl === 'es').q, ['Ingeniero mecánico', 'Ingeniero de procesos'], 'both Spanish titles travel in the same request');
   eq([r.asked, r.requests, r.translated], [5, 4, 5], 'five titles asked in four requests, five records in English');
   eq(cache.get('Project Engineer'), '', 'a title with nothing to translate is remembered as such');
+}
+{
+  // ➤ The Spanish site's titles: the same asking, into Spanish, kept as ts.
+  calls = [];
+  const recs = [{ t: 'Naval Architect', tl: 'en', l: '' }, { t: 'Maskiningenjör', tl: 'sv', l: 'Göteborg, Sweden' }, { t: 'Ingeniero mecánico', tl: 'es', l: 'Bilbao, Spain' }];
+  const r = await translateTitles(recs, { target: 'es', field: 'ts', cache: new Map(), fetchImpl: fake, gapMs: 0 });
+  eq([recs[0].ts, recs[1].ts, 'ts' in recs[2], 'te' in recs[0]], ['Arquitecto naval', 'Ingeniero mecánico', false, false], 'English and Swedish titles get their Spanish, a Spanish one is left alone, and the English field is not touched');
+  eq([r.translated, calls.map(c => c.sl).sort()], [2, ['en', 'sv']], 'a title already in Spanish is not even asked');
 }
 {
   // ➤ The point of the cache: a second build asks nothing.

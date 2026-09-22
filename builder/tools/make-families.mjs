@@ -1,22 +1,22 @@
 // ➤ Writes catalogues/families.json: one family per ISCO-08 unit group of the vertical, grouped
 // ➤ by minor group, with ESCO's official title kept for reference and short labels for the
-// ➤ screen (the group heading gives them their meaning). The extra terms are the hand-made
-// ➤ part: Catalan, which ESCO lacks, and a few titles ESCO does not list. Run from the
+// ➤ screen in English and Spanish (the group heading gives them their meaning). The extra
+// ➤ terms are the hand-made part: Catalan, which ESCO lacks, and a few titles ESCO does not list. Run from the
 // ➤ argus-web folder after builder/isco-esco.mjs. APPEND ONLY: a family's position is its bit
 // ➤ in the profile code, so new groups go at the end and nothing is ever reordered.
 import { readFileSync, writeFileSync } from 'fs';
 const isco = JSON.parse(readFileSync('catalogues/codes/isco.json', 'utf8'));
 
 const GROUPS = [
-  { id: 'engineers', label: 'Engineers', isco: ['214', '215'] },
-  { id: 'architects-surveyors', label: 'Architects, planners and surveyors', isco: ['216'] },
-  { id: 'technicians', label: 'Technicians', isco: ['311'] },
-  { id: 'supervisors', label: 'Supervisors', isco: ['312'] },
-  { id: 'plant-operators', label: 'Plant operators', isco: ['313'] },
-  { id: 'crews', label: 'Ship and aircraft crews', isco: ['315'] },
+  { id: 'engineers', label: 'Engineers', es: 'Ingenieros', isco: ['214', '215'] },
+  { id: 'architects-surveyors', label: 'Architects, planners and surveyors', es: 'Arquitectos, urbanistas y topógrafos', isco: ['216'] },
+  { id: 'technicians', label: 'Technicians', es: 'Técnicos', isco: ['311'] },
+  { id: 'supervisors', label: 'Supervisors', es: 'Supervisores', isco: ['312'] },
+  { id: 'plant-operators', label: 'Plant operators', es: 'Operadores de planta', isco: ['313'] },
+  { id: 'crews', label: 'Ship and aircraft crews', es: 'Tripulaciones de barco y avión', isco: ['315'] },
   // ➤ Added 2026-09-06: computing came in (the owner's decision); only trades and service jobs stay out.
-  { id: 'software-it', label: 'Software and IT', isco: ['251', '252'] },
-  { id: 'it-technicians', label: 'IT technicians', isco: ['351', '352'] },
+  { id: 'software-it', label: 'Software and IT', es: 'Software e informática', isco: ['251', '252'] },
+  { id: 'it-technicians', label: 'IT technicians', es: 'Técnicos informáticos', isco: ['351', '352'] },
 ];
 const LABELS = {
   2141: 'Industrial and production', 2142: 'Civil', 2143: 'Environmental', 2144: 'Mechanical', 2145: 'Chemical', 2146: 'Mining and metallurgy', 2149: 'Other engineers',
@@ -26,9 +26,22 @@ const LABELS = {
   3121: 'Mining', 3122: 'Manufacturing', 3123: 'Construction',
   3131: 'Power plants', 3132: 'Water and waste plants', 3133: 'Chemical plants', 3134: 'Oil and gas refineries', 3135: 'Metal production', 3139: 'Other plants',
   3151: "Ships' engineers", 3152: 'Deck officers and pilots', 3153: 'Aircraft pilots', 3154: 'Air traffic controllers', 3155: 'Air traffic safety electronics',
-  2511: 'Systems analysts', 2512: 'Software developers', 2513: 'Web and multimedia', 2514: 'Applications programmers', 2519: 'Other software',
+  2511: 'Systems analysts', 2512: 'Software developers', 2513: 'Web and multimedia', 2514: 'Applications programmers', 2519: 'Data, AI and other software',
   2521: 'Databases', 2522: 'Systems administrators', 2523: 'Networks', 2529: 'Security and other IT',
   3511: 'IT operations', 3512: 'User support', 3513: 'Networks and systems', 3514: 'Web', 3521: 'Broadcasting and audiovisual', 3522: 'Telecommunications',
+};
+// ➤ The same labels in Spanish, for the Spanish site.
+const LABELS_ES = {
+  2141: 'Industriales y de producción', 2142: 'Civiles', 2143: 'Medioambientales', 2144: 'Mecánicos', 2145: 'Químicos', 2146: 'Minas y metalurgia', 2149: 'Otros ingenieros',
+  2151: 'Eléctricos', 2152: 'Electrónicos', 2153: 'Telecomunicaciones',
+  2161: 'Arquitectos', 2162: 'Arquitectos paisajistas', 2164: 'Urbanistas y planificadores de tráfico', 2165: 'Topógrafos y cartógrafos',
+  3111: 'Ciencias físicas y químicas', 3112: 'Ingeniería civil', 3113: 'Ingeniería eléctrica', 3114: 'Ingeniería electrónica', 3115: 'Ingeniería mecánica', 3116: 'Ingeniería química', 3117: 'Minas y metalurgia', 3118: 'Delineantes', 3119: 'Otros técnicos',
+  3121: 'Minería', 3122: 'Industria manufacturera', 3123: 'Construcción',
+  3131: 'Centrales eléctricas', 3132: 'Plantas de agua y residuos', 3133: 'Plantas químicas', 3134: 'Refinerías de petróleo y gas', 3135: 'Producción de metales', 3139: 'Otras plantas',
+  3151: 'Oficiales de máquinas', 3152: 'Oficiales de puente y prácticos', 3153: 'Pilotos de aviación', 3154: 'Controladores aéreos', 3155: 'Electrónica de seguridad aérea',
+  2511: 'Analistas de sistemas', 2512: 'Desarrolladores de software', 2513: 'Web y multimedia', 2514: 'Programadores de aplicaciones', 2519: 'Datos, IA y otro software',
+  2521: 'Bases de datos', 2522: 'Administradores de sistemas', 2523: 'Redes', 2529: 'Seguridad y otras TI',
+  3511: 'Operaciones de TI', 3512: 'Soporte al usuario', 3513: 'Redes y sistemas', 3514: 'Web', 3521: 'Radiodifusión y audiovisual', 3522: 'Telecomunicaciones',
 };
 const CATALAN = {
   2141: ['enginyer industrial', 'enginyera industrial', 'enginyer de producció', 'enginyera de producció', "enginyer d'organització industrial", "enginyer d'automatització", "enginyera d'automatització", 'enginyer de manteniment', 'enginyera de manteniment'],
@@ -92,8 +105,8 @@ for (const g of GROUPS) {
     if (!m) throw new Error(`minor group ${minor} not in isco.json`);
     for (const code of m.units) {
       const u = isco.units[code];
-      if (!LABELS[code]) throw new Error(`no label for ${code} ${u.title}`);
-      const f = { id: code, group: g.id, label: LABELS[code], isco_title: u.title, isco: [code] };
+      if (!LABELS[code] || !LABELS_ES[code]) throw new Error(`no label for ${code} ${u.title}`);
+      const f = { id: code, group: g.id, label: LABELS[code], es: LABELS_ES[code], isco_title: u.title, isco: [code] };
       const extra = {};
       if (ENGLISH[code]) extra.en = ENGLISH[code];
       if (SPANISH[code]) extra.es = SPANISH[code];
@@ -104,8 +117,8 @@ for (const g of GROUPS) {
   }
 }
 const out = {
-  _about: 'Version 2 (2026-09-05; computing groups appended 2026-09-06). One family per ISCO-08 unit group of the vertical (minor groups 214-216, 251-252, 311-315 and 351-352, minus product/garment and graphic designers), grouped by minor group. id = the ISCO code; label = what the screen shows under the group heading; isco_title = ISCO/ESCO\'s own title; extra_terms = job titles ESCO lacks, per language (all of Catalan; the English of company boards; a few Spanish). The gate reads the job titles per language from codes/isco.json (ESCO) and the SSYK correspondence from codes/ssyk-isco.json (JobTech). APPEND ONLY: the position of a family is its bit in the profile code. Built by builder/tools/make-families.mjs.',
-  groups: GROUPS.map(g => ({ id: g.id, label: g.label, isco: g.isco })),
+  _about: 'Version 2 (2026-09-05; computing groups appended 2026-09-06). One family per ISCO-08 unit group of the vertical (minor groups 214-216, 251-252, 311-315 and 351-352, minus product/garment and graphic designers), grouped by minor group. id = the ISCO code; label = what the screen shows under the group heading, es = the same in Spanish; isco_title = ISCO/ESCO\'s own title; extra_terms = job titles ESCO lacks, per language (all of Catalan; the English of company boards; a few Spanish). The gate reads the job titles per language from codes/isco.json (ESCO) and the SSYK correspondence from codes/ssyk-isco.json (JobTech). APPEND ONLY: the position of a family is its bit in the profile code. Built by builder/tools/make-families.mjs.',
+  groups: GROUPS.map(g => ({ id: g.id, label: g.label, es: g.es, isco: g.isco })),
   families,
 };
 writeFileSync('catalogues/families.json', JSON.stringify(out, null, 2) + '\n');

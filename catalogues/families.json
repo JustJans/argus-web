@@ -1,9 +1,10 @@
 {
-  "_about": "Version 2 (2026-09-05; computing groups appended 2026-09-06). One family per ISCO-08 unit group of the vertical (minor groups 214-216, 251-252, 311-315 and 351-352, minus product/garment and graphic designers), grouped by minor group. id = the ISCO code; label = what the screen shows under the group heading; isco_title = ISCO/ESCO's own title; extra_terms = job titles ESCO lacks, per language (all of Catalan; the English of company boards; a few Spanish). The gate reads the job titles per language from codes/isco.json (ESCO) and the SSYK correspondence from codes/ssyk-isco.json (JobTech). APPEND ONLY: the position of a family is its bit in the profile code. Built by builder/tools/make-families.mjs.",
+  "_about": "Version 2 (2026-09-05; computing groups appended 2026-09-06). One family per ISCO-08 unit group of the vertical (minor groups 214-216, 251-252, 311-315 and 351-352, minus product/garment and graphic designers), grouped by minor group. id = the ISCO code; label = what the screen shows under the group heading, es = the same in Spanish; isco_title = ISCO/ESCO's own title; extra_terms = job titles ESCO lacks, per language (all of Catalan; the English of company boards; a few Spanish). The gate reads the job titles per language from codes/isco.json (ESCO) and the SSYK correspondence from codes/ssyk-isco.json (JobTech). APPEND ONLY: the position of a family is its bit in the profile code. Built by builder/tools/make-families.mjs.",
   "groups": [
     {
       "id": "engineers",
       "label": "Engineers",
+      "es": "Ingenieros",
       "isco": [
         "214",
         "215"
@@ -12,6 +13,7 @@
     {
       "id": "architects-surveyors",
       "label": "Architects, planners and surveyors",
+      "es": "Arquitectos, urbanistas y topógrafos",
       "isco": [
         "216"
       ]
@@ -19,6 +21,7 @@
     {
       "id": "technicians",
       "label": "Technicians",
+      "es": "Técnicos",
       "isco": [
         "311"
       ]
@@ -26,6 +29,7 @@
     {
       "id": "supervisors",
       "label": "Supervisors",
+      "es": "Supervisores",
       "isco": [
         "312"
       ]
@@ -33,6 +37,7 @@
     {
       "id": "plant-operators",
       "label": "Plant operators",
+      "es": "Operadores de planta",
       "isco": [
         "313"
       ]
@@ -40,6 +45,7 @@
     {
       "id": "crews",
       "label": "Ship and aircraft crews",
+      "es": "Tripulaciones de barco y avión",
       "isco": [
         "315"
       ]
@@ -47,6 +53,7 @@
     {
       "id": "software-it",
       "label": "Software and IT",
+      "es": "Software e informática",
       "isco": [
         "251",
         "252"
@@ -55,6 +62,7 @@
     {
       "id": "it-technicians",
       "label": "IT technicians",
+      "es": "Técnicos informáticos",
       "isco": [
         "351",
         "352"
@@ -66,6 +74,7 @@
       "id": "2141",
       "group": "engineers",
       "label": "Industrial and production",
+      "es": "Industriales y de producción",
       "isco_title": "Industrial and production engineers",
       "isco": [
         "2141"
@@ -88,6 +97,7 @@
       "id": "2142",
       "group": "engineers",
       "label": "Civil",
+      "es": "Civiles",
       "isco_title": "Civil engineers",
       "isco": [
         "2142"
@@ -109,6 +119,7 @@
       "id": "2143",
       "group": "engineers",
       "label": "Environmental",
+      "es": "Medioambientales",
       "isco_title": "Environmental engineers",
       "isco": [
         "2143"
@@ -124,6 +135,7 @@
       "id": "2144",
       "group": "engineers",
       "label": "Mechanical",
+      "es": "Mecánicos",
       "isco_title": "Mechanical engineers",
       "isco": [
         "2144"
@@ -139,6 +151,7 @@
       "id": "2145",
       "group": "engineers",
       "label": "Chemical",
+      "es": "Químicos",
       "isco_title": "Chemical engineers",
       "isco": [
         "2145"
@@ -154,6 +167,7 @@
       "id": "2146",
       "group": "engineers",
       "label": "Mining and metallurgy",
+      "es": "Minas y metalurgia",
       "isco_title": "Mining engineers, metallurgists and related professionals",
       "isco": [
         "2146"
@@ -169,6 +183,7 @@
       "id": "2149",
       "group": "engineers",
       "label": "Other engineers",
+      "es": "Otros ingenieros",
       "isco_title": "Engineering professionals not elsewhere classified",
       "isco": [
         "2149"
@@ -190,6 +205,7 @@
       "id": "2151",
       "group": "engineers",
       "label": "Electrical",
+      "es": "Eléctricos",
       "isco_title": "Electrical engineers",
       "isco": [
         "2151"
@@ -205,6 +221,7 @@
       "id": "2152",
       "group": "engineers",
       "label": "Electronics",
+      "es": "Electrónicos",
       "isco_title": "Electronics engineers",
       "isco": [
         "2152"
@@ -220,6 +237,7 @@
       "id": "2153",
       "group": "engineers",
       "label": "Telecommunications",
+      "es": "Telecomunicaciones",
       "isco_title": "Telecommunications engineers",
       "isco": [
         "2153"
@@ -235,6 +253,7 @@
       "id": "2161",
       "group": "architects-surveyors",
       "label": "Building architects",
+      "es": "Arquitectos",
       "isco_title": "Building architects",
       "isco": [
         "2161"
@@ -250,6 +269,7 @@
       "id": "2162",
       "group": "architects-surveyors",
       "label": "Landscape architects",
+      "es": "Arquitectos paisajistas",
       "isco_title": "Landscape architects",
       "isco": [
         "2162"
@@ -265,6 +285,7 @@
       "id": "2164",
       "group": "architects-surveyors",
       "label": "Town and traffic planners",
+      "es": "Urbanistas y planificadores de tráfico",
       "isco_title": "Town and traffic planners",
       "isco": [
         "2164"
@@ -279,6 +300,7 @@
       "id": "2165",
       "group": "architects-surveyors",
       "label": "Surveyors and cartographers",
+      "es": "Topógrafos y cartógrafos",
       "isco_title": "Cartographers and surveyors",
       "isco": [
         "2165"
@@ -296,6 +318,7 @@
       "id": "3111",
       "group": "technicians",
       "label": "Chemical and physical science",
+      "es": "Ciencias físicas y químicas",
       "isco_title": "Chemical and physical science technicians",
       "isco": [
         "3111"
@@ -305,6 +328,7 @@
       "id": "3112",
       "group": "technicians",
       "label": "Civil engineering",
+      "es": "Ingeniería civil",
       "isco_title": "Civil engineering technicians",
       "isco": [
         "3112"
@@ -324,6 +348,7 @@
       "id": "3113",
       "group": "technicians",
       "label": "Electrical engineering",
+      "es": "Ingeniería eléctrica",
       "isco_title": "Electrical engineering technicians",
       "isco": [
         "3113"
@@ -339,6 +364,7 @@
       "id": "3114",
       "group": "technicians",
       "label": "Electronics engineering",
+      "es": "Ingeniería electrónica",
       "isco_title": "Electronics engineering technicians",
       "isco": [
         "3114"
@@ -354,6 +380,7 @@
       "id": "3115",
       "group": "technicians",
       "label": "Mechanical engineering",
+      "es": "Ingeniería mecánica",
       "isco_title": "Mechanical engineering technicians",
       "isco": [
         "3115"
@@ -369,6 +396,7 @@
       "id": "3116",
       "group": "technicians",
       "label": "Chemical engineering",
+      "es": "Ingeniería química",
       "isco_title": "Chemical engineering technicians",
       "isco": [
         "3116"
@@ -384,6 +412,7 @@
       "id": "3117",
       "group": "technicians",
       "label": "Mining and metallurgy",
+      "es": "Minas y metalurgia",
       "isco_title": "Mining and metallurgical technicians",
       "isco": [
         "3117"
@@ -393,6 +422,7 @@
       "id": "3118",
       "group": "technicians",
       "label": "Draughtspersons",
+      "es": "Delineantes",
       "isco_title": "Draughtspersons",
       "isco": [
         "3118"
@@ -416,6 +446,7 @@
       "id": "3119",
       "group": "technicians",
       "label": "Other technicians",
+      "es": "Otros técnicos",
       "isco_title": "Physical and engineering science technicians not elsewhere classified",
       "isco": [
         "3119"
@@ -431,6 +462,7 @@
       "id": "3121",
       "group": "supervisors",
       "label": "Mining",
+      "es": "Minería",
       "isco_title": "Mining supervisors",
       "isco": [
         "3121"
@@ -440,6 +472,7 @@
       "id": "3122",
       "group": "supervisors",
       "label": "Manufacturing",
+      "es": "Industria manufacturera",
       "isco_title": "Manufacturing supervisors",
       "isco": [
         "3122"
@@ -456,6 +489,7 @@
       "id": "3123",
       "group": "supervisors",
       "label": "Construction",
+      "es": "Construcción",
       "isco_title": "Construction supervisors",
       "isco": [
         "3123"
@@ -476,6 +510,7 @@
       "id": "3131",
       "group": "plant-operators",
       "label": "Power plants",
+      "es": "Centrales eléctricas",
       "isco_title": "Power production plant operators",
       "isco": [
         "3131"
@@ -485,6 +520,7 @@
       "id": "3132",
       "group": "plant-operators",
       "label": "Water and waste plants",
+      "es": "Plantas de agua y residuos",
       "isco_title": "Incinerator and water treatment plant operators",
       "isco": [
         "3132"
@@ -494,6 +530,7 @@
       "id": "3133",
       "group": "plant-operators",
       "label": "Chemical plants",
+      "es": "Plantas químicas",
       "isco_title": "Chemical processing plant controllers",
       "isco": [
         "3133"
@@ -503,6 +540,7 @@
       "id": "3134",
       "group": "plant-operators",
       "label": "Oil and gas refineries",
+      "es": "Refinerías de petróleo y gas",
       "isco_title": "Petroleum and natural gas refining plant operators",
       "isco": [
         "3134"
@@ -512,6 +550,7 @@
       "id": "3135",
       "group": "plant-operators",
       "label": "Metal production",
+      "es": "Producción de metales",
       "isco_title": "Metal production process controllers",
       "isco": [
         "3135"
@@ -521,6 +560,7 @@
       "id": "3139",
       "group": "plant-operators",
       "label": "Other plants",
+      "es": "Otras plantas",
       "isco_title": "Process control technicians not elsewhere classified",
       "isco": [
         "3139"
@@ -530,6 +570,7 @@
       "id": "3151",
       "group": "crews",
       "label": "Ships' engineers",
+      "es": "Oficiales de máquinas",
       "isco_title": "Ships’ engineers",
       "isco": [
         "3151"
@@ -545,6 +586,7 @@
       "id": "3152",
       "group": "crews",
       "label": "Deck officers and pilots",
+      "es": "Oficiales de puente y prácticos",
       "isco_title": "Ships' deck officers and pilots",
       "isco": [
         "3152"
@@ -561,6 +603,7 @@
       "id": "3153",
       "group": "crews",
       "label": "Aircraft pilots",
+      "es": "Pilotos de aviación",
       "isco_title": "Aircraft pilots and related associate professionals",
       "isco": [
         "3153"
@@ -576,6 +619,7 @@
       "id": "3154",
       "group": "crews",
       "label": "Air traffic controllers",
+      "es": "Controladores aéreos",
       "isco_title": "Air traffic controllers",
       "isco": [
         "3154"
@@ -591,6 +635,7 @@
       "id": "3155",
       "group": "crews",
       "label": "Air traffic safety electronics",
+      "es": "Electrónica de seguridad aérea",
       "isco_title": "Air traffic safety electronics technicians",
       "isco": [
         "3155"
@@ -600,6 +645,7 @@
       "id": "2511",
       "group": "software-it",
       "label": "Systems analysts",
+      "es": "Analistas de sistemas",
       "isco_title": "Systems analysts",
       "isco": [
         "2511"
@@ -627,6 +673,7 @@
       "id": "2512",
       "group": "software-it",
       "label": "Software developers",
+      "es": "Desarrolladores de software",
       "isco_title": "Software developers",
       "isco": [
         "2512"
@@ -696,6 +743,7 @@
       "id": "2513",
       "group": "software-it",
       "label": "Web and multimedia",
+      "es": "Web y multimedia",
       "isco_title": "Web and multimedia developers",
       "isco": [
         "2513"
@@ -713,6 +761,7 @@
       "id": "2514",
       "group": "software-it",
       "label": "Applications programmers",
+      "es": "Programadores de aplicaciones",
       "isco_title": "Applications programmers",
       "isco": [
         "2514"
@@ -722,6 +771,7 @@
       "id": "2519",
       "group": "software-it",
       "label": "Data, AI and other software",
+      "es": "Datos, IA y otro software",
       "isco_title": "Software and applications developers and analysts not elsewhere classified",
       "isco": [
         "2519"
@@ -740,6 +790,7 @@
       "id": "2521",
       "group": "software-it",
       "label": "Databases",
+      "es": "Bases de datos",
       "isco_title": "Database designers and administrators",
       "isco": [
         "2521"
@@ -759,6 +810,7 @@
       "id": "2522",
       "group": "software-it",
       "label": "Systems administrators",
+      "es": "Administradores de sistemas",
       "isco_title": "Systems administrators",
       "isco": [
         "2522"
@@ -779,6 +831,7 @@
       "id": "2523",
       "group": "software-it",
       "label": "Networks",
+      "es": "Redes",
       "isco_title": "Computer network professionals",
       "isco": [
         "2523"
@@ -794,6 +847,7 @@
       "id": "2529",
       "group": "software-it",
       "label": "Security and other IT",
+      "es": "Seguridad y otras TI",
       "isco_title": "Database and network professionals not elsewhere classified",
       "isco": [
         "2529"
@@ -811,6 +865,7 @@
       "id": "3511",
       "group": "it-technicians",
       "label": "IT operations",
+      "es": "Operaciones de TI",
       "isco_title": "Information and communications technology operations technicians",
       "isco": [
         "3511"
@@ -820,6 +875,7 @@
       "id": "3512",
       "group": "it-technicians",
       "label": "User support",
+      "es": "Soporte al usuario",
       "isco_title": "Information and communications technology user support technicians",
       "isco": [
         "3512"
@@ -853,6 +909,7 @@
       "id": "3513",
       "group": "it-technicians",
       "label": "Networks and systems",
+      "es": "Redes y sistemas",
       "isco_title": "Computer network and systems technicians",
       "isco": [
         "3513"
@@ -873,6 +930,7 @@
       "id": "3514",
       "group": "it-technicians",
       "label": "Web",
+      "es": "Web",
       "isco_title": "Web technicians",
       "isco": [
         "3514"
@@ -882,6 +940,7 @@
       "id": "3521",
       "group": "it-technicians",
       "label": "Broadcasting and audiovisual",
+      "es": "Radiodifusión y audiovisual",
       "isco_title": "Broadcasting and audiovisual technicians",
       "isco": [
         "3521"
@@ -891,6 +950,7 @@
       "id": "3522",
       "group": "it-technicians",
       "label": "Telecommunications",
+      "es": "Telecomunicaciones",
       "isco_title": "Telecommunications engineering technicians",
       "isco": [
         "3522"

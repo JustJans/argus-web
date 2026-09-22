@@ -4,6 +4,8 @@
 // ➤ are Argus's own (engine.js); the years, degree and language facts were read at build
 // ➤ time and travel with each advert.
 
+import { t, label, languageLabel } from './i18n.js';
+
 // ➤ Any engineering degree satisfies an advert that asks for "an engineering degree".
 const ENGINEERING_DEGREES = new Set(['mechanical', 'electrical', 'electronics-telecom', 'civil', 'industrial', 'chemical', 'aerospace', 'naval', 'mining-metallurgy', 'materials', 'environmental', 'energy', 'automation-mechatronics', 'engineering-any']);
 
@@ -34,28 +36,28 @@ export function makeJudge(profile, catalogues, engine) {
   const languages = new Set(profile.languages);
   const degrees = new Set(profile.degrees);
   const holdsEngineering = [...degrees].some(d => ENGINEERING_DEGREES.has(d));
-  const languageName = code => catalogues.languages.languages.find(l => l.code === code)?.label || code;
-  const degreeName = id => catalogues.degrees.degrees.find(d => d.id === id)?.label || id;
+  const languageName = languageLabel;
+  const degreeName = id => label(catalogues.degrees.degrees.find(d => d.id === id)) || id;
 
   return function judge(o) {
-    if (families.size && !(o.f || []).some(f => families.has(f))) return { ok: false, stage: 'FAMILY', reason: 'outside the families you chose' };
-    if (specialties.size && !inFamily(o)) return { ok: false, stage: 'FAMILY', reason: 'outside the specialties you chose' };
-    if (!title(o.t, o.l)) return { ok: false, stage: 'TITLE', reason: title.explain(o.t, o.l) || 'the title does not fit your roles' };
+    if (families.size && !(o.f || []).some(f => families.has(f))) return { ok: false, stage: 'FAMILY', reason: t('outside the families you chose') };
+    if (specialties.size && !inFamily(o)) return { ok: false, stage: 'FAMILY', reason: t('outside the specialties you chose') };
+    if (!title(o.t, o.l)) return { ok: false, stage: 'TITLE', reason: title.explain(o.t, o.l) || t('the title does not fit your roles') };
     if (countries.size) {
-      if (o.cc === 'xx') { if (!profile.remote) return { ok: false, stage: 'COUNTRY', reason: 'remote work, and you did not allow it' }; }
-      else if (o.cc && !countries.has(o.cc)) return { ok: false, stage: 'COUNTRY', reason: `in a country you did not choose (${o.cc.toUpperCase()})` };
-      else if (!inCity(o)) return { ok: false, stage: 'COUNTRY', reason: `in ${o.ci || 'a city'}, not one of the cities you chose` };
+      if (o.cc === 'xx') { if (!profile.remote) return { ok: false, stage: 'COUNTRY', reason: t('remote work, and you did not allow it') }; }
+      else if (o.cc && !countries.has(o.cc)) return { ok: false, stage: 'COUNTRY', reason: t('in a country you did not choose ({cc})', { cc: o.cc.toUpperCase() }) };
+      else if (!inCity(o)) return { ok: false, stage: 'COUNTRY', reason: t('in {city}, not one of the cities you chose', { city: o.ci || '?' }) };
     }
-    if (profile.maxYears && o.y && o.y > profile.maxYears) return { ok: false, stage: 'YEARS', reason: `asks for ${o.y} years of experience (your cap is ${profile.maxYears})` };
+    if (profile.maxYears && o.y && o.y > profile.maxYears) return { ok: false, stage: 'YEARS', reason: t('asks for {n} years of experience (your cap is {max})', { n: o.y, max: profile.maxYears }) };
     // ➤ Degrees and languages screen only when the visitor listed some: left empty, the
     // ➤ question was not asked, and "none" would hide every advert that names one.
     if (degrees.size && o.dg && o.dg.length) {
       const holds = o.dg.some(d => degrees.has(d) || (d === 'engineering-any' && holdsEngineering));
-      if (!holds) return { ok: false, stage: 'DEGREE', reason: `requires a degree you did not list (${o.dg.map(degreeName).join(' or ')})` };
+      if (!holds) return { ok: false, stage: 'DEGREE', reason: t('requires a degree you did not list ({list})', { list: o.dg.map(degreeName).join(t(' or ')) }) };
     }
     if (languages.size && o.lg && o.lg.length) {
       const missing = o.lg.filter(l => !languages.has(l));
-      if (missing.length) return { ok: false, stage: 'LANGUAGE', reason: `requires ${missing.map(languageName).join(' and ')}` };
+      if (missing.length) return { ok: false, stage: 'LANGUAGE', reason: t('requires {list}', { list: missing.map(languageName).join(t(' and ')) }) };
     }
     return { ok: true, stage: 'OK', reason: '' };
   };

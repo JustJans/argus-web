@@ -1,5 +1,6 @@
-// ➤ Titles in English. Google's free translator, the one the Telegram bot uses, also answers
-// ➤ MANY titles in one request (translate_a/t with a q per title), so a pile of eighty
+// ➤ Titles in English, and in Spanish for the Spanish site. Google's free translator, the one
+// ➤ the Telegram bot uses, also answers MANY titles in one request (translate_a/t with a q per
+// ➤ title), so a pile of eighty
 // ➤ thousand adverts costs a few dozen requests instead of one per advert: that is the whole
 // ➤ point of this file, because asking one at a time hit the rate limit after a few hundred
 // ➤ and left every build with most of its foreign titles untranslated.
@@ -11,7 +12,8 @@
 // ➤ When that endpoint shuts the door on the machine's address, which it does to a server
 // ➤ that has asked too often, MyMemory answers instead: one title a request and a free
 // ➤ quota of a few thousand words a day, so the backlog drains slowly rather than not at all.
-// ➤ The English travels as `te` next to the original `t`, only when it differs.
+// ➤ The English travels as `te` and the Spanish as `ts` next to the original `t`, only when
+// ➤ they differ from it; each language has its own cache.
 import { existsSync, mkdirSync, readFileSync } from 'fs';
 import { dirname } from 'path';
 import { languageOfPlace } from 'argus/server-bot/notify.mjs';
@@ -23,14 +25,14 @@ const TITLES_A_REQUEST = 40;     // ➤ the address stays well under any length 
 const CHARS_A_REQUEST = 1800;    // ➤ and so does its query
 const TITLES_A_BUILD = 4000;     // ➤ new titles per build: the backlog clears over a few builds
 const GAP_MS = 400;              // ➤ between requests, to stay welcome
-const NOTHING = '';              // ➤ cached answer for "this title is already English"
+const NOTHING = '';              // ➤ cached answer for "this title is already in that language"
 const SPARE = 'https://api.mymemory.translated.net/get';
 const SPARE_TITLES_A_BUILD = 150;   // ➤ within the free quota of a few thousand words a day
 const SPARE_GAP_MS = 900;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-// ➤ The cache is a Map on disk: title → its English, or NOTHING when the translator said
+// ➤ The cache is a Map on disk: title → its translation, or NOTHING when the translator said
 // ➤ there was nothing to translate. A title it could not answer is not cached, so it is
 // ➤ asked again next build.
 export function loadCache(path) {
@@ -44,8 +46,8 @@ export function saveCache(path, cache) {
 // ➤ One request, many titles. With a named language the answer is a list of strings; with
 // ➤ "auto" it is a list of [text, the language it detected]. Answers [] when it fails, and
 // ➤ says so when the translator asks for a rest.
-async function ask(titles, sl, fetchImpl) {
-  const params = new URLSearchParams({ client: 'gtx', sl, tl: 'en' });
+async function ask(titles, sl, tl, fetchImpl) {
+  const params = new URLSearchParams({ client: 'gtx', sl, tl });
   for (const t of titles) params.append('q', t);
   let res;
   try { res = await fetchImpl(`${ENDPOINT}?${params}`, { signal: AbortSignal.timeout(20_000) }); } catch { return { rows: [] }; }
@@ -59,8 +61,8 @@ async function ask(titles, sl, fetchImpl) {
 
 // ➤ The spare translator: one title, one request, and it must be told both languages. It
 // ➤ says when the day's free quota is spent.
-async function askSpare(title, sl, fetchImpl) {
-  const url = `${SPARE}?q=${encodeURIComponent(title)}&langpair=${encodeURIComponent(sl)}|en`;
+async function askSpare(title, sl, tl, fetchImpl) {
+  const url = `${SPARE}?q=${encodeURIComponent(title)}&langpair=${encodeURIComponent(sl)}|${tl}`;
   let res;
   try { res = await fetchImpl(url, { signal: AbortSignal.timeout(20_000) }); } catch { return {}; }
   if (!res.ok) return {};
@@ -89,12 +91,14 @@ function batches(titles) {
 // ➤ translator detect it.
 const languageOf = rec => rec.tl || languageOfPlace(rec.l || '') || 'auto';
 
-export async function translateTitles(records, { cache = new Map(), fetchImpl = fetch, gapMs = GAP_MS, maxNew = TITLES_A_BUILD, log = () => {} } = {}) {
+// ➤ target: the language to translate into; field: where the record keeps it (te, ts).
+export async function translateTitles(records, { target = 'en', field = 'te', cache = new Map(), fetchImpl = fetch, gapMs = GAP_MS, maxNew = TITLES_A_BUILD, log = () => {} } = {}) {
   // ➤ What is missing, by language, each title once.
   const wanted = new Map();
   for (const rec of records) {
-    if (!rec.t || rec.tl === 'en' || cache.has(rec.t)) continue;
+    if (!rec.t || rec.tl === target || cache.has(rec.t)) continue;
     const lang = languageOf(rec);
+    if (lang === target) continue;
     if (!wanted.has(lang)) wanted.set(lang, new Set());
     wanted.get(lang).add(rec.t);
   }
@@ -103,7 +107,7 @@ export async function translateTitles(records, { cache = new Map(), fetchImpl = 
     for (const batch of batches([...titles])) {
       if (asked >= maxNew) break outer;
       if (requests) await sleep(gapMs);
-      const { rows, limited: stop } = await ask(batch, lang, fetchImpl);
+      const { rows, limited: stop } = await ask(batch, lang, target, fetchImpl);
       requests++;
       asked += batch.length;
       if (stop) { limited = true; log('translator: rate-limited, the rest waits for the next build'); break outer; }
@@ -112,9 +116,9 @@ export async function translateTitles(records, { cache = new Map(), fetchImpl = 
       batch.forEach((title, i) => {
         const { text, lang: detected } = rows[i];
         if (!text) return;
-        // ➤ Unchanged, or detected as English: there is nothing to translate, and saying so
-        // ➤ in the cache is what keeps the next build from asking again.
-        cache.set(title, fold(text) === fold(title) || detected === 'en' ? NOTHING : text);
+        // ➤ Unchanged, or detected as the language asked for: there is nothing to translate,
+        // ➤ and saying so in the cache is what keeps the next build from asking again.
+        cache.set(title, fold(text) === fold(title) || detected === target ? NOTHING : text);
       });
     }
   }
@@ -128,7 +132,7 @@ export async function translateTitles(records, { cache = new Map(), fetchImpl = 
         if (spare >= SPARE_TITLES_A_BUILD) break outer2;
         if (cache.has(title)) continue;
         if (spare) await sleep(SPARE_GAP_MS);
-        const { text, spent } = await askSpare(title, lang, fetchImpl);
+        const { text, spent } = await askSpare(title, lang, target, fetchImpl);
         spare++;
         if (spent) { log('the spare translator has spent its free quota for today'); break outer2; }
         if (text) cache.set(title, fold(text) === fold(title) ? NOTHING : text);
@@ -139,11 +143,11 @@ export async function translateTitles(records, { cache = new Map(), fetchImpl = 
 
   let translated = 0, fromCache = 0;
   for (const rec of records) {
-    if (!rec.t || rec.tl === 'en') continue;
+    if (!rec.t || rec.tl === target) continue;
     const out = cache.get(rec.t);
     if (out === undefined) continue;
     fromCache++;
-    if (out && fold(out) !== fold(rec.t)) { rec.te = out; translated++; }
+    if (out && fold(out) !== fold(rec.t)) { rec[field] = out; translated++; }
   }
   return { asked, requests, spare, fromCache, translated, limited };
 }

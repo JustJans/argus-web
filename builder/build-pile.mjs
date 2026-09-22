@@ -94,15 +94,16 @@ if (!sourceFiles) { log('the store is empty: run builder/crawl.mjs first'); proc
 
 const { kept, sameUrl, sameRole } = dedupe(items);
 
-// ➤ Titles in English, as the bot shows them; the cache on disk means only new titles are asked.
+// ➤ Titles in English, as the bot shows them, and in Spanish for the Spanish site; a cache on
+// ➤ disk per language (keyed by the title alone) means only new titles are asked.
 if (!args.includes('--no-translate')) {
-  // ➤ Keyed by the title alone since the titles are asked in batches; the old
-  // ➤ translations.json keyed them by title and town and is not read any more.
-  const cachePath = join(ROOT, 'builder', 'state', 'titles-en.json');
-  const cache = loadCache(cachePath);
-  const t = await translateTitles(kept, { cache, log });
-  saveCache(cachePath, cache);
-  log(`titles: ${t.translated} in English (${t.asked} new titles asked in ${t.requests} requests${t.spare ? `, ${t.spare} through the spare translator` : ''}${t.limited ? ', the first translator is shut to this machine' : ''})`);
+  for (const [target, field, name] of [['en', 'te', 'English'], ['es', 'ts', 'Spanish']]) {
+    const cachePath = join(ROOT, 'builder', 'state', `titles-${target}.json`);
+    const cache = loadCache(cachePath);
+    const t = await translateTitles(kept, { target, field, cache, log });
+    saveCache(cachePath, cache);
+    log(`titles: ${t.translated} in ${name} (${t.asked} new titles asked in ${t.requests} requests${t.spare ? `, ${t.spare} through the spare translator` : ''}${t.limited ? ', the first translator is shut to this machine' : ''})`);
+  }
 }
 const generatedAt = new Date().toISOString();
 const { files, families: familiesIndex, latest } = buildShards(kept, families);

@@ -4,7 +4,8 @@ A free, public job portal for engineers and technicians in Europe. Search the pu
 offers with filters that are your whole profile, or hand it your CV: it is read **in your
 browser**, never uploaded, and it ticks the occupations, degrees and languages it names. Your
 filters pack into a short code — your "plate" — that lives after the `#` of the address, to
-copy, paste or bookmark. No account, no email, nothing stored anywhere.
+copy, paste or bookmark. No account, no email, nothing stored anywhere. In English at the root
+and in Spanish under `/es/`, the same code working in both.
 
 It is the web companion of [Argus](https://github.com/JustJans/argus), the Telegram job-search
 bot, and reuses its matching engine: the same title, location, years-of-experience, degree
@@ -12,11 +13,12 @@ and language rules, run client-side.
 
 ## Status
 
-**Working across Europe**, strongest in Germany, the United Kingdom, Sweden and France. Live at <https://justjans.github.io/argus-web/>: search the
-pile by words and filters — country and city, occupations by ISCO group and their ESCO
-specialties, date, level, languages, degrees, title words, deal-breakers — let your CV tick
-them, and carry them as a short code. Every advert past its deadline is hidden; the page says when the pile was last rebuilt. A home server rebuilds
-and publishes the pile every three hours with `ops/server-refresh.sh`, from what the crawler
+**Working across Europe**, strongest in Germany, the United Kingdom, Sweden and France. Live
+at <https://justjans.github.io/argus-web/>: search the pile by words and filters — country and
+city, occupations by ISCO group and their ESCO specialties, date, level, languages, degrees,
+title words, deal-breakers — let your CV tick them, and carry them as a short code. Every
+advert past its deadline is hidden; the page says when the pile was last rebuilt. A home
+server rebuilds and publishes the pile every three hours with `ops/server-refresh.sh`, from what the crawler
 (`builder/crawl.mjs`, every hour) has read into the store: every source is visited on its own
 cadence, a feed or a company board every six hours and an employer's careers site once a day
 (`builder/config/crawl.yml`). `node builder/crawl.mjs --status` says what has been read and what
@@ -95,8 +97,8 @@ per dropped advert with the reason to `builder/out/explain.txt`.
 ## Repository layout
 
 ```
-catalogues/   families (ISCO-08 unit groups by minor group), countries, languages, degrees, vetoes;
-              codes/ holds ESCO's job titles per group and JobTech's SSYK→ISCO table (built by
+catalogues/   families (ISCO-08 unit groups by minor group) and their ESCO occupations, countries,
+              languages, degrees, vetoes, each with its Spanish; codes/ holds ESCO's job titles per group and JobTech's SSYK→ISCO table (built by
               builder/isco-esco.mjs)
 builder/      adapters (one per source) → normalise → gate → dedupe → shards and an index
 app/          the static site GitHub Pages serves

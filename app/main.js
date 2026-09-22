@@ -13,11 +13,14 @@ import { renderList, renderEmpty, renderDebug } from './lib/render.js';
 import { wordsOf, matchesWords, isExpired, newestFirst } from './lib/search.js';
 import { readCv } from './lib/cv.js';
 import * as engine from './lib/engine.js';
+import { t, label, countryLabel, languageLabel, number } from './lib/i18n.js';
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const text = (sel, s) => { const e = $(sel); if (e) e.textContent = s; };
-const getJson = async url => { const r = await fetch(url, { cache: 'no-cache' }); if (!r.ok) throw new Error(`${r.status} for ${url}`); return r.json(); };
+// ➤ The site's root, from the page: "" at the root, "../" for the Spanish page under es/.
+const ROOT = document.documentElement.dataset.root || '';
+const getJson = async url => { const r = await fetch(ROOT + url, { cache: 'no-cache' }); if (!r.ok) throw new Error(`${r.status} for ${url}`); return r.json(); };
 const STALE_HOURS = 48;
 const OPEN_BY_DEFAULT = new Set(['country', 'posted']);
 
@@ -41,20 +44,23 @@ function writeHash(parts, replace = false) {
 // ➤ words were already written while typing), run() is called here, so Search always answers.
 function search(parts) {
   const h = hashOf(parts);
-  if (h === location.hash) run().catch(e => text('#results-status', `Something went wrong: ${e.message}`)); else location.hash = h;
+  if (h === location.hash) run().catch(showError); else location.hash = h;
 }
 
-const countryName = cc => cc === 'xx' ? 'Remote' : cc === 'zz' || !cc ? 'Country not stated' : (cats.countries.countries.find(c => c.iso === cc)?.name || cc.toUpperCase());
+const showError = e => text('#results-status', t('Something went wrong: {error}', { error: e.message }));
+// ➤ A code that does not read: what is wrong with it, in the page's language, and what to do.
+const unreadable = e => { showResults(true); text('#results-status', t('That code cannot be read: {error}. Check it was pasted whole, or clear it and tick the filters by hand.', { error: t(e.message) })); };
+const countryName = cc => cc === 'xx' ? t('Remote') : cc === 'zz' || !cc ? t('Country not stated') : countryLabel(cc);
 const familyOf = id => cats.families.families.find(f => f.id === id);
-const groupLabel = id => cats.families.groups.find(g => g.id === id)?.label || id;
-const degreeName = id => cats.degrees.degrees.find(d => d.id === id)?.label || id;
-const specialtyName = code => cats.occupations.occupations.find(o => o.code === code)?.label || code;
-const languageName = code => cats.languages.languages.find(l => l.code === code)?.label || code;
-const n = x => Number(x || 0).toLocaleString('en');
+const groupLabel = id => label(cats.families.groups.find(g => g.id === id)) || id;
+const degreeName = id => label(cats.degrees.degrees.find(d => d.id === id)) || id;
+const specialtyName = code => label(cats.occupations.occupations.find(o => o.code === code)) || code;
+const languageName = languageLabel;
+const n = number;
 // ➤ "Engineers: Mechanical, Civil · Technicians: Mechanical": the group gives a label its meaning.
 function familiesSummary(fams) {
   const byGroup = new Map();
-  for (const id of fams) { const f = familyOf(id); const g = f?.group || ''; byGroup.set(g, [...(byGroup.get(g) || []), f?.label || id]); }
+  for (const id of fams) { const f = familyOf(id); const g = f?.group || ''; byGroup.set(g, [...(byGroup.get(g) || []), label(f) || id]); }
   return [...byGroup].map(([g, labels]) => `${groupLabel(g)}: ${labels.join(', ')}`).join(' · ');
 }
 
@@ -137,11 +143,11 @@ function drawFamilyCounts(profile) {
     const fold = document.createElement('details'); fold.className = 'filter-group'; fold.dataset.group = `families:${g.id}`;
     fold.open = foldState.has(fold.dataset.group) ? foldState.get(fold.dataset.group) : rows.some(([f]) => profile.families.includes(f.id));
     remember(fold, fold.dataset.group);
-    const summary = document.createElement('summary'); summary.append(chevron(), document.createTextNode(g.label));
+    const summary = document.createElement('summary'); summary.append(chevron(), document.createTextNode(label(g)));
     const checks = document.createElement('div'); checks.className = 'checks';
     fold.append(summary, checks);
     for (const [f] of rows) {
-      row(checks, { name: 'f', value: f.id, label: f.label });
+      row(checks, { name: 'f', value: f.id, label: label(f) });
       if (!profile.families.includes(f.id)) continue;
       subRows(checks, 'e', withChosen(index.families?.[f.id]?.occupations, profile.specialties.filter(c => familyOfSpecialty(c) === f.id)).map(c => [c, specialtyName(c)]));
     }
@@ -150,10 +156,10 @@ function drawFamilyCounts(profile) {
 }
 // ➤ The lists that never change: levels, languages, degrees, deal-breakers.
 function drawStaticLists() {
-  for (const l of cats.seniority.levels) row($('#levels-pick'), { name: 'level', value: l.id, label: l.label, radio: true });
-  for (const l of cats.languages.languages) row($('#languages-pick'), { name: 'lg', value: l.code, label: l.label });
-  for (const d of cats.degrees.degrees) row($('#degrees-pick'), { name: 'dg', value: d.id, label: d.label });
-  for (const v of cats.vetoes.vetoes) row($('#vetoes-pick'), { name: 'v', value: v.id, label: v.label });
+  for (const l of cats.seniority.levels) row($('#levels-pick'), { name: 'level', value: l.id, label: label(l), radio: true });
+  for (const l of cats.languages.languages) row($('#languages-pick'), { name: 'lg', value: l.code, label: languageName(l.code) });
+  for (const d of cats.degrees.degrees) row($('#degrees-pick'), { name: 'dg', value: d.id, label: label(d) });
+  for (const v of cats.vetoes.vetoes) row($('#vetoes-pick'), { name: 'v', value: v.id, label: label(v) });
   for (const fold of $$('#filters-form > details')) remember(fold, fold.dataset.group);
 }
 
@@ -186,9 +192,9 @@ function fillFilters(p) {
     if (!foldState.has(g)) foldState.set(g, OPEN_BY_DEFAULT.has(g) || active.has(g));
     fold.open = foldState.get(g);
   }
-  const label = active.size ? `Filters · ${active.size}` : 'Filters';
-  text('#filters-count', label);
-  text('#filters-toggle-label', label);
+  const head = active.size ? `${t('Filters')} · ${active.size}` : t('Filters');
+  text('#filters-count', head);
+  text('#filters-toggle-label', head);
 }
 function activeGroups(p) {
   const on = { country: p.countries.length || p.remote, occupations: p.families.length, posted: p.posted, level: p.level !== 'any' || p.maxYears, languages: p.languages.length, degrees: p.degrees.length || p.highest !== 'none', roles: p.roles.length, vetoes: p.vetoes.length || p.noWords.length };
@@ -203,16 +209,16 @@ function drawPile() {
   // ➤ The pile is built from what the crawler read, and the crawler may stop while the
   // ➤ building goes on: the age that matters is the newest read, not the newest build.
   const readHours = Math.round((Date.now() - new Date(index.crawled_at || index.generated_at).getTime()) / 36e5);
-  const rebuilt = hours <= 0 ? 'rebuilt just now' : hours < 48 ? `rebuilt ${hours} h ago` : `rebuilt ${Math.round(hours / 24)} days ago`;
-  const failed = index.status?.ok ? '' : ' (some sources failed this time)';
+  const rebuilt = hours <= 0 ? t('rebuilt just now') : hours < 48 ? t('rebuilt {n} h ago', { n: hours }) : t('rebuilt {n} days ago', { n: Math.round(hours / 24) });
+  const failed = index.status?.ok ? '' : t(' (some sources failed this time)');
   const rows = Object.entries(index.counts?.by_country || {}).filter(([cc]) => cc !== 'zz').sort((a, b) => b[1] - a[1]);
   text('#hero-count', n(index.counts.offers));
   const stats = $('#hero-stats');
   stats.replaceChildren();
   const b = document.createElement('b'); b.textContent = n(index.counts.offers);
-  stats.append(b, document.createTextNode(` offers · ${rebuilt}${failed}`));
-  text('#generated', `${n(index.counts.offers)} offers, ${rebuilt}${failed}.`);
-  if (readHours > STALE_HOURS) { text('#stale-text', `The sources were last read ${Math.round(readHours / 24)} days ago; some offers may have closed since.`); $('#stale').hidden = false; }
+  stats.append(b, document.createTextNode(` ${t('offers')} · ${rebuilt}${failed}`));
+  text('#generated', t('{n} offers, {rebuilt}{failed}.', { n: n(index.counts.offers), rebuilt, failed }));
+  if (readHours > STALE_HOURS) { text('#stale-text', t('The sources were last read {n} days ago; some offers may have closed since.', { n: Math.round(readHours / 24) })); $('#stale').hidden = false; }
   const tbody = $('#countries tbody');
   tbody.replaceChildren();
   // ➤ Two countries a row, read across (1 2 / 3 4), so the table is half as tall.
@@ -237,13 +243,15 @@ function draw() {
   const since = loaded.profile.posted ? new Date(Date.now() - loaded.profile.posted * 864e5).toISOString().slice(0, 10) : '';
   const inDate = loaded.offers.filter(o => !since || (o.d && o.d >= since));
   const shown = inDate.filter(o => matchesWords(o, words, countryName));
-  const failed = loaded.failed.length ? ` (${loaded.failed.length} part${loaded.failed.length === 1 ? '' : 's'} failed to download)` : '';
+  const lost = loaded.failed.length;
+  const partsFailed = !lost ? '' : lost === 1 ? t(' (1 part failed to download)') : t(' ({n} parts failed to download)', { n: lost });
   const narrowed = words.length || !isEmptyProfile(loaded.profile);
   // ➤ With no occupation and no country named, the site shows the newest of the pile rather
   // ➤ than downloading all of it: say so, and say what to do for the rest.
   const onlyNewest = !loaded.profile.families.length && !loaded.profile.countries.length && index.latest?.files?.length;
-  const rest = onlyNewest ? ` of ${n(index.counts.offers)}; choose a country or an occupation for the rest` : '';
-  text('#results-status', narrowed ? `${n(shown.length)} of ${n(loaded.total)} offers match your filters${rest}${failed}.` : `${n(shown.length)} newest offers${rest}${failed}.`);
+  const rest = onlyNewest ? t(' of {n}; choose a country or an occupation for the rest', { n: n(index.counts.offers) }) : '';
+  const said = { shown: n(shown.length), total: n(loaded.total), rest, failed: partsFailed };
+  text('#results-status', narrowed ? t('{shown} of {total} offers match your filters{rest}{failed}.', said) : t('{shown} newest offers{rest}{failed}.', said));
   // ➤ Zero results: every stage that dropped something, the date and the words included.
   const stages = { ...loaded.stages, 'posted date': loaded.offers.length - inDate.length, 'search words': inDate.length - shown.length };
   if (shown.length) renderList($('#list'), shown, ctx); else renderEmpty($('#list'), stages, loaded.total);
@@ -270,7 +278,7 @@ async function run() {
   $('#code-input').value = code;
   let profile = normaliseProfile({});
   if (code) {
-    try { profile = decodeProfile(code, ids); } catch (e) { showResults(true); text('#results-status', `That code cannot be read: ${e.message}. Check it was pasted whole, or clear it and tick the filters by hand.`); $('#list').replaceChildren(); loaded = null; return; }
+    try { profile = decodeProfile(code, ids); } catch (e) { unreadable(e); $('#list').replaceChildren(); loaded = null; return; }
   }
   fillFilters(profile);
   if (isEmptyProfile(profile) && !q && !all) { showResults(false); loaded = null; return; }
@@ -283,9 +291,9 @@ async function run() {
   showResults(true);
   $('#list').replaceChildren();
   const files = shardFiles(index, scope);
-  text('#results-status', `Downloading ${files.length} part${files.length === 1 ? '' : 's'} of the pile…`);
+  text('#results-status', files.length === 1 ? t('Downloading 1 part of the pile…') : t('Downloading {n} parts of the pile…', { n: files.length }));
   downloading(0, files.length);
-  const { offers, failed } = await loadShards(files, 'data', getJson, (done, total) => { text('#results-status', `Downloading ${done} of ${total}…`); downloading(done, total); });
+  const { offers, failed: lost } = await loadShards(files, 'data', getJson, (done, total) => { text('#results-status', t('Downloading {done} of {total}…', { done, total })); downloading(done, total); });
   downloading(1, 1);
   const alive = offers.filter(o => !isExpired(o));
   const stages = {}, dropped = [];
@@ -296,7 +304,7 @@ async function run() {
     for (const o of alive) { const v = judge(o); if (v.ok) kept.push(o); else { dropped.push({ o, verdict: v }); stages[v.stage] = (stages[v.stage] || 0) + 1; } }
     kept = sortOffers(kept, profile);
   } else kept = newestFirst(kept);
-  loaded = { key, offers: kept, total: alive.length, failed, profile, stages, dropped };
+  loaded = { key, offers: kept, total: alive.length, failed: lost, profile, stages, dropped };
   draw();
 }
 
@@ -314,19 +322,19 @@ async function fileText(file) {
   return pages.join('\n');
 }
 async function readCvFile(file) {
-  cvStatus('reading', `Reading ${file.name}…`);
+  cvStatus('reading', t('Reading {name}…', { name: file.name }));
   try {
-    const t = await fileText(file);
-    if (t.trim().length < 200) { cvStatus('none', 'That file is too short to be a CV.'); return; }
+    const cv = await fileText(file);
+    if (cv.trim().length < 200) { cvStatus('none', t('That file is too short to be a CV.')); return; }
     familyTerms ||= await getJson('catalogues/family-terms.json');
-    const s = readCv(t, { ...cats, familyTerms });
+    const s = readCv(cv, { ...cats, familyTerms });
     const p = profileFromForm();
     const merged = normaliseProfile({ ...p, families: [...p.families, ...s.families], degrees: [...p.degrees, ...s.degrees], languages: [...p.languages, ...s.languages] });
-    const found = [s.families.length ? familiesSummary(s.families) : '', s.degrees.length ? `degrees: ${s.degrees.map(degreeName).join(', ')}` : '', s.languages.length ? `languages: ${s.languages.map(languageName).join(', ')}` : ''].filter(Boolean);
-    if (found.length) cvStatus('ticked', `Ticked from your CV: ${found.join(' · ')}.`); else cvStatus('none', 'Nothing of ours found in that CV; tick the filters by hand.');
+    const found = [s.families.length ? familiesSummary(s.families) : '', s.degrees.length ? t('degrees: {list}', { list: s.degrees.map(degreeName).join(', ') }) : '', s.languages.length ? t('languages: {list}', { list: s.languages.map(languageName).join(', ') }) : ''].filter(Boolean);
+    if (found.length) cvStatus('ticked', t('Ticked from your CV: {found}.', { found: found.join(' · ') })); else cvStatus('none', t('Nothing of ours found in that CV; tick the filters by hand.'));
     writeHash(stateFromForm(merged));
   } catch (e) {
-    cvStatus('error', `Could not read that file (${e.message}).`);
+    cvStatus('error', t('Could not read that file ({error}).', { error: e.message }));
   }
 }
 
@@ -350,7 +358,7 @@ function wireControls() {
     const state = stateFromForm();
     const typed = $('#code-input').value.trim();
     if (typed && typed !== state.p) {
-      try { decodeProfile(typed, ids); state.p = typed; } catch (err) { showResults(true); text('#results-status', `That code cannot be read: ${err.message}. Check it was pasted whole, or clear it and tick the filters by hand.`); return; }
+      try { decodeProfile(typed, ids); state.p = typed; } catch (err) { unreadable(err); return; }
     }
     if (!state.p && !state.q) state.all = '1';
     search(state);
@@ -359,17 +367,20 @@ function wireControls() {
   copy.addEventListener('click', async () => {
     const code = $('#code-input').value.trim();
     if (!code) return;
-    try { await navigator.clipboard.writeText(code); text('#copy-label', 'Copied'); copy.classList.add('is-done'); setTimeout(() => { text('#copy-label', 'Copy'); copy.classList.remove('is-done'); }, 1500); } catch { $('#code-input').select(); }
+    try { await navigator.clipboard.writeText(code); text('#copy-label', t('Copied')); copy.classList.add('is-done'); setTimeout(() => { text('#copy-label', t('Copy')); copy.classList.remove('is-done'); }, 1500); } catch { $('#code-input').select(); }
   });
   $('#cv-file').addEventListener('change', e => { const file = e.target.files[0]; if (file) readCvFile(file); e.target.value = ''; });
   // ➤ Typing redraws at once; the address follows once the typing pauses.
   let timer;
   $('#q').addEventListener('input', () => { writeHash(stateFromForm(), true); draw(); clearTimeout(timer); timer = setTimeout(() => writeHash(stateFromForm(), true), 600); });
-  window.addEventListener('hashchange', () => run().catch(e => text('#results-status', `Something went wrong: ${e.message}`)));
+  window.addEventListener('hashchange', () => run().catch(showError));
+  // ➤ The other language keeps the visitor's filters: the link takes the address's # along.
+  const other = $('.nav__lang');
+  if (other) other.addEventListener('click', () => { other.hash = location.hash; });
 }
 
 async function main() {
-  try { index = await getJson('data/index.json'); } catch { text('#generated', 'The pile is not published yet. Come back in a few hours.'); text('#hero-count', '0'); return; }
+  try { index = await getJson('data/index.json'); } catch { text('#generated', t('The pile is not published yet. Come back in a few hours.')); text('#hero-count', '0'); return; }
   const names = ['families', 'occupations', 'countries', 'languages', 'degrees', 'seniority', 'vetoes'];
   const all = await Promise.all(names.map(name => getJson(`catalogues/${name}.json`)));
   cats = Object.fromEntries(names.map((name, i) => [name, all[i]]));
@@ -381,4 +392,4 @@ async function main() {
   await run();
 }
 
-main().catch(e => { text('#generated', `Something went wrong: ${e.message}`); });
+main().catch(e => { text('#generated', t('Something went wrong: {error}', { error: e.message })); });
