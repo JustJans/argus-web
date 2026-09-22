@@ -12,7 +12,7 @@ and language rules, run client-side.
 
 ## Status
 
-**Working: Spain, Sweden, Czechia, Lithuania and Latvia.** Live at <https://justjans.github.io/argus-web/>: search the
+**Working across Europe**, strongest in Germany, the United Kingdom, Sweden and France. Live at <https://justjans.github.io/argus-web/>: search the
 pile by words and filters — country, occupations by ISCO group, date, level, languages,
 degrees, title words, deal-breakers — let your CV tick them, and carry them as a short code. Every advert past
 its deadline is hidden; the page says when the pile was last rebuilt. A home server rebuilds
@@ -47,9 +47,8 @@ builder/tools/hunt.mjs acme.com` finds its careers pages from its home page, nam
 behind them and reads the adverts with no API key; `--write` keeps what it found in
 `builder/config/hunted.yml`. The intermediaries' partner programmes (Adzuna, Jooble, Talent.com,
 WhatJobs) are read once their keys are in `builder/.env` on the server (`builder/.env.example`
-lists them); their adverts show after the employers' own, in a section of their own. Spanish supply is thin
-on purpose until a licensed feed covers the private market; every source's licence is shown
-on the page. Feeds that need an account or a signed request (France Travail, Norway's NAV,
+lists them); their adverts show after the employers' own, in a section of their own.
+Every source's licence is shown on the sources page. Feeds that need an account or a signed request (France Travail, Norway's NAV,
 Poland's CBOP) wait for the owner.
 
 ## Running it yourself
@@ -57,7 +56,8 @@ Poland's CBOP) wait for the owner.
 ```
 npm ci
 npm test                                  # the builder's pure parts, no network
-node builder/build-pile.mjs --explain     # reads every source, writes builder/out
+node builder/crawl.mjs                    # reads the sources that are due into the store
+node builder/build-pile.mjs --explain     # builds the pile from the store, writes builder/out
 node builder/build-site.mjs               # assembles site/ (the app plus the pile)
 node builder/publish.mjs                  # publishes site/ to the gh-pages branch
 node ops/serve.mjs site 8787              # or preview it at http://localhost:8787/
@@ -68,24 +68,28 @@ per dropped advert with the reason to `builder/out/explain.txt`.
 
 ## What it will be
 
-- **Scope:** classic engineering and technical occupations (ISCO-08 groups 214, 215, 216,
-  311, 312, 313, 315), all of Europe. The families are those ISCO unit groups themselves, shown
+- **Scope:** engineering, technical and IT occupations (ISCO-08 groups 214, 215, 216, 251,
+  252, 311, 312, 313, 315, 351, 352), all of Europe. The families are those ISCO unit groups themselves, shown
   by minor group: engineers, architects/planners/surveyors, technicians, supervisors, plant
   operators, ship and aircraft crews, and, since 2026-09-06, software and IT professionals and
   IT technicians. Trades, service and manual jobs stay out. Their job titles in fifteen
   languages come from ESCO.
-- **Sources:** only job data whose written terms allow republishing, each offer linking to
-  the page it lives on — public employment services with open licences (France Travail,
-  Sweden's JobTech, Norway's NAV, Czechia, Lithuania, Latvia, Spanish regions), documented
-  public applicant-tracking APIs (Lever, Greenhouse, Ashby, Recruitee, Personio), and,
-  later, licensed aggregator feeds. LinkedIn and undocumented endpoints are out.
+- **Sources:** each offer links to the page it lives on. Public employment services with open
+  licences (Sweden's JobTech, Czechia, Lithuania, Latvia and four Spanish regions; France
+  Travail and Norway's NAV once their accounts exist); employers' own careers pages, read
+  through their sitemap and the JobPosting block they publish for search engines, which is
+  most of the pile; documented public applicant-tracking APIs (Greenhouse, Lever, Ashby,
+  SmartRecruiters, Recruitee, Personio, Workable, Teamtailor); Workday and Oracle careers
+  sites, read through the listing call their own page makes, switched on in
+  `builder/config/vendors.yml`; and, in a section of their own, intermediaries' partner
+  feeds once their keys exist. LinkedIn and commercial job boards are out.
 - **Privacy by construction:** the CV is read by the site's own scripts on the device and
   goes nowhere; no page loads a third-party script; the profile code never leaves the
   browser (URL fragments are not sent to servers); no cookies, no local storage, no
   analytics in the first version.
-- **Architecture:** a static site (Cloudflare Pages) plus a pile of offers rebuilt on a
-  schedule and published as static JSON, split by family and country so the code decides
-  which parts to download. No servers holding user data.
+- **Architecture:** a static site on GitHub Pages plus a pile of offers published as static
+  JSON, split by family and country so the code decides which parts to download. A home
+  server crawls every hour and publishes every three hours. No servers holding user data.
 - **Money:** none at launch. If it ever earns, licensed pay-per-click feeds come before ads.
 
 ## Repository layout
