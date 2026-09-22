@@ -40,6 +40,11 @@ eq(judge({ ...base, lg: ['en'] }).ok, true, 'a language spoken is fine');
 {
   const open = makeJudge(normaliseProfile({}), cats, engine);
   eq(open({ f: ['2142'], t: 'Senior Site Manager', cc: 'de' }).ok, true, 'an empty profile lets everything through');
+  eq([open({ f: ['2144'], t: 'Ingeniero mecánico', cc: 'es', dg: ['mechanical'] }).ok, open({ f: ['2144'], t: 'Ingeniero mecánico', cc: 'es', lg: ['es'] }).ok], [true, true], 'an advert that names a degree or a language passes when the visitor listed none');
+  const spainOnly = makeJudge(normaliseProfile({ countries: ['es'] }), cats, engine);
+  eq(spainOnly({ f: ['2144'], t: 'Ingeniero mecánico', cc: 'es', dg: ['mechanical'], lg: ['es'] }).ok, true, 'ticking only a country hides nothing for degree or language');
+  const withDegree = makeJudge(normaliseProfile({ degrees: ['electrical'] }), cats, engine);
+  eq(withDegree({ f: ['2144'], t: 'Ingeniero mecánico', cc: 'es', dg: ['mechanical'] }).stage, 'DEGREE', 'once the visitor lists degrees, the screen applies');
 }
 {
   const sorted = sortOffers([{ cc: 'nl', d: '2026-09-01' }, { cc: 'es', d: '2026-08-01' }, { cc: 'es', d: '2026-09-02' }, { cc: 'xx', d: '2026-09-03' }, { cc: 'fr', d: '2026-09-03' }], profile);

@@ -52,17 +52,22 @@ export function compileCountries(countries) {
 // ➤ other town with DE or SK is in Germany or Slovakia, as their boards write it.
 const STATE_CODES = { md: 'us', al: 'us', me: 'us', mt: 'us' };
 const STATE_TOWNS = { de: ['wilmington', 'newark', 'dover'], nl: ["st. john's", "st john's", 'st. johns', 'newfoundland'], sk: ['saskatoon', 'regina', 'saskatchewan'] };
+// ➤ The other states' codes, which no European country shares: with no European country
+// ➤ beside them they are the United States, before any town name is read, or "Naples, FL"
+// ➤ would be Naples in Italy.
+const US_STATES = new Set('ak az ar ca co ct fl ga hi id il in ia ks ky la ma mi mn ms mo ne nv nh nj nm ny nc nd oh ok or pa ri sc sd tn tx ut vt va wa wv wi wy dc'.split(' '));
 
 // ➤ In this order: a European country named, a country outside Europe named or coded
 // ➤ ("Rockville, MD, US"), a European country coded (unless the code reads as a US state or
-// ➤ a Canadian province), then the word "remote" (a remote job in a named country stays in
-// ➤ that country), then a known city in Europe, then a big city outside it. What names
-// ➤ nothing known keeps its text as the city and no country.
+// ➤ a Canadian province), then a US state's code, then the word "remote" (a remote job in
+// ➤ a named country stays in that country), then a known city in Europe, then a big city
+// ➤ outside it. What names nothing known keeps its text as the city and no country.
 export function placeOf(location, compiled) {
   const raw = String(location || '').trim();
   const f = fold(raw);
   if (!raw) return { cc: '', city: '' };
-  const isoHit = raw.match(/(?:^|[\s,(-])([A-Z]{2})(?=$|[\s,)-])/g);
+  // ➤ Places are separated by commas, semicolons, slashes or bars ("Fort Myers, FL; Naples, FL").
+  const isoHit = raw.match(/(?:^|[\s,;/|(-])([A-Z]{2})(?=$|[\s,;/|)-])/g);
   const codes = new Set((isoHit || []).map(s => s.replace(/[^A-Z]/g, '').toLowerCase()));
   // ➤ The country's code comes last ("Erfurt, TH, DE"): a code before it is a region's.
   const lastCode = isoHit ? isoHit.at(-1).replace(/[^A-Z]/g, '').toLowerCase() : '';
@@ -76,6 +81,7 @@ export function placeOf(location, compiled) {
       : (STATE_TOWNS[c.iso] || []).some(t => word(fold(t)).test(f)) ? (c.iso === 'de' ? 'us' : 'ca') : '';
     return state ? { cc: state, city } : { cc: c.iso, city: cityIn(raw, c) };
   }
+  if ([...codes].some(c => US_STATES.has(c))) return { cc: 'us', city };
   if (/(?:^|[^a-z])remote(?![a-z])|home ?office|teletrabajo|télétravail|homeoffice|thuiswerk|distans/.test(f)) return { cc: 'xx', city: '' };
   for (const c of compiled) if (c.cityRe && c.cityRe.test(f)) return { cc: c.iso, city: cityIn(raw, c) };
   for (const [iso, names] of Object.entries(FAR_CITIES)) if (names.some(n => word(fold(n)).test(f))) return { cc: iso, city };
