@@ -24,11 +24,14 @@ function legalWords(legal) {
 // ➤ Shouted words longer than an acronym come down: "LEIDOS" → Leidos, "KLA" stays.
 const calm = s => s.replace(/[A-ZÀ-Ý]{5,}/g, w => w[0] + w.slice(1).toLowerCase());
 
+// ➤ Words back into a name, without the punctuation the legal name left on its ends ("Dynata,").
+const tidy = words => words.join(' ').replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}.)]+$/gu, '');
+
 // ➤ The address's brand spelt out by the legal name: consecutive words that spell it, or
 // ➤ consecutive capitalised words whose initials make it ("bah" → Booz Allen Hamilton).
 function spelt(key, words) {
   if (key.length >= 3) for (let i = 0; i < words.length; i++) for (let j = i; j < Math.min(words.length, i + 4); j++) {
-    if (letters(words.slice(i, j + 1).join('')) === key) return words.slice(i, j + 1).join(' ');
+    if (letters(words.slice(i, j + 1).join('')) === key) return tidy(words.slice(i, j + 1));
   }
   if (key.length >= 2 && key.length <= 5) {
     // ➤ The capitalised words carry the initials; the small words between them stay in the
@@ -36,7 +39,7 @@ function spelt(key, words) {
     const caps = words.map((w, i) => [w, i]).filter(([w]) => /^[A-Z]/.test(w));
     for (let i = 0; i + key.length <= caps.length; i++) {
       const run = caps.slice(i, i + key.length);
-      if (run.map(([w]) => letters(w)[0]).join('') === key) return words.slice(run[0][1], run.at(-1)[1] + 1).join(' ');
+      if (run.map(([w]) => letters(w)[0]).join('') === key) return tidy(words.slice(run[0][1], run.at(-1)[1] + 1));
     }
   }
   return '';
