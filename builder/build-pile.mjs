@@ -7,8 +7,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { compileFamilies, familiesOf, hygieneReason } from './gate.mjs';
-import { compileCountries, toRecord } from './normalise.mjs';
+import { compileFamilies, familiesOf, hygieneReason, languagesOfCountry } from './gate.mjs';
+import { compileCountries, placeOfAdvert, toRecord } from './normalise.mjs';
 import { compileScreens } from './screens.mjs';
 import { dedupe } from './dedupe.mjs';
 import { buildShards, writePile } from './shard.mjs';
@@ -73,6 +73,8 @@ for (const data of eachSource()) {
     // ➤ The explain report keeps only what it prints: the adverts themselves are many.
     const drop = (why, r) => { if (EXPLAIN) dropped.push([why, { title: r.title, company: r.company, location: r.location, source: r.source }]); };
     if (!/^https?:\/\//.test(String(raw.url || ''))) { counts.noLink++; drop('NO LINK', raw); continue; }
+    // ➤ A source that names no language: the title is read in its country's languages as well.
+    if (!raw.lang) raw.hintLangs = languagesOfCountry(placeOfAdvert(raw, cc).cc || String(raw.country || '').toLowerCase());
     const fam = familiesOf(raw, gate);
     if (!fam.length) { counts.outsideVertical++; drop('OUTSIDE VERTICAL', raw); continue; }
     const why = hygieneReason(raw);

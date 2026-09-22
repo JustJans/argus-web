@@ -154,8 +154,11 @@ shards in eleven minutes.
    the network. A source nobody could read for ten days leaves the pile; a build that would
    lose a third of the offers refuses to publish.
 4. **Gate**: the source's occupation code when it has one, else the title against ESCO's
-   titles in fifteen languages; computing in, trades and service jobs out; hygiene words;
-   Europe only.
+   titles in fifteen languages — the source's language, or the languages of the advert's
+   country when the source names none, and English; a title that names only "engineer" or
+   only a computing word goes by the discipline or specialty it carries before the two
+   catch-alls (2149, 2519); computing in, trades, service, sales and marketing jobs out;
+   hygiene words; Europe only.
 5. **Records**: no advert text at all — the title, the employer, the place, the day and the
    link, plus what the screens read off the text (years, degrees, languages); the employer's own
    address, expiry by `validThrough`, deadline or absence.
