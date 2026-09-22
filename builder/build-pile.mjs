@@ -98,7 +98,7 @@ if (!args.includes('--no-translate')) {
   const cache = loadCache(cachePath);
   const t = await translateTitles(kept, { cache, log });
   saveCache(cachePath, cache);
-  log(`titles: ${t.translated} in English (${t.asked} new titles asked in ${t.requests} requests${t.limited ? ', translator rate-limited' : ''})`);
+  log(`titles: ${t.translated} in English (${t.asked} new titles asked in ${t.requests} requests${t.spare ? `, ${t.spare} through the spare translator` : ''}${t.limited ? ', the first translator is shut to this machine' : ''})`);
 }
 const generatedAt = new Date().toISOString();
 const { files, families: familiesIndex, latest } = buildShards(kept, families);

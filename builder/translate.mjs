@@ -8,6 +8,9 @@
 // ➤ as such instead of being asked again every build. The language is named when the source
 // ➤ or the country says it (automatic detection reads short titles as English); only then is
 // ➤ nothing the matter with "Charpentier naval". A 429 stops the asking for this build.
+// ➤ When that endpoint shuts the door on the machine's address, which it does to a server
+// ➤ that has asked too often, MyMemory answers instead: one title a request and a free
+// ➤ quota of a few thousand words a day, so the backlog drains slowly rather than not at all.
 // ➤ The English travels as `te` next to the original `t`, only when it differs.
 import { existsSync, mkdirSync, readFileSync } from 'fs';
 import { dirname } from 'path';
@@ -21,6 +24,9 @@ const CHARS_A_REQUEST = 1800;    // ➤ and so does its query
 const TITLES_A_BUILD = 4000;     // ➤ new titles per build: the backlog clears over a few builds
 const GAP_MS = 400;              // ➤ between requests, to stay welcome
 const NOTHING = '';              // ➤ cached answer for "this title is already English"
+const SPARE = 'https://api.mymemory.translated.net/get';
+const SPARE_TITLES_A_BUILD = 150;   // ➤ within the free quota of a few thousand words a day
+const SPARE_GAP_MS = 900;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -49,6 +55,21 @@ async function ask(titles, sl, fetchImpl) {
   try { data = await res.json(); } catch { return { rows: [] }; }
   const list = Array.isArray(data) ? data : [];
   return { rows: list.map(row => (Array.isArray(row) ? { text: String(row[0] ?? '').trim(), lang: String(row[1] ?? '') } : { text: String(row ?? '').trim(), lang: sl })) };
+}
+
+// ➤ The spare translator: one title, one request, and it must be told both languages. It
+// ➤ says when the day's free quota is spent.
+async function askSpare(title, sl, fetchImpl) {
+  const url = `${SPARE}?q=${encodeURIComponent(title)}&langpair=${encodeURIComponent(sl)}|en`;
+  let res;
+  try { res = await fetchImpl(url, { signal: AbortSignal.timeout(20_000) }); } catch { return {}; }
+  if (!res.ok) return {};
+  let data;
+  try { data = await res.json(); } catch { return {}; }
+  if (data?.quotaFinished) return { spent: true };
+  const text = String(data?.responseData?.translatedText ?? '').trim();
+  // ➤ It shouts its complaints in the answer field ("PLEASE SELECT TWO DISTINCT LANGUAGES").
+  return /^[A-Z ,'"!.()-]+$/.test(text) && text.length > 25 ? {} : { text };
 }
 
 // ➤ Titles into batches that no request will choke on.
@@ -97,6 +118,25 @@ export async function translateTitles(records, { cache = new Map(), fetchImpl = 
       });
     }
   }
+  // ➤ Google said no: the spare takes a few, so a build still moves the backlog. Only
+  // ➤ titles whose language is known, which is what the spare must be told.
+  let spare = 0;
+  if (limited) {
+    outer2: for (const [lang, titles] of wanted) {
+      if (lang === 'auto') continue;
+      for (const title of titles) {
+        if (spare >= SPARE_TITLES_A_BUILD) break outer2;
+        if (cache.has(title)) continue;
+        if (spare) await sleep(SPARE_GAP_MS);
+        const { text, spent } = await askSpare(title, lang, fetchImpl);
+        spare++;
+        if (spent) { log('the spare translator has spent its free quota for today'); break outer2; }
+        if (text) cache.set(title, fold(text) === fold(title) ? NOTHING : text);
+      }
+    }
+    if (spare) log(`the spare translator answered ${spare} titles`);
+  }
+
   let translated = 0, fromCache = 0;
   for (const rec of records) {
     if (!rec.t || rec.tl === 'en') continue;
@@ -105,5 +145,5 @@ export async function translateTitles(records, { cache = new Map(), fetchImpl = 
     fromCache++;
     if (out && fold(out) !== fold(rec.t)) { rec.te = out; translated++; }
   }
-  return { asked, requests, fromCache, translated, limited };
+  return { asked, requests, spare, fromCache, translated, limited };
 }
