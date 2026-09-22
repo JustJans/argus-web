@@ -6,7 +6,7 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { harness } from 'argus/server-bot/test-harness.mjs';
-import { compileFamilies, familiesOf, occupationsOf, hygieneReason, matchableTitle } from '../builder/gate.mjs';
+import { compileFamilies, familiesOf, occupationsOf, classifier, hygieneReason, matchableTitle } from '../builder/gate.mjs';
 import { compileCountries, placeOf, placeOfAdvert, normUrl, idFor, toRecord } from '../builder/normalise.mjs';
 import { dedupe, roleKey } from '../builder/dedupe.mjs';
 import { buildShards, latestOf, occupationCounts, cityCounts } from '../builder/shard.mjs';
@@ -83,6 +83,12 @@ eq(occ('Marine Engineer / Naval Architect'), ['2144.1.10', '2144.1.14'], 'a titl
 eq([occ('Senior Mechanical Design Engineer'), occ('Java Developer'), occ('Bauingenieur (m/w/d)', { hintLangs: ['de'] })], [['2144.1'], ['2512.3'], ['2142.1']], "a title filed by the discipline it names is that discipline's own occupation");
 eq(occupationsOf({ title: 'Naval Architect', codes: {} }, ['2142'], gate), [], 'only occupations of the families the advert was given');
 eq(occ('Engineer'), [], 'a bare engineer names no occupation');
+{
+  const classify = classifier(gate);
+  const first = classify({ title: 'Naval Architect', codes: {} });
+  first.families.push('x');
+  eq([classify({ title: 'Naval Architect', codes: {} }), classify({ title: 'Bauingenieur', codes: {}, hintLangs: ['de'] }).families], [{ families: ['2144'], occupations: ['2144.1.14'] }, ['2142']], "the build-wide gate answers as the gate does, a title worked out once, and no advert can change another's answer");
+}
 eq(occupationCounts([{ f: ['2144'], e: ['2144.1.14'] }, { f: ['2144', '3151'], e: ['2144.1.14', '2144.1.10'] }, { f: ['2142'], e: ['2144.1.14'] }]), { 2144: { '2144.1.14': 2, '2144.1.10': 1 } }, 'the index counts the occupations per family, each under its own');
 eq(cityCounts([...Array(3)].map(() => ({ cc: 'se', ci: 'Malmö' })).concat([{ cc: 'se', ci: 'Malmo' }, { cc: 'se', ci: 'Lund' }, { cc: 'xx', ci: 'Anywhere' }, { cc: 'es', ci: '' }])), { se: [['Malmö', 4]] }, 'the cities a country names, one spelling each, the rare ones and remote left out');
 

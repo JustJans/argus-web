@@ -197,6 +197,23 @@ export function occupationsOf(raw, families, gate) {
   return [];
 }
 
+// ➤ The gate for a whole build. Titles repeat ("Software Engineer" thousands of times) and a
+// ➤ title read in the same languages with the same codes always gets the same answer, so each
+// ➤ is worked out once. Answers { families, occupations }, fresh arrays every time.
+export function classifier(gate) {
+  const known = new Map();
+  return raw => {
+    const key = [raw.title, raw.lang || (raw.hintLangs || []).join(','), raw.codes?.isco || '', raw.codes?.ssyk || ''].join('\n');
+    let v = known.get(key);
+    if (!v) {
+      const families = familiesOf(raw, gate);
+      v = { families, occupations: occupationsOf(raw, families, gate) };
+      known.set(key, v);
+    }
+    return { families: [...v.families], occupations: [...v.occupations] };
+  };
+}
+
 // ➤ Title terms that mean "not the job you think": a sales role that names a product, a
 // ➤ recruiter hiring engineers, an internship, a labourer. In the sources' languages, kept
 // ➤ short; the visitor has vetoes of their own in the profile code.

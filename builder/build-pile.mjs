@@ -7,7 +7,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { compileFamilies, familiesOf, occupationsOf, hygieneReason, languagesOfCountry } from './gate.mjs';
+import { compileFamilies, classifier, hygieneReason, languagesOfCountry } from './gate.mjs';
 import { compileCountries, placeOfAdvert, toRecord } from './normalise.mjs';
 import { compileScreens } from './screens.mjs';
 import { dedupe } from './dedupe.mjs';
@@ -40,6 +40,7 @@ const codes = {
 };
 const countries = JSON.parse(readFileSync(join(ROOT, 'catalogues', 'countries.json'), 'utf-8')).countries;
 const gate = compileFamilies(catalogue, codes);
+const classify = classifier(gate);
 const cc = compileCountries(countries);
 const screens = compileScreens({
   degrees: JSON.parse(readFileSync(join(ROOT, 'catalogues', 'degrees.json'), 'utf-8')),
@@ -75,12 +76,11 @@ for (const data of eachSource()) {
     if (!/^https?:\/\//.test(String(raw.url || ''))) { counts.noLink++; drop('NO LINK', raw); continue; }
     // ➤ A source that names no language: the title is read in its country's languages as well.
     if (!raw.lang) raw.hintLangs = languagesOfCountry(placeOfAdvert(raw, cc).cc || String(raw.country || '').toLowerCase());
-    const fam = familiesOf(raw, gate);
+    const { families: fam, occupations } = classify(raw);
     if (!fam.length) { counts.outsideVertical++; drop('OUTSIDE VERTICAL', raw); continue; }
     const why = hygieneReason(raw);
     if (why) { counts.hygiene++; drop(`HYGIENE ${why}`, raw); continue; }
     const rec = toRecord(raw, fam, cc, screens);
-    const occupations = occupationsOf(raw, fam, gate);
     if (occupations.length) rec.e = occupations;
     if (rec.x && rec.x < startedAt.toISOString().slice(0, 10)) { counts.stale++; drop('EXPIRED', raw); continue; }
     if (rec.cc && rec.cc !== 'xx' && !europe.has(rec.cc)) { counts.outsideEurope++; drop('OUTSIDE EUROPE', raw); continue; }
