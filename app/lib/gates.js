@@ -31,11 +31,13 @@ export function makeJudge(profile, catalogues, engine) {
       else if (o.cc && !countries.has(o.cc)) return { ok: false, stage: 'COUNTRY', reason: `in a country you did not choose (${o.cc.toUpperCase()})` };
     }
     if (profile.maxYears && o.y && o.y > profile.maxYears) return { ok: false, stage: 'YEARS', reason: `asks for ${o.y} years of experience (your cap is ${profile.maxYears})` };
-    if (o.dg && o.dg.length) {
+    // ➤ Degrees and languages screen only when the visitor listed some: left empty, the
+    // ➤ question was not asked, and "none" would hide every advert that names one.
+    if (degrees.size && o.dg && o.dg.length) {
       const holds = o.dg.some(d => degrees.has(d) || (d === 'engineering-any' && holdsEngineering));
       if (!holds) return { ok: false, stage: 'DEGREE', reason: `requires a degree you did not list (${o.dg.map(degreeName).join(' or ')})` };
     }
-    if (o.lg && o.lg.length) {
+    if (languages.size && o.lg && o.lg.length) {
       const missing = o.lg.filter(l => !languages.has(l));
       if (missing.length) return { ok: false, stage: 'LANGUAGE', reason: `requires ${missing.map(languageName).join(' and ')}` };
     }

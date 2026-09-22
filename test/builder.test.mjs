@@ -124,6 +124,9 @@ eq([placeOf("St. Julian's, MT", cc).cc, placeOf('Billings, MT', cc).cc, placeOf(
 eq([placeOf('Wilmington, DE', cc).cc, placeOf('Rottach-Egern, DE', cc).cc], ['us', 'de'], 'DE is Germany except for the towns of Delaware');
 eq([placeOf('Saskatoon, SK', cc).cc, placeOf('Trnava, SK', cc).cc, placeOf("St. John's, NL, CA", cc).cc, placeOf('Zwolle, NL', cc).cc], ['ca', 'sk', 'ca', 'nl'], 'SK and NL the same way');
 eq([placeOf('Erfurt, TH, DE', cc).cc, placeOf('Rockville, MD or Hawthorne, CA', cc).cc], ['de', 'ca'], 'the last code is the country: a code before it is a region');
+eq(placeOf('Fort Myers, FL; Hybrid; La Belle, FL; Naples, FL', cc).cc, 'us', 'places split by semicolons are read, and Naples, Florida is not Naples in Italy');
+eq([placeOf('Munich, DE; Austin, TX', cc).cc, placeOf('Madrid, ES; Barcelona, ES', cc).cc], ['de', 'es'], 'a European place in a mixed list keeps the advert in Europe');
+eq(placeOf('Naples, Italy', cc).cc, 'it', 'and Naples with its country is still Italy');
 eq(placeOf('KR - Seoul', cc).cc, 'kr', 'a code outside Europe anywhere in the text');
 eq(placeOf('New York', cc).cc, 'us', 'a big city outside Europe, unnamed country');
 eq(placeOf('São Paulo', cc).cc, 'br', 'accents and all');
