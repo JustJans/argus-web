@@ -50,11 +50,14 @@ export function brandName(current, legal, slug) {
   // ➤ The name the site gave, without the words sites add ("TRUMPF Students" → TRUMPF).
   const mended = now.replace(SITE_WORDS, ' ').replace(/\s+\d+$/, '').replace(/\s+/g, ' ').trim();
   const broken = !mended || GENERIC.test(mended) || COUNTRIES.has(mended.toLowerCase());
-  // ➤ A name that is not the address itself was chosen by someone ("CommBank", "Damen",
-  // ➤ "Emerson College"): it stays, only cleared of the site's words.
-  const fromAddress = [raw, key].includes(letters(mended));
-  if (!broken && !fromAddress) return mended;
-  const found = spelt(key, words);
+  // ➤ The hunter names a board after the employer's domain, one glued word ("Jnj",
+  // ➤ "Lloydsbankinggroup"): that is an address too.
+  const glued = /^[A-Z][a-z0-9]{2,}$/.test(mended) ? letters(mended) : '';
+  const keys = [...new Set([raw, key, glued].filter(Boolean))];
+  // ➤ A name that is not an address was chosen by someone ("CommBank", "Emerson College"): it
+  // ➤ stays, only cleared of the site's words.
+  if (!broken && !keys.includes(letters(mended))) return mended;
+  const found = keys.map(k => spelt(k, words)).find(Boolean);
   if (found) {
     const name = calm(found);
     // ➤ The same letters again only for a better spelling: words apart ("Baker Hughes"),

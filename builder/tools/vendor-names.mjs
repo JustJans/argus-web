@@ -6,6 +6,7 @@
 // ➤ ("bakerhughes" → Baker Hughes, "bah" → Booz Allen Hamilton), mending only broken names.
 // ➤   node builder/tools/vendor-names.mjs            # read what is missing, rewrite the names
 // ➤   node builder/tools/vendor-names.mjs --dry      # show what would change, write nothing
+// ➤   node builder/tools/vendor-names.mjs --found    # the server's own finds (state/found)
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -16,7 +17,10 @@ import { brandName } from '../lib/names.mjs';
 
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 const STATE = join(ROOT, 'builder', 'state', 'vendor-names.json');
-const FILES = ['companies-found.yml', 'hunted.yml'].map(f => join(ROOT, 'builder', 'config', f));
+// ➤ The lists in the repository (config/), or with --found the server's own (state/found/,
+// ➤ which the server's hunter writes and never commits): the server never touches a tracked file.
+const FOUND = process.argv.includes('--found');
+const FILES = (FOUND ? ['state/found/hunted.yml'] : ['config/companies-found.yml', 'config/hunted.yml']).map(f => join(ROOT, 'builder', ...f.split('/')));
 const LANES = 4;
 const DRY = process.argv.includes('--dry');
 const opts = { tries: 1, timeoutMs: 15000, gapMs: 300 };

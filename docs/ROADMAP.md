@@ -37,6 +37,7 @@ The structure is built for the changes already known. Each item names the seam.
 - **Names of the Workday boards**: after a scout probe, `node builder/tools/vendor-names.mjs`
   reads one vacancy per new Workday board and names the board after the brand its address
   carries ("bakerhughes" → Baker Hughes, "bah" → Booz Allen Hamilton); `--dry` shows the changes.
+  On the server, the Sunday round does the same for the boards the hunter found (`--found`).
 - **One company by domain**: `node builder/tools/hunt.mjs acme.com [--write]` finds the careers
   pages, the platform and the adverts; Workday and Oracle sites read once `builder/config/vendors.yml`
   says so.
