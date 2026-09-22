@@ -377,7 +377,7 @@ eq(brandName('Uq', 'The University of Queensland', 'uq.wd3/x'), 'University of Q
 eq(brandName('Gsknch', '12340 Haleon Brasil Ltda.', 'gsknch.wd3/GSKCareers'), 'Gsknch', 'a subsidiary somewhere else does not replace the brand');
 eq(brandName('CommBank', 'CBA Services', 'cba.wd3/CommBank_Careers'), 'CommBank', 'a name someone chose stays');
 eq([brandName('Jnj', 'Johnson & Johnson Services, Inc.', 'jj.wd5/JJ'), brandName('Lloydsbankinggroup', 'Lloyds Banking Group plc', 'lbg.wd3/lbg_Careers'), brandName('Glencore', 'Glencore International AG', 'glencorecorp.wd3/External')], ['Johnson & Johnson', 'Lloyds Banking Group', 'Glencore'], "the hunter's name from a domain is an address too, and a one-word brand stays");
-eq(brandName('Surveysampling', 'Dynata, LLC (formerly SSI)', 'dynata.wd108/careers'), 'Dynata', 'the punctuation the legal name leaves on a word stays behind');
+eq([brandName('Surveysampling', 'Dynata, LLC (formerly SSI)', 'dynata.wd108/careers'), brandName('Dynata,', 'Dynata, LLC', 'dynata.wd108/careers')], ['Dynata', 'Dynata'], 'the punctuation the legal name leaves on a word stays behind, and a name that kept it is cleaned');
 eq(brandName('GERMANY', '7090 Gamer Lasertechnik', 'trumpf.wd3/germany'), 'Gamer Lasertechnik', 'a country is not an employer: the legal name takes its place');
 eq([brandName('Leidos', 'LEIDOS INC', 'leidos.wd5/x'), brandName('Kla', 'KLA Corporation', 'kla.wd1/x')], ['Leidos', 'KLA'], 'shouting comes down, acronyms stay');
 

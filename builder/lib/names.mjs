@@ -51,7 +51,7 @@ export function brandName(current, legal, slug) {
   const key = raw.replace(/(?:corporation|corp|group|hr|careers|career|jobs|inc|external|ext)$/, '') || raw;
   const words = legalWords(legal);
   // ➤ The name the site gave, without the words sites add ("TRUMPF Students" → TRUMPF).
-  const mended = now.replace(SITE_WORDS, ' ').replace(/\s+\d+$/, '').replace(/\s+/g, ' ').trim();
+  const mended = tidy(now.replace(SITE_WORDS, ' ').replace(/\s+\d+$/, '').split(/\s+/));
   const broken = !mended || GENERIC.test(mended) || COUNTRIES.has(mended.toLowerCase());
   // ➤ The hunter names a board after the employer's domain, one glued word ("Jnj",
   // ➤ "Lloydsbankinggroup"): that is an address too.
