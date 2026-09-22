@@ -2670,7 +2670,7 @@ companies:
     adverts: 65
     kept: 24
     where: gr 10 gb 6 hu 5 fr 3
-  - name: Kla
+  - name: KLA
     workday: kla.wd1/AnnArbor
     adverts: 40
     kept: 24
@@ -2975,7 +2975,7 @@ companies:
     adverts: 40
     kept: 22
     where: zz 22
-  - name: Blueorigin
+  - name: Blue Origin
     workday: blueorigin.wd5/BlueOrigin
     adverts: 40
     kept: 22
@@ -4760,7 +4760,7 @@ companies:
     adverts: 60
     kept: 15
     where: zz 7 xx 4 hu 2 be 1 tr 1
-  - name: Cox 1
+  - name: Cox
     workday: cox.wd1/Cox_External_Career_Site_1
     adverts: 60
     kept: 15
@@ -4780,7 +4780,7 @@ companies:
     adverts: 40
     kept: 15
     where: zz 15
-  - name: Earlywarning
+  - name: Early Warning
     workday: earlywarning.wd5/earlywarningcareers
     adverts: 40
     kept: 15
@@ -5170,7 +5170,7 @@ companies:
     adverts: 40
     kept: 14
     where: gb 7 zz 6 es 1
-  - name: Experienced
+  - name: Adobe
     workday: adobe.wd5/external_experienced
     adverts: 40
     kept: 14
@@ -5195,7 +5195,7 @@ companies:
     adverts: 40
     kept: 14
     where: zz 13 xx 1
-  - name: Thomsonreuters
+  - name: Thomson Reuters
     workday: thomsonreuters.wd5/External_Career_Site
     adverts: 40
     kept: 14
@@ -5660,7 +5660,7 @@ companies:
     adverts: 40
     kept: 13
     where: zz 9 gb 3 se 1
-  - name: Zeissgroup
+  - name: Zeiss
     workday: zeissgroup.wd3/External
     adverts: 40
     kept: 13
@@ -6145,7 +6145,7 @@ companies:
     adverts: 30
     kept: 12
     where: zz 10 de 2
-  - name: Crowdstrike
+  - name: CrowdStrike
     workday: crowdstrike.wd5/crowdstrikecareers
     adverts: 40
     kept: 12
@@ -6815,7 +6815,7 @@ companies:
     adverts: 60
     kept: 11
     where: zz 10 it 1
-  - name: Formulaone
+  - name: Formula One
     workday: formulaone.wd3/F1
     adverts: 13
     kept: 11
@@ -6825,12 +6825,12 @@ companies:
     adverts: 60
     kept: 11
     where: zz 10 bg 1
-  - name: Sifive
+  - name: SiFive
     workday: sifive.wd1/sifivecareers
     adverts: 40
     kept: 11
     where: zz 11
-  - name: Braunintertec
+  - name: Braun Intertec
     workday: braunintertec.wd5/BraunIntertecCareers
     adverts: 40
     kept: 11
@@ -7535,7 +7535,7 @@ companies:
     adverts: 31
     kept: 10
     where: pl 6 es 2 gb 1 se 1
-  - name: BAH
+  - name: Booz Allen Hamilton
     workday: bah.wd1/BAH_Jobs
     adverts: 40
     kept: 10
@@ -7545,7 +7545,7 @@ companies:
     adverts: 40
     kept: 10
     where: zz 5 nl 5
-  - name: REC RTX Ext Gateway
+  - name: REC RTX Gateway
     workday: globalhr.wd5/REC_RTX_Ext_Gateway
     adverts: 60
     kept: 10
@@ -7560,7 +7560,7 @@ companies:
     adverts: 40
     kept: 10
     where: zz 4 fr 3 de 1 gb 1 cz 1
-  - name: TRUMPF Graduates And Professionals
+  - name: TRUMPF
     workday: trumpf.wd3/TRUMPF_Graduates_and_Professionals
     adverts: 40
     kept: 10
@@ -7610,7 +7610,7 @@ companies:
     adverts: 40
     kept: 10
     where: pl 5 zz 3 dk 2
-  - name: Usaa
+  - name: United Services Automobile Asn
     workday: usaa.wd1/USAAJOBSWD
     adverts: 60
     kept: 10
@@ -8530,7 +8530,7 @@ companies:
     adverts: 44
     kept: 9
     where: xx 8 zz 1
-  - name: Arcticwolf
+  - name: Arctic Wolf
     workday: arcticwolf.wd1/External
     adverts: 60
     kept: 9
@@ -8540,7 +8540,7 @@ companies:
     adverts: 40
     kept: 9
     where: zz 7 pl 2
-  - name: Liveramp
+  - name: LiveRamp
     workday: liveramp.wd5/LiveRampCareers
     adverts: 49
     kept: 9
@@ -8550,12 +8550,12 @@ companies:
     adverts: 40
     kept: 9
     where: ch 7 lu 1 zz 1
-  - name: CORPORATE
+  - name: Northwestern Mutual
     workday: northwesternmutual.wd5/CORPORATE-CAREERS
     adverts: 40
     kept: 9
     where: zz 7 no 2
-  - name: Rockwoolgroup
+  - name: Rockwool
     workday: rockwoolgroup.wd3/ROCKWOOL
     adverts: 40
     kept: 9
@@ -8590,12 +8590,12 @@ companies:
     adverts: 40
     kept: 9
     where: zz 9
-  - name: Prysmiangroup
+  - name: Prysmian
     workday: prysmiangroup.wd3/Careers
     adverts: 40
     kept: 9
     where: zz 9
-  - name: Sailpoint
+  - name: SailPoint
     workday: sailpoint.wd1/sailpoint
     adverts: 40
     kept: 9
@@ -9845,7 +9845,7 @@ companies:
     adverts: 60
     kept: 8
     where: rs 4 zz 3 es 1
-  - name: Fil
+  - name: FIL
     workday: fil.wd3/001
     adverts: 40
     kept: 8
@@ -9870,7 +9870,7 @@ companies:
     adverts: 31
     kept: 8
     where: zz 8
-  - name: Bakerhughes
+  - name: Baker Hughes
     workday: bakerhughes.wd5/BakerHughes
     adverts: 40
     kept: 8
@@ -11480,7 +11480,7 @@ companies:
     adverts: 40
     kept: 7
     where: de 3 zz 2 es 1 fr 1
-  - name: GERMANY
+  - name: Gamer Lasertechnik
     workday: bdx.wd1/EXTERNAL_CAREER_SITE_GERMANY
     adverts: 38
     kept: 7
@@ -11490,7 +11490,7 @@ companies:
     adverts: 37
     kept: 7
     where: xx 3 ie 3 zz 1
-  - name: Motorolasolutions
+  - name: Motorola Solutions
     workday: motorolasolutions.wd5/Careers
     adverts: 40
     kept: 7
@@ -13355,17 +13355,17 @@ companies:
     adverts: 40
     kept: 6
     where: zz 6
-  - name: Goto
+  - name: GoTo
     workday: goto.wd5/GoToCareers
     adverts: 14
     kept: 6
     where: zz 2 hu 2 xx 2
-  - name: Michelinhr
+  - name: Michelin
     workday: michelinhr.wd3/Michelin
     adverts: 40
     kept: 6
     where: zz 6
-  - name: Roche Ext
+  - name: Roche
     workday: roche.wd3/roche-ext
     adverts: 60
     kept: 6
@@ -13470,12 +13470,12 @@ companies:
     adverts: 40
     kept: 6
     where: zz 6
-  - name: Paypal
+  - name: PayPal
     workday: paypal.wd1/jobs
     adverts: 40
     kept: 6
     where: zz 6
-  - name: Rand
+  - name: RAND
     workday: rand.wd5/External_Career_Site
     adverts: 10
     kept: 6
@@ -13490,7 +13490,7 @@ companies:
     adverts: 18
     kept: 6
     where: zz 4 pl 2
-  - name: Transunion
+  - name: TransUnion
     workday: transunion.wd5/TransUnion
     adverts: 40
     kept: 6
@@ -15950,7 +15950,7 @@ companies:
     adverts: 40
     kept: 5
     where: zz 5
-  - name: Msfg
+  - name: MSFG
     workday: msfg.wd3/Careers
     adverts: 9
     kept: 5
@@ -15960,7 +15960,7 @@ companies:
     adverts: 40
     kept: 5
     where: zz 5
-  - name: Global Experienced
+  - name: PricewaterhouseCoopers
     workday: pwc.wd3/Global_Experienced_Careers
     adverts: 60
     kept: 5
@@ -16000,7 +16000,7 @@ companies:
     adverts: 40
     kept: 5
     where: zz 3 ie 1 gb 1
-  - name: Frostbank
+  - name: Frost Bank
     workday: frostbank.wd5/External
     adverts: 40
     kept: 5
@@ -16015,7 +16015,7 @@ companies:
     adverts: 40
     kept: 5
     where: zz 5
-  - name: Husqvarnagroup
+  - name: Husqvarna
     workday: husqvarnagroup.wd3/External_Career_Site
     adverts: 40
     kept: 5
@@ -16040,7 +16040,7 @@ companies:
     adverts: 60
     kept: 5
     where: ie 4 fr 1
-  - name: Lmu
+  - name: Loyola Marymount University
     workday: lmu.wd1/Careers
     adverts: 40
     kept: 5
@@ -16065,12 +16065,12 @@ companies:
     adverts: 40
     kept: 5
     where: zz 4 de 1
-  - name: Relx
+  - name: RELX
     workday: relx.wd3/LexisNexisLegal
     adverts: 40
     kept: 5
     where: zz 5
-  - name: Slu
+  - name: Saint Louis University
     workday: slu.wd5/Careers
     adverts: 60
     kept: 5
@@ -19640,7 +19640,7 @@ companies:
     adverts: 18
     kept: 4
     where: zz 4
-  - name: Airliquidehr
+  - name: Air Liquide
     workday: airliquidehr.wd3/AirLiquideExternalCareer
     adverts: 40
     kept: 4
@@ -19650,7 +19650,7 @@ companies:
     adverts: 40
     kept: 4
     where: zz 4
-  - name: Global
+  - name: Concentrix Nederland
     workday: cnx.wd1/external_global
     adverts: 40
     kept: 4
@@ -19665,7 +19665,7 @@ companies:
     adverts: 60
     kept: 4
     where: zz 4
-  - name: And
+  - name: Healthcare SP
     workday: philips.wd3/jobs-and-careers
     adverts: 40
     kept: 4
@@ -19685,12 +19685,12 @@ companies:
     adverts: 26
     kept: 4
     where: zz 4
-  - name: Aig
+  - name: AIG
     workday: aig.wd1/aig
     adverts: 40
     kept: 4
     where: zz 3 gb 1
-  - name: Airasia
+  - name: AirAsia
     workday: airasia.wd3/Careers
     adverts: 39
     kept: 4
@@ -19765,12 +19765,12 @@ companies:
     adverts: 29
     kept: 4
     where: zz 4
-  - name: Ext Non Usalteos
+  - name: Non Usalteos
     workday: ncratleos.wd1/ext_non_usalteos
     adverts: 40
     kept: 4
     where: zz 2 rs 1 cy 1
-  - name: Newschool
+  - name: New School
     workday: newschool.wd1/External
     adverts: 60
     kept: 4
@@ -19800,7 +19800,7 @@ companies:
     adverts: 40
     kept: 4
     where: zz 4
-  - name: Redhat
+  - name: Red Hat
     workday: redhat.wd5/jobs
     adverts: 40
     kept: 4
@@ -24890,7 +24890,7 @@ companies:
     adverts: 18
     kept: 3
     where: fr 3
-  - name: Airproducts
+  - name: Air Products
     workday: airproducts.wd5/AP0001
     adverts: 40
     kept: 3
@@ -24900,7 +24900,7 @@ companies:
     adverts: 40
     kept: 3
     where: pl 2 zz 1
-  - name: Cae
+  - name: CAE
     workday: cae.wd3/career
     adverts: 40
     kept: 3
@@ -24910,7 +24910,7 @@ companies:
     adverts: 40
     kept: 3
     where: zz 2 nl 1
-  - name: Duckcreek
+  - name: Duck Creek
     workday: duckcreek.wd1/duckcreekcareers
     adverts: 23
     kept: 3
@@ -24990,12 +24990,12 @@ companies:
     adverts: 40
     kept: 3
     where: zz 2 gb 1
-  - name: Embryriddle
+  - name: Embry Riddle
     workday: embryriddle.wd1/External
     adverts: 40
     kept: 3
     where: zz 3
-  - name: ERM
+  - name: Environmental Resources Management
     workday: erm.wd3/ERM_Careers
     adverts: 40
     kept: 3
@@ -25010,7 +25010,7 @@ companies:
     adverts: 13
     kept: 3
     where: fr 2 zz 1
-  - name: FBD 101
+  - name: FBD
     workday: freshfields.wd3/FBD_101
     adverts: 40
     kept: 3
@@ -25035,7 +25035,7 @@ companies:
     adverts: 40
     kept: 3
     where: zz 3
-  - name: Hoganlovells
+  - name: Hogan Lovells
     workday: hoganlovells.wd3/Search
     adverts: 40
     kept: 3
@@ -25055,7 +25055,7 @@ companies:
     adverts: 40
     kept: 3
     where: zz 3
-  - name: Lifefitness
+  - name: Life Fitness
     workday: lifefitness.wd1/searchLFN
     adverts: 40
     kept: 3
@@ -25085,22 +25085,22 @@ companies:
     adverts: 40
     kept: 3
     where: zz 2 no 1
-  - name: Path
+  - name: PATH
     workday: path.wd1/External
     adverts: 60
     kept: 3
     where: zz 2 xx 1
-  - name: Primetherapeutics
+  - name: Prime Therapeutics
     workday: primetherapeutics.wd1/PrimeTherapeuticsCareers
     adverts: 18
     kept: 3
     where: zz 3
-  - name: Pzcussons
+  - name: PZ Cussons
     workday: pzcussons.wd3/CareersPZCussons
     adverts: 19
     kept: 3
     where: gb 2 zz 1
-  - name: Rb
+  - name: Reserve Bank
     workday: rb.wd5/FRS
     adverts: 40
     kept: 3
@@ -25110,12 +25110,12 @@ companies:
     adverts: 60
     kept: 3
     where: zz 3
-  - name: Sentryinsurance
+  - name: Sentry Insurance
     workday: sentryinsurance.wd1/SentryCareers
     adverts: 26
     kept: 3
     where: zz 3
-  - name: Smithnephew
+  - name: Smith & Nephew
     workday: smithnephew.wd5/External
     adverts: 40
     kept: 3
@@ -25170,7 +25170,7 @@ companies:
     adverts: 38
     kept: 3
     where: zz 3
-  - name: Vumc
+  - name: Vanderbilt University Medical Center
     workday: vumc.wd1/vumccareers
     adverts: 40
     kept: 3
@@ -25180,7 +25180,7 @@ companies:
     adverts: 9
     kept: 3
     where: gb 3
-  - name: Zoll
+  - name: ZOLL
     workday: zoll.wd5/ZOLLMedicalCorp
     adverts: 40
     kept: 3
@@ -32855,7 +32855,7 @@ companies:
     adverts: 40
     kept: 2
     where: zz 2
-  - name: Akumincorp
+  - name: Akumin
     workday: akumincorp.wd5/akumincareers
     adverts: 60
     kept: 2
@@ -32900,7 +32900,7 @@ companies:
     adverts: 8
     kept: 2
     where: zz 2
-  - name: Cardinalhealth
+  - name: Cardinal Health
     workday: cardinalhealth.wd1/EXT
     adverts: 40
     kept: 2
@@ -32910,12 +32910,12 @@ companies:
     adverts: 40
     kept: 2
     where: zz 2
-  - name: Chrobinson
+  - name: C.H. Robinson
     workday: chrobinson.wd5/CHRobinson
     adverts: 40
     kept: 2
     where: zz 2
-  - name: Commercebank
+  - name: Commerce Bank
     workday: commercebank.wd1/CommerceJobs
     adverts: 40
     kept: 2
@@ -32935,17 +32935,17 @@ companies:
     adverts: 40
     kept: 2
     where: zz 2
-  - name: Fifththird
+  - name: Fifth Third
     workday: fifththird.wd5/53careers
     adverts: 40
     kept: 2
     where: zz 2
-  - name: Firstrand
+  - name: FirstRand
     workday: firstrand.wd3/FRB
     adverts: 40
     kept: 2
     where: zz 2
-  - name: Primary 1
+  - name: Primary
     workday: franklintempleton.wd5/Primary-External-1
     adverts: 40
     kept: 2
@@ -32960,7 +32960,7 @@ companies:
     adverts: 40
     kept: 2
     where: zz 2
-  - name: Goodrx
+  - name: GoodRx
     workday: goodrx.wd1/careers
     adverts: 13
     kept: 2
@@ -32975,7 +32975,7 @@ companies:
     adverts: 40
     kept: 2
     where: zz 1 gr 1
-  - name: Hhmi
+  - name: Howard Hughes Medical Institute
     workday: hhmi.wd1/External
     adverts: 40
     kept: 2
@@ -33000,7 +33000,7 @@ companies:
     adverts: 40
     kept: 2
     where: zz 1 nl 1
-  - name: Ijm
+  - name: International Justice Mission
     workday: ijm.wd5/careers-ijm
     adverts: 40
     kept: 2
@@ -33010,7 +33010,7 @@ companies:
     adverts: 40
     kept: 2
     where: gb 2
-  - name: Irsc
+  - name: Indian River State College
     workday: irsc.wd5/External
     adverts: 40
     kept: 2
@@ -33025,7 +33025,7 @@ companies:
     adverts: 40
     kept: 2
     where: zz 2
-  - name: Keybank
+  - name: KeyBank
     workday: keybank.wd5/External_Career_Site
     adverts: 40
     kept: 2
@@ -33075,7 +33075,7 @@ companies:
     adverts: 20
     kept: 2
     where: zz 2
-  - name: Ext Apac
+  - name: Apac
     workday: ncr.wd1/ext_apac
     adverts: 40
     kept: 2
@@ -33085,7 +33085,7 @@ companies:
     adverts: 60
     kept: 2
     where: de 2
-  - name: Nxp
+  - name: NXP
     workday: nxp.wd3/careers
     adverts: 39
     kept: 2
@@ -33095,12 +33095,12 @@ companies:
     adverts: 23
     kept: 2
     where: zz 2
-  - name: Oshkoshcorporation
+  - name: Oshkosh
     workday: oshkoshcorporation.wd5/Oshkosh
     adverts: 40
     kept: 2
     where: zz 2
-  - name: Osu
+  - name: Ohio State University
     workday: osu.wd1/OSUCareers
     adverts: 40
     kept: 2
@@ -33110,7 +33110,7 @@ companies:
     adverts: 60
     kept: 2
     where: zz 2
-  - name: Palmbeachstate
+  - name: Palm Beach State
     workday: palmbeachstate.wd1/external
     adverts: 40
     kept: 2
@@ -33120,12 +33120,12 @@ companies:
     adverts: 9
     kept: 2
     where: be 2
-  - name: Portlandgeneral
+  - name: Portland General
     workday: portlandgeneral.wd5/pgn
     adverts: 22
     kept: 2
     where: zz 2
-  - name: Rsm
+  - name: RSM
     workday: rsm.wd1/RSMCareers
     adverts: 40
     kept: 2
@@ -33155,7 +33155,7 @@ companies:
     adverts: 40
     kept: 2
     where: zz 1 gb 1
-  - name: Silvercross
+  - name: Silver Cross
     workday: silvercross.wd5/SilverCrossCareers
     adverts: 40
     kept: 2
@@ -33175,7 +33175,7 @@ companies:
     adverts: 40
     kept: 2
     where: zz 2
-  - name: Experienced
+  - name: Sun Life
     workday: sunlife.wd3/Experienced-Jobs
     adverts: 40
     kept: 2
@@ -33200,7 +33200,7 @@ companies:
     adverts: 40
     kept: 2
     where: xx 1 zz 1
-  - name: Trugreen
+  - name: TruGreen
     workday: trugreen.wd1/USExternalCareers
     adverts: 60
     kept: 2
@@ -33210,12 +33210,12 @@ companies:
     adverts: 40
     kept: 2
     where: zz 2
-  - name: Unilever Experienced Professionals
+  - name: Unilever
     workday: unilever.wd3/Unilever_Experienced_Professionals
     adverts: 40
     kept: 2
     where: gb 1 zz 1
-  - name: Unioncollege
+  - name: Union College
     workday: unioncollege.wd5/UnionCollegeCareers
     adverts: 39
     kept: 2
@@ -33230,7 +33230,7 @@ companies:
     adverts: 40
     kept: 2
     where: zz 2
-  - name: Staff Website Live
+  - name: Website Live
     workday: wfu.wd1/Staff_Career_Website_live
     adverts: 40
     kept: 2
@@ -33240,7 +33240,7 @@ companies:
     adverts: 40
     kept: 2
     where: zz 2
-  - name: WSU
+  - name: Washington State University
     workday: wsu.wd5/WSU_Jobs
     adverts: 60
     kept: 2
@@ -46390,7 +46390,7 @@ companies:
     adverts: 40
     kept: 1
     where: zz 1
-  - name: Collegeboard
+  - name: College Board
     workday: collegeboard.wd1/Careers
     adverts: 40
     kept: 1
@@ -46405,12 +46405,12 @@ companies:
     adverts: 40
     kept: 1
     where: es 1
-  - name: Ingrammicro
+  - name: Ingram Micro
     workday: ingrammicro.wd5/IngramMicro
     adverts: 40
     kept: 1
     where: fr 1
-  - name: Kimberlyclark
+  - name: Kimberly Clark
     workday: kimberlyclark.wd1/GLOBAL
     adverts: 40
     kept: 1
@@ -46425,7 +46425,7 @@ companies:
     adverts: 1
     kept: 1
     where: zz 1
-  - name: Servicetitan
+  - name: ServiceTitan
     workday: servicetitan.wd1/ServiceTitan
     adverts: 40
     kept: 1
@@ -46505,12 +46505,12 @@ companies:
     adverts: 40
     kept: 1
     where: zz 1
-  - name: Asmglobal
+  - name: ASM Global
     workday: asmglobal.wd1/careers
     adverts: 60
     kept: 1
     where: zz 1
-  - name: Astrazeneca
+  - name: AstraZeneca
     workday: astrazeneca.wd3/Careers
     adverts: 60
     kept: 1
@@ -46550,7 +46550,7 @@ companies:
     adverts: 40
     kept: 1
     where: zz 1
-  - name: Staff Brown
+  - name: Brown
     workday: brown.wd5/staff-careers-brown
     adverts: 40
     kept: 1
@@ -46560,7 +46560,7 @@ companies:
     adverts: 20
     kept: 1
     where: zz 1
-  - name: Caa
+  - name: Creative Artists Agency
     workday: caa.wd1/Careers
     adverts: 40
     kept: 1
@@ -46575,12 +46575,12 @@ companies:
     adverts: 28
     kept: 1
     where: zz 1
-  - name: Chordenergy
+  - name: Chord Energy
     workday: chordenergy.wd1/external
     adverts: 26
     kept: 1
     where: zz 1
-  - name: Circlek
+  - name: Circle K
     workday: circlek.wd3/CircleKStoreJobs
     adverts: 40
     kept: 1
@@ -46620,7 +46620,7 @@ companies:
     adverts: 60
     kept: 1
     where: zz 1
-  - name: Emerson College Staff
+  - name: Emerson College
     workday: emerson.wd5/Emerson_College_Staff
     adverts: 39
     kept: 1
@@ -46630,7 +46630,7 @@ companies:
     adverts: 40
     kept: 1
     where: nl 1
-  - name: Fau
+  - name: Florida Atlantic University
     workday: fau.wd1/FAU
     adverts: 40
     kept: 1
@@ -46645,7 +46645,7 @@ companies:
     adverts: 1
     kept: 1
     where: zz 1
-  - name: Staff
+  - name: Florida Polytechnic University
     workday: flpoly.wd1/External-Staff
     adverts: 5
     kept: 1
@@ -46660,7 +46660,7 @@ companies:
     adverts: 40
     kept: 1
     where: gb 1
-  - name: Goodwinprocter
+  - name: Goodwin Procter
     workday: goodwinprocter.wd5/External_Careers
     adverts: 40
     kept: 1
@@ -46680,7 +46680,7 @@ companies:
     adverts: 40
     kept: 1
     where: gb 1
-  - name: Harbourvest
+  - name: HarbourVest
     workday: harbourvest.wd5/HVP
     adverts: 40
     kept: 1
@@ -46690,17 +46690,17 @@ companies:
     adverts: 40
     kept: 1
     where: zz 1
-  - name: Hmfp
+  - name: HMFP
     workday: hmfp.wd5/HMFP
     adverts: 40
     kept: 1
     where: gb 1
-  - name: Hpinc
+  - name: Helmerich & Payne
     workday: hpinc.wd5/HPINC
     adverts: 40
     kept: 1
     where: zz 1
-  - name: Isu
+  - name: Iowa State University
     workday: isu.wd1/IowaStateJobs
     adverts: 40
     kept: 1
@@ -46720,7 +46720,7 @@ companies:
     adverts: 33
     kept: 1
     where: zz 1
-  - name: Kumc
+  - name: KUMC
     workday: kumc.wd5/kumc-jobs
     adverts: 40
     kept: 1
@@ -46785,7 +46785,7 @@ companies:
     adverts: 40
     kept: 1
     where: es 1
-  - name: Multicare
+  - name: MultiCare
     workday: multicare.wd1/multicare
     adverts: 40
     kept: 1
@@ -46825,7 +46825,7 @@ companies:
     adverts: 40
     kept: 1
     where: zz 1
-  - name: Pnc
+  - name: PNC
     workday: pnc.wd5/External
     adverts: 40
     kept: 1
@@ -46860,7 +46860,7 @@ companies:
     adverts: 40
     kept: 1
     where: zz 1
-  - name: Rockymountain
+  - name: Rocky Mountain
     workday: rockymountain.wd1/RMI
     adverts: 4
     kept: 1
@@ -46890,12 +46890,12 @@ companies:
     adverts: 40
     kept: 1
     where: be 1
-  - name: Smithcollege
+  - name: Smith College
     workday: smithcollege.wd5/smithcollege
     adverts: 30
     kept: 1
     where: zz 1
-  - name: US
+  - name: Smucker
     workday: smucker.wd5/US_External_Careers
     adverts: 40
     kept: 1
@@ -46910,7 +46910,7 @@ companies:
     adverts: 32
     kept: 1
     where: zz 1
-  - name: Stormontvail
+  - name: Stormont Vail
     workday: stormontvail.wd1/SVH
     adverts: 40
     kept: 1
@@ -46930,7 +46930,7 @@ companies:
     adverts: 60
     kept: 1
     where: gb 1
-  - name: TRUMPF Students
+  - name: TRUMPF
     workday: trumpf.wd3/TRUMPF_Students
     adverts: 40
     kept: 1
@@ -46950,12 +46950,12 @@ companies:
     adverts: 40
     kept: 1
     where: zz 1
-  - name: Uq
+  - name: University of Queensland
     workday: uq.wd3/uqcareers
     adverts: 40
     kept: 1
     where: zz 1
-  - name: Usc
+  - name: University of Southern California
     workday: usc.wd5/ExternalUSCCareers
     adverts: 60
     kept: 1
@@ -46970,7 +46970,7 @@ companies:
     adverts: 18
     kept: 1
     where: zz 1
-  - name: VCUHealth
+  - name: VCU Health
     workday: vcuhealth.wd1/VCUHealth_careers
     adverts: 60
     kept: 1
@@ -46985,7 +46985,7 @@ companies:
     adverts: 40
     kept: 1
     where: zz 1
-  - name: Wgu
+  - name: WGU
     workday: wgu.wd5/External
     adverts: 60
     kept: 1
@@ -46995,12 +46995,12 @@ companies:
     adverts: 60
     kept: 1
     where: zz 1
-  - name: Wlu
+  - name: Washington and Lee University
     workday: wlu.wd5/WLUCareers
     adverts: 19
     kept: 1
     where: zz 1
-  - name: Wolseleyuk
+  - name: Wolseley UK
     workday: wolseleyuk.wd3/Wolseley
     adverts: 44
     kept: 1

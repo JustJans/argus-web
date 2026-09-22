@@ -34,6 +34,9 @@ The structure is built for the changes already known. Each item names the seam.
 - **Why a site gives nothing**: `node builder/tools/triage.mjs [--limit 300] [--out file.tsv]`
   labels the silent sites (no block, feed, unrecognised, JavaScript, vendor, wall, dead, empty)
   by asking the crawler's own reader, so the next reader is built for the biggest reason.
+- **Names of the Workday boards**: after a scout probe, `node builder/tools/vendor-names.mjs`
+  reads one vacancy per new Workday board and names the board after the brand its address
+  carries ("bakerhughes" → Baker Hughes, "bah" → Booz Allen Hamilton); `--dry` shows the changes.
 - **One company by domain**: `node builder/tools/hunt.mjs acme.com [--write]` finds the careers
   pages, the platform and the adverts; Workday and Oracle sites read once `builder/config/vendors.yml`
   says so.

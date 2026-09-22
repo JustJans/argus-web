@@ -27,6 +27,7 @@ import { jobicy, remotive, arbeitnow } from '../builder/adapters/remote.mjs';
 import { parseRobots, allowed, parseSitemap, looksLikeJob, pathShape, jobLinks, jobPostings, careerLinks, nextLink, detectPlatform, feedName, repairJson } from '../builder/lib/crawl.mjs';
 import { toRaw as careersRaw } from '../builder/adapters/careers.mjs';
 import { deadline } from '../builder/http.mjs';
+import { brandName } from '../builder/lib/names.mjs';
 
 const { ok, eq, done } = harness('builder');
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -57,6 +58,22 @@ eq(familiesOf({ title: 'Anything', codes: { isco: '2142' } }, gate), ['2142'], '
 eq(familiesOf({ title: 'Mechanical Engineer', codes: { isco: '2512' } }, gate), ['2512'], 'an ISCO code in the computing groups is in since 2026-09-06');
 eq(familiesOf({ title: 'Anything', codes: { isco: '5120' } }, gate), [], 'a cook is out, whatever the title');
 eq(familiesOf({ title: 'Konstruktér/ka', codes: { isco: '31152' }, lang: 'cs' }, gate), ['3115'], 'a five-digit CZ-ISCO code decides by its first four digits');
+// The precision pass: a title with no language is read in its country's; a discipline or a
+// computing specialty wins over the two catch-alls; a few more jobs are outside.
+eq(familiesOf({ title: 'Bauingenieur (m/w/d)', codes: {}, hintLangs: ['de'] }, gate), ['2142'], "a German title from a source that names no language is read in German");
+eq(familiesOf({ title: 'Bauingenieur (m/w/d)', codes: {} }, gate), ['2149'], 'without the hint it was only the bare engineer word');
+eq(familiesOf({ title: 'Mechanical Design Engineer', codes: {} }, gate), ['2144'], "a discipline wins over ESCO's generic design engineer");
+eq(familiesOf({ title: 'Engineer - Bridges & Structures', codes: {} }, gate), ['2142'], 'and over the bare engineer word');
+eq(familiesOf({ title: 'Android Engineer', codes: {} }, gate), ['2514'], 'a mobile title goes to the applications programmers, as ESCO files mobile apps');
+eq(familiesOf({ title: 'Senior SAP SD S/4HANA Consultant', codes: {} }, gate), ['2511'], 'an ERP consultant goes to the systems analysts');
+eq(familiesOf({ title: 'Java Developer', codes: {} }, gate), ['2512'], 'a developer goes to the software developers');
+eq(familiesOf({ title: 'Senior Data Engineer', codes: {} }, gate), ['2519'], 'data stays where ISCO keeps it');
+eq(familiesOf({ title: 'Arquitecto Fullstack Spring + React', codes: {}, hintLangs: ['es'] }, gate).includes('2161'), false, 'a software architect is not a building architect');
+eq(familiesOf({ title: 'Product Marketing Manager', codes: {} }, gate), [], 'marketing is out when it is the job');
+eq(familiesOf({ title: 'Technical Support Engineer - Digital Marketing', codes: {} }, gate).length > 0, true, 'and stays when it is the product a support engineer serves');
+eq(familiesOf({ title: "Ingénieur d'affaires confirmé", codes: {}, hintLangs: ['fr'] }, gate), [], 'a French business engineer sells');
+eq([hygieneReason({ title: 'shift supervisor - Store# 08570' }) !== null, hygieneReason({ title: 'Werkstudent IT Servicemanagement' }) !== null, hygieneReason({ title: 'Quality Control Operator' }) !== null], [true, true, true], 'shop shifts, working students and operatives are hygiene');
+eq(hygieneReason({ title: 'SAP Retail Consultant' }), null, 'a SAP Retail consultant is not a shop job');
 eq(familiesOf({ title: 'Automatikos inžinierius', codes: { isco: '214911' }, lang: 'lt' }, gate), ['2149'], 'a six-digit Lithuanian LPK code, the same way');
 
 // ── The gate: titles, by ESCO's names ───────────────────────────────────
@@ -71,17 +88,17 @@ eq(familiesOf({ title: 'AI Research Engineer - Computer Vision', codes: {}, lang
 eq(familiesOf({ title: 'Lead D365 F&O Solutions Architect Finance', codes: {}, lang: 'en' }, gate), ['2511'], 'and a solutions architect is not a building architect');
 eq(familiesOf({ title: 'Head Chef', codes: {}, lang: 'en' }, gate), [], 'a chef is out');
 eq(familiesOf({ title: 'Welder', codes: {}, lang: 'en' }, gate), [], 'a welder is out');
-eq(familiesOf({ title: 'Advanced Mechanical Design Engineer (Thermal Runaway)', codes: {}, lang: 'en' }, gate), ['2149'], 'a mechanical design engineer stays in, as an engineer not elsewhere classified');
+eq(familiesOf({ title: 'Advanced Mechanical Design Engineer (Thermal Runaway)', codes: {}, lang: 'en' }, gate), ['2144'], 'a mechanical design engineer is a mechanical engineer');
 eq(familiesOf({ title: 'Draughtsman', codes: {}, lang: 'en' }, gate), ['3118'], 'a British spelling ESCO lacks comes from the extra terms');
 eq(familiesOf({ title: 'INGENIERO/A MECÁNICO/A', codes: {}, lang: 'es' }, gate), ['2144'], 'Spanish, with gender marks');
-eq(familiesOf({ title: 'INGENIERO/A TÉCNICO/A O INDUSTRIAL JUNIOR', codes: {}, lang: 'es' }, gate), ['2149'], 'a Spanish title with only the word ingeniero falls into 2149');
+eq(familiesOf({ title: 'INGENIERO/A TÉCNICO/A O INDUSTRIAL JUNIOR', codes: {}, lang: 'es' }, gate), ['2141'], 'an ingeniero técnico o industrial is an industrial engineer');
 eq(familiesOf({ title: 'Ingeniero de procesos para Burgos', codes: {}, lang: 'es' }, gate), ['2141'], 'a Spanish process engineer');
 eq(familiesOf({ title: 'Técnico comercial', codes: {}, lang: 'es' }, gate), [], 'the bare word técnico names no occupation');
 eq(familiesOf({ title: 'Arquitecto/a para Ayto. de Medina del Campo (Valladolid)', codes: {}, lang: 'es' }, gate), ['2161'], 'an architect is an architect');
 eq(familiesOf({ title: 'Encargado/a de obra', codes: {}, lang: 'es' }, gate), ['3123'], 'a construction supervisor');
 eq(familiesOf({ title: 'ENGINYER/A INDUSTRIAL', codes: {}, lang: 'ca' }, gate), ['2141'], 'Catalan, from the catalogue\'s extra terms (ESCO has no Catalan)');
 eq(familiesOf({ title: "Enginyer/a d'automatització", codes: {}, lang: 'ca' }, gate), ['2141'], 'a Catalan title with an apostrophe');
-eq(familiesOf({ title: 'Ingénieur études et conception mécanique H/F', codes: {}, lang: 'fr' }, gate), ['2149'], 'French: the bare ingénieur alone falls into 2149');
+eq(familiesOf({ title: 'Ingénieur études et conception mécanique H/F', codes: {}, lang: 'fr' }, gate), ['2144'], 'French: études et conception mécanique is mechanical');
 eq(familiesOf({ title: 'Fisioterapeuta', codes: {}, lang: 'es' }, gate), [], 'a physiotherapist is outside the vertical');
 eq(familiesOf({ title: "CAP D'OBRA - APARELLADOR/A - ARQUITECTE/A TÈCNIC/A", codes: {}, lang: 'ca' }, gate).sort(), ['2149', '3112', '3123'], 'a Catalan site manager and building surveyor: the longer "arquitecte tècnic" beats "arquitecte"');
 eq(familiesOf({ title: 'Ingeniero/a Informático/a para AUVASA (Valladolid)', codes: {}, lang: 'es' }, gate), ['2512'], 'a Spanish computing engineer is a software developer');
@@ -99,10 +116,10 @@ eq(familiesOf({ title: 'Stavební inženýr', codes: {}, lang: 'cs' }, gate), ['
 eq(familiesOf({ title: 'KOMUNĀLINŽENIERIS', codes: {}, lang: 'lv' }, gate), ['2149'], 'a Latvian compound with the engineer word inside falls into 2149');
 eq(familiesOf({ title: 'Bauingenieur (m/w/d)', codes: {}, lang: 'de' }, gate).length > 0, true, 'so does a German one');
 eq(familiesOf({ title: 'JEFE/A DE OBRA', codes: {}, lang: 'es' }, gate), ['3123'], 'a Spanish site manager is a construction supervisor');
-eq(hygieneReason({ title: 'PĀRDEVĒJS' }), 'title names a sales, recruiting, trainee, labourer or gig role', 'a Latvian shop assistant is hygiene');
-eq(hygieneReason({ title: 'Sales Engineer' }), 'title names a sales, recruiting, trainee, labourer or gig role', 'a sales engineer is hygiene');
-eq(hygieneReason({ title: 'VENDEDOR/A, INTERIORISTA, DISEÑADOR/A' }), 'title names a sales, recruiting, trainee, labourer or gig role', 'so is a Spanish shop assistant, whatever else the title says');
-eq(hygieneReason({ title: 'PEONES DE LA INDUSTRIA METALÚRGICA' }), 'title names a sales, recruiting, trainee, labourer or gig role', 'and a labourer');
+eq(hygieneReason({ title: 'PĀRDEVĒJS' }), 'title names a sales, recruiting, trainee, labourer, retail, operative or gig role', 'a Latvian shop assistant is hygiene');
+eq(hygieneReason({ title: 'Sales Engineer' }), 'title names a sales, recruiting, trainee, labourer, retail, operative or gig role', 'a sales engineer is hygiene');
+eq(hygieneReason({ title: 'VENDEDOR/A, INTERIORISTA, DISEÑADOR/A' }), 'title names a sales, recruiting, trainee, labourer, retail, operative or gig role', 'so is a Spanish shop assistant, whatever else the title says');
+eq(hygieneReason({ title: 'PEONES DE LA INDUSTRIA METALÚRGICA' }), 'title names a sales, recruiting, trainee, labourer, retail, operative or gig role', 'and a labourer');
 eq(hygieneReason({ title: 'Ingeniero/a de procesos' }), null, 'an engineer is not');
 ok(hygieneReason({ title: 'AI Trainer – Aerospace Engineers - CAD Expertise (Remote Advisory - US)' }), 'a gig-platform task is hygiene, whatever engineer it asks for');
 
@@ -350,5 +367,15 @@ eq(ATS.workday.request('aviva.wd1/External', 40).method, 'POST', 'the Workday li
   eq(jobs.length, 1, 'a <job> without a web address is left out');
   eq([jobs[0].source, jobs[0].sourceId, jobs[0].title, jobs[0].company, jobs[0].location, jobs[0].country, jobs[0].city, jobs[0].url, jobs[0].description, jobs[0].posted], ['talentcom', 'ab12', 'Site Engineer', 'Van Oord', 'Rotterdam, Zuid-Holland, NL', 'nl', 'Rotterdam', 'https://www.talent.com/view?id=ab12', 'Dredging & reclamation works.', '2026-09-05'], 'a partner feed advert: the usual <job> fields, CDATA and entities undone');
 }
+
+// Workday boards: the brand the address carries, spelt out by the legal name of a vacancy.
+eq(brandName('Experienced', 'ADUS-Adobe Inc.', 'adobe.wd5/external_experienced'), 'Adobe', 'a careers-site word is mended with the brand the address names');
+eq(brandName('Bakerhughes', 'Baker Hughes Energy Technology', 'bakerhughes.wd5/x'), 'Baker Hughes', 'a glued address is spelt out');
+eq(brandName('BAH', '631 Booz Allen Hamilton_United State', 'bah.wd1/x'), 'Booz Allen Hamilton', 'initials are spelt out');
+eq(brandName('Uq', 'The University of Queensland', 'uq.wd3/x'), 'University of Queensland', 'with the small words between them');
+eq(brandName('Gsknch', '12340 Haleon Brasil Ltda.', 'gsknch.wd3/GSKCareers'), 'Gsknch', 'a subsidiary somewhere else does not replace the brand');
+eq(brandName('CommBank', 'CBA Services', 'cba.wd3/CommBank_Careers'), 'CommBank', 'a name someone chose stays');
+eq(brandName('GERMANY', '7090 Gamer Lasertechnik', 'trumpf.wd3/germany'), 'Gamer Lasertechnik', 'a country is not an employer: the legal name takes its place');
+eq([brandName('Leidos', 'LEIDOS INC', 'leidos.wd5/x'), brandName('Kla', 'KLA Corporation', 'kla.wd1/x')], ['Leidos', 'KLA'], 'shouting comes down, acronyms stay');
 
 done();
