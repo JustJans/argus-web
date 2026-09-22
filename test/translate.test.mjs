@@ -65,6 +65,26 @@ const fake = async url => {
   eq(cache.size, 0, 'and nothing wrong is cached');
 }
 {
+  // ➤ Google shut its door on this machine: the spare picks up what it can.
+  calls = [];
+  const spare = { 'Vedoucí projektu': 'Project manager' };
+  const withSpare = async url => {
+    if (url.includes('mymemory')) {
+      const q = new URL(url).searchParams.get('q');
+      calls.push({ spare: q });
+      return { status: 200, ok: true, json: async () => ({ responseData: { translatedText: spare[q] || q } }) };
+    }
+    calls.push({ google: true });
+    return { status: 429, ok: false, json: async () => [] };
+  };
+  const cache = new Map();
+  const recs = [{ t: 'Vedoucí projektu', tl: 'cs', l: 'Praha, Czechia' }, { t: 'Neznámý titul', tl: 'cs', l: 'Brno, Czechia' }];
+  const r = await translateTitles(recs, { cache, fetchImpl: withSpare, gapMs: 0 });
+  eq(recs[0].te, 'Project manager', 'with the first translator shut, the spare answers');
+  ok(!('te' in recs[1]), 'a title the spare returns unchanged stays as it is');
+  eq([r.limited, r.spare], [true, 2], 'the build says the first was shut and how many the spare took');
+}
+{
   calls = [];
   const cache = new Map();
   const recs = Array.from({ length: 120 }, (_, i) => ({ t: `Titulo ${i}`, tl: 'es', l: 'Spain' }));
