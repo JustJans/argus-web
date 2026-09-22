@@ -4,17 +4,19 @@
 // ➤ free words travel as short UTF-8 strings. A checksum rejects a mistyped code. Pure:
 // ➤ the same file runs in the browser and under Node's tests.
 
-// ➤ Version 2 (2026-09-05): families became ISCO-08 unit groups, more than 32 of them, so
-// ➤ their field grew to 8 bytes; a version-1 code named families that no longer exist and is
-// ➤ refused with a message that says to make a new one.
-export const VERSION = 2;
+// ➤ Version 3 (2026-09-22): specialties inside the families (ESCO's occupations), cities inside
+// ➤ the countries, and more posted windows. A version-2 code reads as it always did; a version-1
+// ➤ code named families that no longer exist and is refused with a message to make a new one.
+export const VERSION = 3;
 const FAMILY_BYTES = 8, LANGUAGE_BYTES = 2, DEGREE_BYTES = 4;
 export const MAX_YEARS_STEPS = [null, 1, 2, 3, 5, 7, 10, 15];   // ➤ 3 bits
 export const LEVELS = ['any', 'junior', 'mid', 'senior'];         // ➤ 2 bits
 export const HIGHEST = ['none', 'bachelor', 'master', 'phd'];     // ➤ 2 bits
-export const POSTED_STEPS = [0, 7, 30];                           // ➤ 2 bits of the flags: posted within n days, 0 = any time
+export const POSTED_STEPS = [0, 1, 3, 7, 30, 90];                 // ➤ 3 bits of the flags: posted within n days, 0 = any time
+const POSTED_V2 = [0, 7, 30];
 const MAX_FREE = 8;
 const MAX_TERM_BYTES = 24;
+const MAX_CITY_BYTES = 40;
 
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
 export function toBase64url(bytes) {
@@ -56,7 +58,7 @@ class Writer {
   // ➤ A set of catalogue choices as a bitfield of n bytes: position p of the catalogue is
   // ➤ bit (p mod 8) of byte (p div 8). Positions beyond the field are left out.
   bits(ids, catalogue, n) { const b = new Array(n).fill(0); for (const id of ids || []) { const p = catalogue.indexOf(id); if (p >= 0 && p < n * 8) b[p >> 3] |= 1 << (p & 7); } for (const x of b) this.byte(x); }
-  string(s) { let b = enc.encode(String(s).trim()); if (b.length > MAX_TERM_BYTES) b = b.slice(0, MAX_TERM_BYTES); this.varint(b.length); for (const x of b) this.byte(x); }
+  string(s, max = MAX_TERM_BYTES) { let b = enc.encode(String(s).trim()); if (b.length > max) b = b.slice(0, max); this.varint(b.length); for (const x of b) this.byte(x); }
 }
 class Reader {
   constructor(bytes) { this.b = bytes; this.i = 0; }
@@ -64,20 +66,29 @@ class Reader {
   varint() { let v = 0, shift = 0, b; do { b = this.byte(); v |= (b & 127) << shift; shift += 7; if (shift > 28) throw new Error('bad number'); } while (b & 128); return v >>> 0; }
   // ➤ The ids whose bit is set; a bit for a position the catalogue does not have yet is ignored.
   bits(catalogue, n) { const b = []; for (let i = 0; i < n; i++) b.push(this.byte()); return catalogue.filter((_, p) => p < n * 8 && (b[p >> 3] & (1 << (p & 7)))); }
-  string() { const n = this.varint(); if (n > MAX_TERM_BYTES) throw new Error('bad word'); const s = this.b.slice(this.i, this.i + n); if (s.length < n) throw new Error('code too short'); this.i += n; return dec.decode(s); }
+  string(max = MAX_TERM_BYTES) { const n = this.varint(); if (n > max) throw new Error('bad word'); const s = this.b.slice(this.i, this.i + n); if (s.length < n) throw new Error('code too short'); this.i += n; return dec.decode(s); }
 }
 
 const cleanTerms = list => [...new Set((list || []).map(s => String(s).trim()).filter(Boolean))].slice(0, MAX_FREE);
 
 // ➤ A complete, tidy profile from whatever object came in. Sets (families, languages,
-// ➤ degrees, vetoes) are sorted: their order carries no meaning and a code decodes them
-// ➤ in catalogue order anyway. Countries keep their order: it is the priority.
+// ➤ degrees, vetoes, specialties, cities) are sorted: their order carries no meaning and a code
+// ➤ decodes them in catalogue order anyway. Countries keep their order: it is the priority.
+// ➤ A specialty is an ESCO occupation, whose code starts with its family's ("2144.1.14" is a
+// ➤ naval architect, a mechanical engineer, 2144); a city is "es:Barcelona". Each brings its
+// ➤ family or country along.
 const sorted = list => [...new Set(list || [])].sort();
+export const familyOfSpecialty = code => String(code).slice(0, 4);
+export const countryOfCity = city => String(city).split(':')[0];
 export function normaliseProfile(p = {}) {
+  const specialties = sorted(p.specialties);
+  const cities = sorted((p.cities || []).filter(c => /^[a-z]{2}:./.test(c)));
   return {
     v: VERSION,
-    families: sorted(p.families),
-    countries: [...new Set(p.countries || [])],
+    families: sorted([...(p.families || []), ...specialties.map(familyOfSpecialty)]),
+    specialties,
+    countries: [...new Set([...(p.countries || []), ...cities.map(countryOfCity)])],
+    cities,
     languages: sorted(p.languages),
     degrees: sorted(p.degrees),
     level: LEVELS.includes(p.level) ? p.level : 'any',
@@ -111,6 +122,10 @@ export function encodeProfile(profile, cats) {
   const vetoes = p.vetoes.map(v => cats.vetoes.indexOf(v)).filter(i => i >= 0);
   w.varint(vetoes.length); for (const i of vetoes) w.varint(i);
   w.varint(p.noWords.length); for (const r of p.noWords) w.string(r);
+  const specialties = p.specialties.map(c => (cats.occupations || []).indexOf(c)).filter(i => i >= 0);
+  w.varint(specialties.length); for (const i of specialties) w.varint(i);
+  const cities = p.cities.map(c => [cats.countries.indexOf(countryOfCity(c)), c.slice(3)]).filter(([i]) => i >= 0);
+  w.varint(cities.length); for (const [i, name] of cities) { w.varint(i); w.string(name, MAX_CITY_BYTES); }
   const crc = crc16(w.bytes);
   w.byte(crc >> 8); w.byte(crc);
   return toBase64url(Uint8Array.from(w.bytes));
@@ -124,7 +139,8 @@ export function decodeProfile(code, cats) {
   if (crc16(body) !== given) throw new Error('code does not check out (a character is wrong or missing)');
   const r = new Reader(body);
   const version = r.byte();
-  if (version !== VERSION) throw new Error(version < VERSION ? 'this code is from an earlier version of the page; make a new one' : `this code is from a newer version of the page (${version}) than this one reads (${VERSION})`);
+  if (version < 2) throw new Error('this code is from an earlier version of the page; make a new one');
+  if (version > VERSION) throw new Error(`this code is from a newer version of the page (${version}) than this one reads (${VERSION})`);
   const flags = r.byte();
   const families = r.bits(cats.families, FAMILY_BYTES);
   const packed = r.byte();
@@ -137,7 +153,14 @@ export function decodeProfile(code, cats) {
   const nr = r.varint(); const roles = []; for (let i = 0; i < nr; i++) roles.push(r.string());
   const nv = r.varint(); const vetoes = []; for (let i = 0; i < nv; i++) { const idx = r.varint(); if (cats.vetoes[idx]) vetoes.push(cats.vetoes[idx]); }
   const nn = r.varint(); const noWords = []; for (let i = 0; i < nn; i++) noWords.push(r.string());
-  return normaliseProfile({ families, countries, languages, degrees, level, maxYears, highest, remote: !!(flags & 1), posted: POSTED_STEPS[(flags >> 1) & 3] || 0, roles, vetoes, noWords });
+  // ➤ Version 2 ends here, with two bits of posted window.
+  const specialties = [], cities = [];
+  if (version >= 3) {
+    const ns = r.varint(); for (let i = 0; i < ns; i++) { const idx = r.varint(); if (cats.occupations?.[idx]) specialties.push(cats.occupations[idx]); }
+    const nt = r.varint(); for (let i = 0; i < nt; i++) { const idx = r.varint(); const name = r.string(MAX_CITY_BYTES); if (cats.countries[idx] && name) cities.push(`${cats.countries[idx]}:${name}`); }
+  }
+  const posted = version === 2 ? POSTED_V2[(flags >> 1) & 3] : POSTED_STEPS[(flags >> 1) & 7];
+  return normaliseProfile({ families, specialties, countries, cities, languages, degrees, level, maxYears, highest, remote: !!(flags & 1), posted: posted || 0, roles, vetoes, noWords });
 }
 
 // ➤ The catalogue id lists in order, from the loaded catalogue files.
@@ -148,5 +171,6 @@ export function catalogueIds(catalogues) {
     languages: catalogues.languages.languages.map(l => l.code),
     degrees: catalogues.degrees.degrees.map(d => d.id),
     vetoes: catalogues.vetoes.vetoes.map(v => v.id),
+    occupations: (catalogues.occupations?.occupations || []).map(o => o.code),
   };
 }

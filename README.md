@@ -13,9 +13,9 @@ and language rules, run client-side.
 ## Status
 
 **Working across Europe**, strongest in Germany, the United Kingdom, Sweden and France. Live at <https://justjans.github.io/argus-web/>: search the
-pile by words and filters — country, occupations by ISCO group, date, level, languages,
-degrees, title words, deal-breakers — let your CV tick them, and carry them as a short code. Every advert past
-its deadline is hidden; the page says when the pile was last rebuilt. A home server rebuilds
+pile by words and filters — country and city, occupations by ISCO group and their ESCO
+specialties, date, level, languages, degrees, title words, deal-breakers — let your CV tick
+them, and carry them as a short code. Every advert past its deadline is hidden; the page says when the pile was last rebuilt. A home server rebuilds
 and publishes the pile every three hours with `ops/server-refresh.sh`, from what the crawler
 (`builder/crawl.mjs`, every hour) has read into the store: every source is visited on its own
 cadence, a feed or a company board every six hours and an employer's careers site once a day

@@ -118,6 +118,9 @@ details[open] > summary > .chev { transform: rotate(90deg); }
 #families-pick .filter-group > summary { font-size: 13px; font-weight: 500; padding: 3px 0; color: var(--n800); }
 #families-pick .chev { width: 12px; height: 12px; }
 #families-pick .checks { padding: 4px 0 6px 20px; }
+/* A ticked country's cities and a ticked family's specialties, under it */
+.checks.sub, #families-pick .checks.sub { padding: 0 0 6px 23px; }
+.checks.sub .check-row { font-size: 13px; color: var(--n800); }
 .filters-toggle { display: none; }
 
 /* The search plate */

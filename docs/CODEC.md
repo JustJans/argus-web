@@ -1,13 +1,13 @@
 # The profile code
 
-Version 2. Implemented in `app/lib/codec.js`, tested in `test/codec.test.mjs`.
+Version 3. Implemented in `app/lib/codec.js`, tested in `test/codec.test.mjs`.
 
 The code is base64url (`A-Z a-z 0-9 - _`, no padding) of these bytes:
 
 | Bytes | Content |
 |---|---|
-| 1 | version, `0x02` |
-| 1 | flags: bit 0 = remote work is fine; bits 1-2 = posted within (0 any time, 1 = 7 days, 2 = 30 days) |
+| 1 | version, `0x03` |
+| 1 | flags: bit 0 = remote work is fine; bits 1-3 = posted within (0 any time, 1 = a day, 2 = 3 days, 3 = 7 days, 4 = 30 days, 5 = 90 days) |
 | 8 | families (ISCO-08 unit groups), one bit per position in `catalogues/families.json` |
 | 1 | level (2 bits: any, junior, mid, senior) · years cap index (3 bits: none, 1, 2, 3, 5, 7, 10, 15) · highest degree (2 bits: none, bachelor, master, phd) |
 | 2 | languages, one bit per position in `catalogues/languages.json` |
@@ -16,12 +16,14 @@ The code is base64url (`A-Z a-z 0-9 - _`, no padding) of these bytes:
 | varint n, then n strings | role words (each: varint length + UTF-8, at most 24 bytes; at most 8) |
 | varint n, then n varints | deal-breaker chips as positions in `catalogues/vetoes.json` |
 | varint n, then n strings | deal-breaker words, as the role words |
+| varint n, then n varints | specialties: ESCO occupations as positions in `catalogues/occupations.json` (each brings its family, the first four digits of its code) |
+| varint n, then n × (varint, string) | cities: the country's position in `catalogues/countries.json` and the city's name (UTF-8, at most 40 bytes; each brings its country) |
 | 2 | CRC-16/CCITT-FALSE of everything before, big-endian |
 
 Bitfields: position p of the catalogue is bit (p mod 8) of byte (p div 8); a position past the
 field is left out of the code.
 
-Sizes: an empty profile is 31 characters; a typical one 55 to 95; everything at once stays
+Sizes: an empty profile is 34 characters; a typical one 55 to 130; everything at once stays
 under 450.
 
 Rules that keep old codes meaningful: catalogues are append-only and never reordered; an
@@ -30,6 +32,11 @@ does not have yet is ignored. A change of layout is a new version byte.
 
 ## History
 
+- **Version 3 (2026-09-22).** Specialties inside the families (ESCO's occupations, so a visitor
+  can keep only naval architects among the mechanical engineers), cities inside the countries,
+  and posted windows of a day, three days and ninety days (the field grew to three bits). A
+  version-2 code is read as before: its posted field is two bits of 0, 7 and 30 days, and it
+  has no specialties or cities.
 - **Version 2 (2026-09-05).** Families became the ISCO-08 unit groups of the vertical (37 of
   them, grouped as engineers, architects/planners/surveyors, technicians, supervisors, plant
   operators, ship and aircraft crews), so the family field grew from 4 to 8 bytes. A

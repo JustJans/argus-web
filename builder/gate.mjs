@@ -44,31 +44,33 @@ const ICT_WORDS = /(?:^|[^a-z0-9])(?:informatic[oa]s?|informatica|it|ict|tic|sof
 
 // ➤ Where a computing title goes when ESCO names nothing more precise, by the words it carries,
 // ➤ first match wins; only then the catch-all (2519, which ISCO keeps for data, AI and testing).
+// ➤ The third field is ESCO's occupation for every title the route takes, where there is one.
 const ICT_ROUTES = [
   [/(?:^|[^a-z])(?:security|securite|seguridad|sicherheit|cyber|iam|soc|pentest|penetration|siem|infosec)(?![a-z])/, '2529'],
   [/(?:^|[^a-z])(?:sap|s 4hana|s4hana|hana|erp|dynamics|d365|salesforce|crm|servicenow|workday consultant|oracle ebs)(?![a-z])/, '2511'],
   [/(?:^|[^a-z])(?:database|databases|dba|datenbank|base de datos|bases de datos|sql server|postgres|oracle dba)(?![a-z])/, '2521'],
-  [/(?:^|[^a-z])(?:network engineer|network administrator|netzwerk|netzwerkadministrator|redes|reseau|reseaux|cisco|ccnp|ccna)(?![a-z])/, '2523'],
-  [/(?:^|[^a-z])(?:it support|helpdesk|help desk|service desk|desktop support|support technician|1st level|2nd level|first line|second line|soporte)(?![a-z])/, '3512'],
+  [/(?:^|[^a-z])(?:network engineer|network administrator|netzwerk|netzwerkadministrator|redes|reseau|reseaux|cisco|ccnp|ccna)(?![a-z])/, '2523', '2523.3'],
+  [/(?:^|[^a-z])(?:it support|helpdesk|help desk|service desk|desktop support|support technician|1st level|2nd level|first line|second line|soporte)(?![a-z])/, '3512', '3512.1'],
   [/(?:^|[^a-z])(?:devops|devsecops|sre|site reliability|cloud|platform engineer|kubernetes|sysadmin|system administrator|systemadministrator|systemadministratorin|linux administrator|sap basis|administrador de sistemas|administrateur systeme)(?![a-z])/, '2522'],
-  [/(?:^|[^a-z])(?:web developer|webentwickler|webentwicklerin|desarrollador web|developpeur web|frontend|front end|ui developer|wordpress|shopify)(?![a-z])/, '2513'],
-  [/(?:^|[^a-z])(?:android|ios|mobile developer|mobile engineer|app developer|flutter|react native|swift|kotlin)(?![a-z])/, '2514'],
+  [/(?:^|[^a-z])(?:web developer|webentwickler|webentwicklerin|desarrollador web|developpeur web|frontend|front end|ui developer|wordpress|shopify)(?![a-z])/, '2513', '2513.5'],
+  [/(?:^|[^a-z])(?:android|ios|mobile developer|mobile engineer|app developer|flutter|react native|swift|kotlin)(?![a-z])/, '2514', '2514.2.2'],
   [/(?:^|[^a-z])(?:data|daten|datos|dades|analytics|analytic|machine learning|ml|ai|artificial intelligence|business intelligence|bi|power bi|tableau|llm|nlp|computer vision|qa|test automation|tester)(?![a-z])/, '2519'],
   [/(?:^|[^a-z])(?:consultant|consultante|berater|beraterin|consultor|consultora|business analyst|systems analyst|functional|architect|architekt|architektin|arquitecto|arquitecta)(?![a-z])/, '2511'],
-  [/(?:^|[^a-z])(?:developer|desarrollador|desarrolladora|developpeur|developpeuse|entwickler|entwicklerin|ontwikkelaar|utvecklare|udvikler|utvikler|programmer|programador|programadora|programmeur|software|java|dotnet|net developer|c\+\+|python|golang|rust|scala|ruby|php|node|typescript|javascript|full stack|fullstack|backend|back end|forward deployed|embedded)(?![a-z])/, '2512'],
+  [/(?:^|[^a-z])(?:developer|desarrollador|desarrolladora|developpeur|developpeuse|entwickler|entwicklerin|ontwikkelaar|utvecklare|udvikler|utvikler|programmer|programador|programadora|programmeur|software|java|dotnet|net developer|c\+\+|python|golang|rust|scala|ruby|php|node|typescript|javascript|full stack|fullstack|backend|back end|forward deployed|embedded)(?![a-z])/, '2512', '2512.3'],
 ];
 // ➤ Where a title that names only "engineer" goes when it also names a discipline, in the
-// ➤ languages of the sources; else ISCO's engineers not elsewhere classified (2149).
+// ➤ languages of the sources; else ISCO's engineers not elsewhere classified (2149). The third
+// ➤ field is the discipline's own occupation in ESCO ("mechanical engineer").
 const ENGINEER_ROUTES = [
-  [/(?:^|[^a-z])(?:electronic|electronics|electronico|electronica|electronique|elektronik|elektronisch|elettronic[oa]|eletronic[oa]|analog|mixed signal|asic|fpga|pcb|hardware|rf|radio frequency|semiconductor|chip|vlsi|firmware|embedded)(?![a-z])/, '2152'],
-  [/(?:^|[^a-z])(?:telecom|telecoms|telecommunications|telecomunicaciones|telecommunication|telekommunikation|5g|lte|radio network)(?![a-z])/, '2153'],
-  [/(?:^|[^a-z])(?:electrical|electric|electrico|electrica|electrique|elektrotechnik|elektrotechniek|elektrotechnisch|elektro|elettric[oa]|eletric[oa]|power systems|high voltage|substation)(?![a-z])/, '2151'],
-  [/(?:^|[^a-z])(?:mechanical|mecanico|mecanica|mecanique|maschinenbau|werktuigbouwkunde|werktuigbouwkundig|werktuigbouwkundige|maskiningenjor|meccanic[oa]|mecanic[oa]|hvac|piping|thermal)(?![a-z])/, '2144'],
-  [/(?:^|[^a-z])(?:civil|structural|structures|estructuras|estructural|bridges|bridge|puentes|brucken|tiefbau|hochbau|geotechnical|geotecnico|highway|highways|carreteras|railway|railways|ferroviario|hidraulic[oa]|hydraulic)(?![a-z])/, '2142'],
-  [/(?:^|[^a-z])(?:chemical|quimico|quimica|chimique|chimiste|chemie|chemisch|kemi|chimic[oa])(?![a-z])/, '2145'],
-  [/(?:^|[^a-z])(?:environmental|medioambiental|medioambiente|ambiental|environnement|umwelt|milieu|sustainability)(?![a-z])/, '2143'],
+  [/(?:^|[^a-z])(?:electronic|electronics|electronico|electronica|electronique|elektronik|elektronisch|elettronic[oa]|eletronic[oa]|analog|mixed signal|asic|fpga|pcb|hardware|rf|radio frequency|semiconductor|chip|vlsi|firmware|embedded)(?![a-z])/, '2152', '2152.1'],
+  [/(?:^|[^a-z])(?:telecom|telecoms|telecommunications|telecomunicaciones|telecommunication|telekommunikation|5g|lte|radio network)(?![a-z])/, '2153', '2153.1'],
+  [/(?:^|[^a-z])(?:electrical|electric|electrico|electrica|electrique|elektrotechnik|elektrotechniek|elektrotechnisch|elektro|elettric[oa]|eletric[oa]|power systems|high voltage|substation)(?![a-z])/, '2151', '2151.1'],
+  [/(?:^|[^a-z])(?:mechanical|mecanico|mecanica|mecanique|maschinenbau|werktuigbouwkunde|werktuigbouwkundig|werktuigbouwkundige|maskiningenjor|meccanic[oa]|mecanic[oa]|hvac|piping|thermal)(?![a-z])/, '2144', '2144.1'],
+  [/(?:^|[^a-z])(?:civil|structural|structures|estructuras|estructural|bridges|bridge|puentes|brucken|tiefbau|hochbau|geotechnical|geotecnico|highway|highways|carreteras|railway|railways|ferroviario|hidraulic[oa]|hydraulic)(?![a-z])/, '2142', '2142.1'],
+  [/(?:^|[^a-z])(?:chemical|quimico|quimica|chimique|chimiste|chemie|chemisch|kemi|chimic[oa])(?![a-z])/, '2145', '2145.1'],
+  [/(?:^|[^a-z])(?:environmental|medioambiental|medioambiente|ambiental|environnement|umwelt|milieu|sustainability)(?![a-z])/, '2143', '2143.1'],
   [/(?:^|[^a-z])(?:mining|mineria|minas|metallurgy|metallurgical|metalurgia|metalurgico|bergbau)(?![a-z])/, '2146'],
-  [/(?:^|[^a-z])(?:industrial|production|manufacturing|fabricacion|produccion|fertigung|produktion|productie|lean)(?![a-z])/, '2141'],
+  [/(?:^|[^a-z])(?:industrial|production|manufacturing|fabricacion|produccion|fertigung|produktion|productie|lean)(?![a-z])/, '2141', '2141.3'],
 ];
 const known = new WeakMap();
 const route = (routes, title, gate) => {
@@ -126,20 +128,29 @@ export function compileFamilies(catalogue, codes = {}) {
   const blockers = {};
   for (const b of Object.values(codes.isco?.blockers || {})) for (const [lang, labels] of Object.entries(b.labels || {})) (blockers[lang] ||= []).push(...labels);
   for (const lang of Object.keys(blockers)) blockers[lang] = T.alternation(blockers[lang]);
-  return { families, byIsco, bySsyk, titles, blockers, generic: T.alternation(ENGINEER_WORDS), genericFamily: byIsco.get(GENERIC_FAMILY) || null, ictFamily: byIsco.get(ICT_FAMILY) || null };
+  // ➤ Which ESCO occupation each title names, per family and language: a title's match says
+  // ➤ which occupation it is, not only which family.
+  const occupations = {};
+  for (const f of families) for (const c of f.isco || []) for (const o of codes.isco?.units?.[c]?.occupations || []) {
+    for (const [lang, list] of Object.entries(o.labels || {})) {
+      const m = ((occupations[f.id] ||= {})[lang] ||= new Map());
+      for (const l of list.filter(usableTitle)) { const k = T.clean(l); m.set(k, [...new Set([...(m.get(k) || []), o.code])]); }
+    }
+  }
+  return { families, byIsco, bySsyk, titles, blockers, occupations, generic: T.alternation(ENGINEER_WORDS), genericFamily: byIsco.get(GENERIC_FAMILY) || null, ictFamily: byIsco.get(ICT_FAMILY) || null };
 }
 
 // ➤ What a cleaned title names, by ESCO's titles: the families that stand by the rule, and
 // ➤ whether an outside occupation matched with nothing of ours over it.
 function titleFamilies(title, langs, gate) {
   const hits = [];
-  for (const fam of gate.titles) for (const lang of langs) for (const text of T.matches(fam.res[lang], title)) hits.push({ id: fam.id, text, named: fam.preferred.has(text) });
+  for (const fam of gate.titles) for (const lang of langs) for (const text of T.matches(fam.res[lang], title)) hits.push({ id: fam.id, text, named: fam.preferred.has(text), lang });
   const blocks = [];
   for (const lang of langs) for (const text of T.matches(gate.blockers[lang], title)) blocks.push(text);
   const kept = T.winners(hits, blocks);
   const all = [...hits.map(h => h.text), ...blocks];
   const blocked = !kept.length && blocks.some(b => !all.some(o => T.inside(b, o)));
-  return { families: [...new Set(kept.map(h => h.id))], blocked, texts: [...new Set(kept.map(h => h.text))] };
+  return { families: [...new Set(kept.map(h => h.id))], blocked, texts: [...new Set(kept.map(h => h.text))], hits };
 }
 
 // ➤ The families of one advert. [] means outside the vertical.
@@ -167,6 +178,23 @@ export function familiesOf(raw, gate) {
   if (ICT_WORDS.test(title)) { const to = route(ICT_ROUTES, title, gate) || gate.ictFamily; return to ? [to] : []; }
   if (!gate.genericFamily) return [];
   return T.matches(gate.generic, title).length || COMPOUND_ENGINEER.test(title) ? [route(ENGINEER_ROUTES, title, gate) || gate.genericFamily] : [];
+}
+
+// ➤ The ESCO occupations an advert's title names inside the families it was given: the
+// ➤ specialties a visitor can narrow a family to ("naval architect" inside mechanical
+// ➤ engineers). Among the titles found in those families the longest stands, as in the gate;
+// ➤ a title filed by the discipline it names ("Mechanical Design Engineer") is that
+// ➤ discipline's own occupation. [] when the title names none.
+export function occupationsOf(raw, families, gate) {
+  if (!families?.length) return [];
+  const fams = new Set(families);
+  const title = matchableTitle(raw.title);
+  const langs = raw.lang ? languagesFor(raw.lang) : [...new Set([...(raw.hintLangs || []), 'en'])];
+  const hits = titleFamilies(title, langs, gate).hits.filter(h => fams.has(h.id));
+  const found = [...new Set(T.winners(hits).flatMap(h => gate.occupations?.[h.id]?.[h.lang]?.get(h.text) || []))];
+  if (found.length) return found.sort();
+  for (const [re, id, head] of [...ENGINEER_ROUTES, ...ICT_ROUTES]) if (head && fams.has(id) && re.test(title)) return [head];
+  return [];
 }
 
 // ➤ Title terms that mean "not the job you think": a sales role that names a product, a

@@ -1,12 +1,12 @@
 // ➤ The one page. The filters on the left are the visitor's whole profile: country (in the
-// ➤ order ticked), occupations by group, posted date, level and years, languages, degrees,
+// ➤ order ticked) and its cities, occupations by group and their specialties, posted date, level and years, languages, degrees,
 // ➤ title words, deal-breakers; each a fold-out. The profile is packed into a short code that
 // ➤ appears as the filters change and can be copied or pasted; the code and the search words
 // ➤ live in the address after the #, so a list can be bookmarked and shared. A CV read on
 // ➤ the device ticks the occupations, degrees and languages it names. Everything downloads
 // ➤ only the parts of the pile it needs, judges them here, hides adverts past their deadline
 // ➤ and draws the list. Nothing about the visitor leaves the browser.
-import { encodeProfile, decodeProfile, normaliseProfile, isEmptyProfile, catalogueIds } from './lib/codec.js';
+import { encodeProfile, decodeProfile, normaliseProfile, isEmptyProfile, catalogueIds, familyOfSpecialty, countryOfCity } from './lib/codec.js';
 import { makeJudge, sortOffers } from './lib/gates.js';
 import { shardFiles, loadShards } from './lib/shards.js';
 import { renderList, renderEmpty, renderDebug } from './lib/render.js';
@@ -48,6 +48,7 @@ const countryName = cc => cc === 'xx' ? 'Remote' : cc === 'zz' || !cc ? 'Country
 const familyOf = id => cats.families.families.find(f => f.id === id);
 const groupLabel = id => cats.families.groups.find(g => g.id === id)?.label || id;
 const degreeName = id => cats.degrees.degrees.find(d => d.id === id)?.label || id;
+const specialtyName = code => cats.occupations.occupations.find(o => o.code === code)?.label || code;
 const languageName = code => cats.languages.languages.find(l => l.code === code)?.label || code;
 const n = x => Number(x || 0).toLocaleString('en');
 // ➤ "Engineers: Mechanical, Civil · Technicians: Mechanical": the group gives a label its meaning.
@@ -63,8 +64,12 @@ function profileFromForm() {
   const words = sel => $(sel).value.split(',').map(s => s.trim()).filter(Boolean).slice(0, 8);
   const ticked = new Set(checked('c'));
   const countries = [...countryOrder.filter(c => ticked.has(c)), ...[...ticked].filter(c => !countryOrder.includes(c))];
+  // ➤ A specialty or a city left ticked under a family or a country just unticked goes with it.
+  const families = checked('f');
+  const specialties = checked('e').filter(c => families.includes(familyOfSpecialty(c)));
+  const cities = checked('ci').filter(c => ticked.has(countryOfCity(c)));
   return normaliseProfile({
-    families: checked('f'), countries, remote: $('#remote').checked, posted: Number($('#filters-form input[name="d"]:checked')?.value) || 0,
+    families, specialties, countries, cities, remote: $('#remote').checked, posted: Number($('#filters-form input[name="d"]:checked')?.value) || 0,
     level: checked('level')[0] || 'any', maxYears: Number($('#max-years').value) || null, highest: $('#highest').value,
     languages: checked('lg'), degrees: checked('dg'), vetoes: checked('v'), roles: words('#roles'), noWords: words('#no-words'),
   });
@@ -92,6 +97,15 @@ function chevron() {
   return svg;
 }
 const remember = (fold, key) => fold.addEventListener('toggle', () => foldState.set(key, fold.open));
+// ➤ The choices inside a ticked country or family (its cities, its specialties), under it.
+function subRows(container, name, items) {
+  if (!items.length) return;
+  const box = document.createElement('div'); box.className = 'checks sub';
+  for (const [value, label] of items) row(box, { name, value, label });
+  container.append(box);
+}
+// ➤ The fullest first from the index's counts, then any the profile names that have none today.
+const withChosen = (counted, chosen) => [...Object.entries(counted || {}).sort((a, b) => b[1] - a[1]).map(([k]) => k), ...chosen.filter(k => !(counted || {})[k])];
 
 // ➤ Countries with adverts, the fullest first, plus any the profile names without adverts today (count 0).
 function drawCountries(profile) {
@@ -101,7 +115,12 @@ function drawCountries(profile) {
   for (const cc of profile.countries) if (!counts[cc]) rows.push([cc, 0]);
   const pick = $('#countries-pick');
   pick.replaceChildren();
-  for (const [cc] of rows) row(pick, { name: 'c', value: cc, label: countryName(cc) });
+  for (const [cc] of rows) {
+    row(pick, { name: 'c', value: cc, label: countryName(cc) });
+    if (!profile.countries.includes(cc)) continue;
+    const listed = Object.fromEntries((index.cities?.[cc] || []).map(([name, count]) => [`${cc}:${name}`, count]));
+    subRows(pick, 'ci', withChosen(listed, profile.cities.filter(c => countryOfCity(c) === cc)).map(c => [c, c.slice(3)]));
+  }
 }
 
 // ➤ Inside "Occupations", one fold-out per group (Engineers, Technicians, crews…) with the families
@@ -121,7 +140,11 @@ function drawFamilyCounts(profile) {
     const summary = document.createElement('summary'); summary.append(chevron(), document.createTextNode(g.label));
     const checks = document.createElement('div'); checks.className = 'checks';
     fold.append(summary, checks);
-    for (const [f] of rows) row(checks, { name: 'f', value: f.id, label: f.label });
+    for (const [f] of rows) {
+      row(checks, { name: 'f', value: f.id, label: f.label });
+      if (!profile.families.includes(f.id)) continue;
+      subRows(checks, 'e', withChosen(index.families?.[f.id]?.occupations, profile.specialties.filter(c => familyOfSpecialty(c) === f.id)).map(c => [c, specialtyName(c)]));
+    }
     pick.append(fold);
   }
 }
@@ -142,9 +165,11 @@ function fillFilters(p) {
   countryOrder.length = 0; countryOrder.push(...p.countries);
   drawCountries(p);
   drawFamilyCounts(p);
-  for (const i of $$('#countries-pick input')) i.checked = p.countries.includes(i.value);
+  for (const i of $$('#countries-pick input[name="c"]')) i.checked = p.countries.includes(i.value);
+  for (const i of $$('#countries-pick input[name="ci"]')) i.checked = p.cities.includes(i.value);
   $('#remote').checked = p.remote;
-  for (const i of $$('#families-pick input')) i.checked = p.families.includes(i.value);
+  for (const i of $$('#families-pick input[name="f"]')) i.checked = p.families.includes(i.value);
+  for (const i of $$('#families-pick input[name="e"]')) i.checked = p.specialties.includes(i.value);
   for (const i of $$('#filters-form input[name="d"]')) i.checked = (Number(i.value) || 0) === p.posted;
   for (const i of $$('#levels-pick input')) i.checked = i.value === p.level;
   $('#max-years').value = p.maxYears ? String(p.maxYears) : '';
@@ -345,7 +370,7 @@ function wireControls() {
 
 async function main() {
   try { index = await getJson('data/index.json'); } catch { text('#generated', 'The pile is not published yet. Come back in a few hours.'); text('#hero-count', '0'); return; }
-  const names = ['families', 'countries', 'languages', 'degrees', 'seniority', 'vetoes'];
+  const names = ['families', 'occupations', 'countries', 'languages', 'degrees', 'seniority', 'vetoes'];
   const all = await Promise.all(names.map(name => getJson(`catalogues/${name}.json`)));
   cats = Object.fromEntries(names.map((name, i) => [name, all[i]]));
   ids = catalogueIds(cats);

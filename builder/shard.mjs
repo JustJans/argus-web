@@ -3,6 +3,7 @@
 // ➤ and under which licence. A shard past 4 MB is split into numbered parts.
 import { mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
+import { fold } from 'argus/server-bot/text.mjs';
 
 const MAX_BYTES = 4 * 1024 * 1024;
 const LATEST = 6000;        // ➤ the newest offers a visitor sees before naming anything
@@ -25,6 +26,36 @@ export function latestOf(records, { max = LATEST, days = LATEST_DAYS, now = Date
   return { offers: out, since };
 }
 
+// ➤ How many adverts name each occupation, per family: the specialties the filters list inside
+// ➤ a family, the fullest first. An occupation's code starts with its family's ("2144.1.14").
+export function occupationCounts(records) {
+  const out = {};
+  for (const rec of records) for (const code of rec.e || []) { const fam = code.slice(0, 4); if (!rec.f.includes(fam)) continue; const m = (out[fam] ||= {}); m[code] = (m[code] || 0) + 1; }
+  return out;
+}
+
+// ➤ The cities each country's adverts name most, for the filters: [name, count] pairs, the
+// ➤ fullest first, at most `top` a country and none with fewer than `least` adverts. A city
+// ➤ is counted by its folded name ("Malmo", "Malmö") and shown as most of its adverts spell it.
+export function cityCounts(records, { top = 25, least = 3 } = {}) {
+  const tally = new Map();
+  for (const rec of records) {
+    if (!rec.cc || rec.cc === 'xx' || !rec.ci) continue;
+    const cities = tally.get(rec.cc) || tally.set(rec.cc, new Map()).get(rec.cc);
+    const key = fold(rec.ci);
+    const city = cities.get(key) || cities.set(key, { n: 0, spellings: new Map() }).get(key);
+    city.n++;
+    city.spellings.set(rec.ci, (city.spellings.get(rec.ci) || 0) + 1);
+  }
+  const out = {};
+  for (const [cc, cities] of tally) {
+    const rows = [...cities.values()].filter(c => c.n >= least).sort((a, b) => b.n - a.n).slice(0, top)
+      .map(c => [[...c.spellings].sort((a, b) => b[1] - a[1])[0][0], c.n]);
+    if (rows.length) out[cc] = rows;
+  }
+  return out;
+}
+
 // ➤ records → { files: {name: content}, families: index block }. The same offers give the same
 // ➤ bytes (no date inside a shard, a fixed order), so a publish moves only what changed.
 export function buildShards(records, families) {
@@ -38,7 +69,8 @@ export function buildShards(records, families) {
   }
   const files = {};
   const index = {};
-  for (const f of families) index[f.id] = { label: f.label, group: f.group, countries: {} };
+  const occupations = occupationCounts(records);
+  for (const f of families) index[f.id] = { label: f.label, group: f.group, countries: {}, ...(occupations[f.id] ? { occupations: occupations[f.id] } : {}) };
   for (const [key, g] of groups) {
     g.offers.sort((a, b) => (b.d || '').localeCompare(a.d || '') || String(a.id).localeCompare(String(b.id)));
     const parts = [];

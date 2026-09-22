@@ -6,10 +6,10 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { harness } from 'argus/server-bot/test-harness.mjs';
-import { compileFamilies, familiesOf, hygieneReason, matchableTitle } from '../builder/gate.mjs';
+import { compileFamilies, familiesOf, occupationsOf, hygieneReason, matchableTitle } from '../builder/gate.mjs';
 import { compileCountries, placeOf, placeOfAdvert, normUrl, idFor, toRecord } from '../builder/normalise.mjs';
 import { dedupe, roleKey } from '../builder/dedupe.mjs';
-import { buildShards, latestOf } from '../builder/shard.mjs';
+import { buildShards, latestOf, occupationCounts, cityCounts } from '../builder/shard.mjs';
 import { shardFiles } from '../app/lib/shards.js';
 import { parseLanbide, isoDay } from '../builder/adapters/lanbide.mjs';
 import { parseFeinaActiva } from '../builder/adapters/feinaactiva.mjs';
@@ -28,6 +28,7 @@ import { parseRobots, allowed, parseSitemap, looksLikeJob, pathShape, jobLinks, 
 import { toRaw as careersRaw } from '../builder/adapters/careers.mjs';
 import { deadline } from '../builder/http.mjs';
 import { brandName } from '../builder/lib/names.mjs';
+import { bothGenders, spanishName, buildOccupations } from '../builder/tools/occupations.mjs';
 
 const { ok, eq, done } = harness('builder');
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -74,6 +75,29 @@ eq(familiesOf({ title: 'Technical Support Engineer - Digital Marketing', codes: 
 eq(familiesOf({ title: "Ingénieur d'affaires confirmé", codes: {}, hintLangs: ['fr'] }, gate), [], 'a French business engineer sells');
 eq([hygieneReason({ title: 'shift supervisor - Store# 08570' }) !== null, hygieneReason({ title: 'Werkstudent IT Servicemanagement' }) !== null, hygieneReason({ title: 'Quality Control Operator' }) !== null], [true, true, true], 'shop shifts, working students and operatives are hygiene');
 eq(hygieneReason({ title: 'SAP Retail Consultant' }), null, 'a SAP Retail consultant is not a shop job');
+
+// The specialties: which ESCO occupation a title names, inside the families it was given.
+const occ = (title, extra = {}) => { const raw = { title, codes: {}, ...extra }; return occupationsOf(raw, familiesOf(raw, gate), gate); };
+eq([occ('Naval Architect'), occ('Wind Energy Engineer'), occ('Software Tester'), occ('Data Scientist')], [['2144.1.14'], ['2149.7.6'], ['2519.6'], ['2511.3']], 'a title that is an occupation names it');
+eq(occ('Marine Engineer / Naval Architect'), ['2144.1.10', '2144.1.14'], 'a title with two occupations names both');
+eq([occ('Senior Mechanical Design Engineer'), occ('Java Developer'), occ('Bauingenieur (m/w/d)', { hintLangs: ['de'] })], [['2144.1'], ['2512.3'], ['2142.1']], "a title filed by the discipline it names is that discipline's own occupation");
+eq(occupationsOf({ title: 'Naval Architect', codes: {} }, ['2142'], gate), [], 'only occupations of the families the advert was given');
+eq(occ('Engineer'), [], 'a bare engineer names no occupation');
+eq(occupationCounts([{ f: ['2144'], e: ['2144.1.14'] }, { f: ['2144', '3151'], e: ['2144.1.14', '2144.1.10'] }, { f: ['2142'], e: ['2144.1.14'] }]), { 2144: { '2144.1.14': 2, '2144.1.10': 1 } }, 'the index counts the occupations per family, each under its own');
+eq(cityCounts([...Array(3)].map(() => ({ cc: 'se', ci: 'Malmö' })).concat([{ cc: 'se', ci: 'Malmo' }, { cc: 'se', ci: 'Lund' }, { cc: 'xx', ci: 'Anywhere' }, { cc: 'es', ci: '' }])), { se: [['Malmö', 4]] }, 'the cities a country names, one spelling each, the rare ones and remote left out');
+
+// The catalogue of specialties: ESCO's Spanish in both genders, and a file that only grows.
+eq([bothGenders(['ingeniero mecánico', 'ingeniera mecánica']), bothGenders(['desarrollador de software', 'desarrolladora de software']), bothGenders(['técnico', 'técnica']), bothGenders(['piloto', 'piloto'])], ['ingeniero/a mecánico/a', 'desarrollador/a de software', 'técnico/a', 'piloto'], 'the two genders in one, word by word');
+eq(bothGenders(['jefe de obra', 'jefa de obra']), 'jefe de obra', 'a pair that differs otherwise keeps the first');
+eq(spanishName('ingeniero especializado en energía eólica/ingeniera especializada en energía eólica'), 'ingeniero/a especializado/a en energía eólica', "ESCO's slash pair becomes one name");
+{
+  const fams = { families: [{ id: '2144', isco: ['2144'] }] };
+  const isco = v => ({ units: { 2144: { occupations: v.map(([code, en]) => ({ code, title: en, preferred: { en: [en] } })) } } });
+  const first = buildOccupations(fams, isco([['2144.1', 'mechanical engineer'], ['2144.1.14', 'naval architect']]));
+  const later = buildOccupations(fams, isco([['2144.1', 'mechanical engineer'], ['2144.1.2', 'agricultural engineer']]), first);
+  eq(later.map(o => o.code), ['2144.1', '2144.1.14', '2144.1.2'], 'what was published keeps its place and what is new goes last');
+  eq(later[1].retired, true, 'an occupation ESCO dropped stays, marked retired, so old codes keep their meaning');
+}
 eq(familiesOf({ title: 'Automatikos inžinierius', codes: { isco: '214911' }, lang: 'lt' }, gate), ['2149'], 'a six-digit Lithuanian LPK code, the same way');
 
 // ── The gate: titles, by ESCO's names ───────────────────────────────────

@@ -47,6 +47,15 @@ eq(judge({ ...base, lg: ['en'] }).ok, true, 'a language spoken is fine');
   eq(withDegree({ f: ['2144'], t: 'Ingeniero mecánico', cc: 'es', dg: ['mechanical'] }).stage, 'DEGREE', 'once the visitor lists degrees, the screen applies');
 }
 {
+  // ➤ Specialties narrow a family; cities narrow a country; the rest stays as it was.
+  const naval = makeJudge(normaliseProfile({ families: ['2144', '2142'], specialties: ['2144.1.14'] }), cats, engine);
+  eq([naval({ f: ['2144'], e: ['2144.1.14'], t: 'Naval Architect' }).ok, naval({ f: ['2144'], e: ['2144.1'], t: 'Mechanical Engineer' }).stage, naval({ f: ['2144'], t: 'Werktuigbouwkundige' }).stage], [true, 'FAMILY', 'FAMILY'], 'a mechanical engineer is out once only naval architects were chosen, and so is one that names no specialty');
+  eq(naval({ f: ['2142'], t: 'Site Engineer' }).ok, true, 'a family with no specialty chosen keeps all of its adverts');
+  const bcn = makeJudge(normaliseProfile({ countries: ['es', 'nl'], cities: ['es:Barcelona'] }), cats, engine);
+  eq([bcn({ f: ['2144'], t: 'Ingeniero', cc: 'es', ci: 'Barcelona' }).ok, bcn({ f: ['2144'], t: 'Ingeniero', cc: 'es', ci: '', l: 'Barcelona Area, Spain' }).ok, bcn({ f: ['2144'], t: 'Ingeniero', cc: 'es', ci: 'Madrid' }).stage], [true, true, 'COUNTRY'], 'Barcelona by its city, or named in the place; Madrid is out');
+  eq(bcn({ f: ['2144'], t: 'Engineer', cc: 'nl', ci: 'Delft' }).ok, true, 'a country with no city chosen keeps all of its adverts');
+}
+{
   const sorted = sortOffers([{ cc: 'nl', d: '2026-09-01' }, { cc: 'es', d: '2026-08-01' }, { cc: 'es', d: '2026-09-02' }, { cc: 'xx', d: '2026-09-03' }, { cc: 'fr', d: '2026-09-03' }], profile);
   eq(sorted.map(o => `${o.cc}:${o.d}`), ['es:2026-09-02', 'es:2026-08-01', 'nl:2026-09-01', 'fr:2026-09-03', 'xx:2026-09-03'], 'countries in the profile order, newest first inside, others and remote last');
 }

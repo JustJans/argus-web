@@ -7,11 +7,11 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { compileFamilies, familiesOf, hygieneReason, languagesOfCountry } from './gate.mjs';
+import { compileFamilies, familiesOf, occupationsOf, hygieneReason, languagesOfCountry } from './gate.mjs';
 import { compileCountries, placeOfAdvert, toRecord } from './normalise.mjs';
 import { compileScreens } from './screens.mjs';
 import { dedupe } from './dedupe.mjs';
-import { buildShards, writePile } from './shard.mjs';
+import { buildShards, writePile, cityCounts } from './shard.mjs';
 import { loadCache, saveCache, translateTitles } from './translate.mjs';
 import { eachSource } from './store.mjs';
 import { licenceFor } from './sources.mjs';
@@ -80,6 +80,8 @@ for (const data of eachSource()) {
     const why = hygieneReason(raw);
     if (why) { counts.hygiene++; drop(`HYGIENE ${why}`, raw); continue; }
     const rec = toRecord(raw, fam, cc, screens);
+    const occupations = occupationsOf(raw, fam, gate);
+    if (occupations.length) rec.e = occupations;
     if (rec.x && rec.x < startedAt.toISOString().slice(0, 10)) { counts.stale++; drop('EXPIRED', raw); continue; }
     if (rec.cc && rec.cc !== 'xx' && !europe.has(rec.cc)) { counts.outsideEurope++; drop('OUTSIDE EUROPE', raw); continue; }
     // ➤ Company boards are read the world over: an advert of theirs whose place names nothing
@@ -123,7 +125,7 @@ if (!FORCE && wasKept && kept.length < wasKept * KEEP_AT_LEAST) {
 const index = {
   v: 1, generated_at: generatedAt, crawled_at: crawledAt || generatedAt,
   expires_at: new Date(Date.parse(crawledAt || generatedAt) + 48 * 3600 * 1000).toISOString(), catalogue_v: 2,
-  families: familiesIndex, latest, sources,
+  families: familiesIndex, latest, sources, cities: cityCounts(kept),
   counts: { offers: kept.length, found: counts.found, by_country: perCountry, via: viaCount, sources: sourceFiles, companies: boardSources },
   status: { ok: kept.length > 0, seconds: Math.round((Date.now() - startedAt) / 1000) },
 };

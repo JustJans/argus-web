@@ -9,27 +9,41 @@ import { encodeProfile, decodeProfile, normaliseProfile, isEmptyProfile, catalog
 const { ok, eq, done } = harness('codec');
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const load = n => JSON.parse(readFileSync(join(ROOT, 'catalogues', `${n}.json`), 'utf-8'));
-const cats = catalogueIds({ families: load('families'), countries: load('countries'), languages: load('languages'), degrees: load('degrees'), vetoes: load('vetoes') });
+const cats = catalogueIds({ families: load('families'), countries: load('countries'), languages: load('languages'), degrees: load('degrees'), vetoes: load('vetoes'), occupations: load('occupations') });
 
-eq(VERSION, 2, 'the code is at version 2');
+eq(VERSION, 3, 'the code is at version 3');
 eq(toBase64url(Uint8Array.from([0, 255, 16])), 'AP8Q', 'base64url of three bytes');
 eq([...fromBase64url('AP8Q')], [0, 255, 16], 'and back');
 eq([...fromBase64url(toBase64url(Uint8Array.from([1, 2])))], [1, 2], 'two bytes, no padding needed');
 eq(crc16(new TextEncoder().encode('123456789')), 0x29b1, 'CRC-16/CCITT-FALSE check value');
 
 // ➤ Families are ISCO-08 unit groups: 2144 mechanical engineers, 3151 ships' engineers.
-const typical = { families: ['2144', '3151'], countries: ['es', 'nl', 'no'], languages: ['en', 'es'], degrees: ['naval', 'mechanical'], level: 'junior', maxYears: 3, highest: 'master', remote: true, posted: 7, roles: ['mooring engineer', 'naval architect'], vetoes: ['sales', 'internships'], noWords: ['dredging'] };
+const typical = { families: ['2144', '3151'], specialties: ['2144.1.14', '2144.1.10'], countries: ['es', 'nl', 'no'], cities: ['es:Bilbao', 'nl:Gorinchem'], languages: ['en', 'es'], degrees: ['naval', 'mechanical'], level: 'junior', maxYears: 3, highest: 'master', remote: true, posted: 7, roles: ['mooring engineer', 'naval architect'], vetoes: ['sales', 'internships'], noWords: ['dredging'] };
 {
   const code = encodeProfile(typical, cats);
   ok(/^[A-Za-z0-9_-]+$/.test(code), 'the code is URL-safe');
-  ok(code.length <= 100, `a typical profile stays short (${code.length} chars)`);
+  ok(code.length <= 130, `a typical profile, specialties and cities included, stays short (${code.length} chars)`);
   const back = decodeProfile(code, cats);
   eq(back, normaliseProfile(typical), 'a typical profile round-trips exactly');
   eq(back.countries, ['es', 'nl', 'no'], 'countries keep their order (it is the priority)');
+  eq([back.specialties, back.cities], [['2144.1.10', '2144.1.14'], ['es:Bilbao', 'nl:Gorinchem']], 'specialties and cities ride along');
+}
+{
+  // ➤ A specialty brings its family, a city its country: a code never names one without the other.
+  const p = normaliseProfile({ specialties: ['2149.7.6'], cities: ['de:München'] });
+  eq([p.families, p.countries], [['2149'], ['de']], 'a specialty names its family and a city its country');
+  eq(decodeProfile(encodeProfile({ cities: ['de:Frankfurt am Main'] }, cats), cats).cities, ['de:Frankfurt am Main'], 'a city name with spaces and more than 24 bytes of room round-trips');
+  eq(normaliseProfile({ cities: ['Barcelona', 'es:'] }).cities, [], 'a city without its country, or a country without a city, is no city');
+}
+{
+  // ➤ Codes made before version 3 are in bookmarks: they read as they did.
+  eq(decodeProfile('AgMIAAAAAQAAAFoDAIEAAAADAAMKAhBtb29yaW5nIGVuZ2luZWVyD25hdmFsIGFyY2hpdGVjdAIBAAEIZHJlZGdpbmfxPQ', cats), normaliseProfile({ ...typical, specialties: [], cities: [] }), 'a version-2 code decodes to the same profile');
+  eq(decodeProfile('AgQAAAAAAAAAAAAAAAAAAAAAAAAAWtg', cats).posted, 30, 'with its posted window, two bits then');
+  eq([1, 3, 90].map(d => decodeProfile(encodeProfile({ posted: d }, cats), cats).posted), [1, 3, 90], 'version 3 has the day, three days and three months');
 }
 {
   const empty = encodeProfile({}, cats);
-  ok(empty.length <= 32, `an empty profile is tiny (${empty.length} chars)`);
+  ok(empty.length <= 36, `an empty profile is tiny (${empty.length} chars)`);
   eq(decodeProfile(empty, cats), normaliseProfile({}), 'and decodes to the defaults');
 }
 {
