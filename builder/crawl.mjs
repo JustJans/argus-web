@@ -12,7 +12,7 @@ import { dirname, join } from 'path';
 import { writeFileAtomic } from 'argus/server-bot/fs-atomic.mjs';
 import { allSources, sourceId, loadCrawlConfig, sharesHost } from './sources.mjs';
 import { loadSource, saveSource, dropSource, sweepTemps, storeSize, eachSource } from './store.mjs';
-import { readWithDeadline, compare } from './readers.mjs';
+import { readWithDeadline, compare, remember, readAll } from './readers.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const STATE_DIR = join(ROOT, 'builder', 'state');
@@ -97,6 +97,7 @@ async function pass(src, st, budget, tally) {
     // ➤ what it had and comes back in the next run, not in a day.
     if (meta.postponed) { entry.next = Date.now() + 60_000; tally.postponed++; return false; }
     const diff = compare(before, adverts);
+    remember(before, adverts, { knewAll: readAll(src, data), today: day(started) });
     Object.assign(data, { v: 1, group: src.group, key: src.key, kind: src.kind, adverts, pass: { started: new Date(started).toISOString(), ended: new Date().toISOString(), ok: true, seconds, ...meta } });
     saveSource(data);
     Object.assign(entry, { last: data.pass.ended, ok: true, n: adverts.length, seconds, fails: 0, err: '', next: nextPass(src, entry, { ok: true }) });

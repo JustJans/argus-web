@@ -146,6 +146,9 @@ shards in eleven minutes.
    source's own file in the store (`builder/state/adverts/<group>/<key>.json`, written to a
    scratch file and renamed). A careers site keeps the pages it has already read, so a pass
    costs one sitemap plus the pages that are new; an advert that leaves the sitemap has closed.
+   Each pass keeps, per advert, the earliest day it was said to be posted (Workday's "30+ days
+   ago" and Greenhouse's last edit never make an advert younger) and, for an advert that names
+   no day, the day it first appeared in a list the last pass had read whole.
    Every read has a deadline, "too many requests" pauses that group until the host says come
    back, a source that fails waits six hours, then a day, then two, and is parked after a
    fortnight. `builder/state/STOP` stops everything.

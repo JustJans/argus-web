@@ -133,6 +133,7 @@ eq(placeOf('Remote, Germany', cc).cc, 'de', 'and one in a named European country
 eq(toRecord({ title: 'Fuel Chemist', company: 'A British Recruiter', location: 'Singapore', country: 'gb', url: 'https://x.example/1', description: 'x' }, ['f'], cc).cc, 'sg', 'where the advert says the work is beats where its source is');
 eq(toRecord({ title: 'Ingeniero', company: 'Acme', location: 'OIARTZUN, GIPUZKOA', country: 'es', url: 'https://x.example/2', description: 'x' }, ['f'], cc).cc, 'es', 'and a town nobody knows keeps the country its source declares');
 eq([toRecord({ title: 'A', url: 'https://x.example/3', posted: 'Mon Aug 24', description: 'x' }, ['f'], cc).d, toRecord({ title: 'A', url: 'https://x.example/4', posted: '2026-09-01T08:00:00Z', description: 'x' }, ['f'], cc).d], ['', '2026-09-01'], 'a day that is not a day is no day');
+eq([toRecord({ title: 'A', url: 'https://x.example/5', seen: '2026-09-20', description: 'x' }, ['f'], cc).d, toRecord({ title: 'A', url: 'https://x.example/6', posted: '2026-09-01', seen: '2026-09-20', description: 'x' }, ['f'], cc).d], ['2026-09-20', '2026-09-01'], 'an advert with no day has the day it appeared; one with a day keeps its own');
 eq(placeOf('Baltimore, MD', cc).cc, 'us', 'MD after a town is Maryland, not Moldova');
 eq(placeOf('Rockville, MD, US', cc).cc, 'us', 'a country outside Europe coded at the end wins over a European code');
 eq([placeOf('Chisinau, MD', cc).cc, placeOf('Chișinău, Moldova', cc).cc], ['md', 'md'], 'MD with a Moldovan city, or Moldova named, is Moldova');
