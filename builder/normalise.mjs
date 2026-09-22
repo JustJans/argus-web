@@ -131,7 +131,8 @@ export function toRecord(raw, families, compiledCountries, screens = null) {
     c: String(raw.company || '').replace(/\s+/g, ' ').trim().slice(0, 80),
     l: normalizeLocation(String(raw.location || '').replace(/\s+/g, ' ').trim()).slice(0, 120),
     cc: place.cc, ci: place.city,
-    d: isoDay(raw.posted),
+    // ➤ An advert that names no day has the day it first appeared, when the crawler saw that.
+    d: isoDay(raw.posted) || isoDay(raw.seen),
     u: normUrl(raw.url),
     s: raw.source,
     f: families,

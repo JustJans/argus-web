@@ -40,7 +40,7 @@ export async function readSource(src, data, { budget = {}, log = () => {}, fail 
   }
   if (src.reader === 'site') {
     const r = await careers.readSite(src.site, data, budget, log);
-    return { adverts: r.adverts, meta: { listed: r.listed, fetched: r.fetched, blocks: r.blocks } };
+    return { adverts: r.adverts, meta: { listed: r.listed, fetched: r.fetched, blocks: r.blocks, backlog: r.backlog } };
   }
   throw new Error(`no reader for ${src.reader}`);
 }
@@ -58,4 +58,29 @@ export function compare(before = [], after = []) {
   for (const u of now) if (!old.has(u)) added++;
   for (const u of old) if (!now.has(u)) gone++;
   return { added, gone, same: now.size - added };
+}
+
+// ➤ Whether the last pass read the whole list: not a site with vacancy pages it had no time
+// ➤ to read, nor a board cut at its first few hundred adverts.
+export function readAll(src, data) {
+  const p = data?.pass;
+  if (!p?.ended) return false;
+  if (src.reader === 'site') return p.backlog === 0;
+  return !(p.listed > (data.adverts || []).length);
+}
+
+// ➤ What a pass keeps of the last one, per advert (by address). The earliest day it was said to
+// ➤ be posted: a Workday board says "30+ days ago" every day and Greenhouse gives the day of the
+// ➤ last edit, and neither may make an advert younger. And the day it was first seen, when the
+// ➤ last pass had read the whole list (knewAll): an advert missing from a complete list and
+// ➤ present now appeared in between. Before that, nobody knows when it appeared.
+export function remember(before = [], after = [], { knewAll = false, today = new Date().toISOString().slice(0, 10) } = {}) {
+  const old = new Map(before.map(a => [a.url, a]));
+  for (const a of after) {
+    const o = old.get(a.url);
+    if (o?.posted && (!a.posted || o.posted < a.posted)) a.posted = o.posted;
+    if (o?.seen) a.seen = o.seen;
+    else if (!o && knewAll) a.seen = today;
+  }
+  return after;
 }

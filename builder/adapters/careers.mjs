@@ -177,7 +177,7 @@ export async function readSite(given, store, budget = {}, log = () => {}) {
   if (site.feed) {
     const adverts = parseSuccessFactors(await getText(site.feed, opts), site.name || '')
       .map(p => toRaw({ title: p.title, company: p.company || site.name, location: p.location, description: String(p._jd || '').slice(0, DESCRIPTION) }, site, p.url));
-    return { adverts, listed: adverts.length, fetched: 1, blocks: true };
+    return { adverts, listed: adverts.length, fetched: 1, backlog: 0, blocks: true };
   }
   const from = site.sitemap || site.listing;
   const host = new URL(from).origin;
@@ -194,11 +194,13 @@ export async function readSite(given, store, budget = {}, log = () => {}) {
   const queue = wanted.sort((a, b) => String(b.lastmod).localeCompare(String(a.lastmod))).slice(0, canRead).map(i => ({ url: i.url, lastmod: i.lastmod, from: '' }));
   const seen = new Set([...items.map(i => i.url), ...queue.map(q => q.url)]);
   let fetched = 0, deeper = 0;
+  const readNow = new Set();
   while (queue.length && fetched < canRead) {
     if (budget.left !== undefined && budget.left <= 0) break;
     if (budget.left !== undefined) budget.left--;
     const q = queue.shift();
     fetched++;
+    readNow.add(q.url);
     try {
       const html = await getText(q.url, opts);
       const job = jobPostings(html, q.url)[0] || null;
@@ -228,5 +230,8 @@ export async function readSite(given, store, budget = {}, log = () => {}) {
   // ➤ A site whose pages were all left unread because the run had spent its budget has not
   // ➤ been read at all: it must come back at once, not tomorrow.
   const postponed = !!wanted.length && !fetched && (budget.left ?? 1) <= 0;
-  return { adverts, listed: items.length, fetched, postponed, blocks: read ? Object.values(pages).some(p => p.job) : true };
+  // ➤ The pages it listed and could not read yet: while any are left, a page read for the first
+  // ➤ time may be old, so its day is not taken for the day it appeared.
+  const backlog = wanted.filter(i => !readNow.has(i.url)).length;
+  return { adverts, listed: items.length, fetched, postponed, backlog, blocks: read ? Object.values(pages).some(p => p.job) : true };
 }

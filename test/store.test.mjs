@@ -2,7 +2,7 @@
 import { existsSync } from 'fs';
 import { harness } from 'argus/server-bot/test-harness.mjs';
 import { fileNameFor, sourcePath, loadSource, saveSource, dropSource, emptySource } from '../builder/store.mjs';
-import { compare } from '../builder/readers.mjs';
+import { compare, remember, readAll } from '../builder/readers.mjs';
 import { sharesHost } from '../builder/sources.mjs';
 import { due, nextPass, adoptStore, cadenceMs } from '../builder/crawl.mjs';
 
@@ -29,6 +29,15 @@ const before = [{ url: 'a' }, { url: 'b' }, { url: 'c' }];
 eq(compare(before, [{ url: 'b' }, { url: 'c' }, { url: 'd' }]), { added: 1, gone: 1, same: 2 }, 'one advert new, one closed, two the same');
 eq(compare(before, before), { added: 0, gone: 0, same: 3 }, 'nothing changed');
 eq(compare([], [{ url: 'a' }]), { added: 1, gone: 0, same: 0 }, 'a source read for the first time is all new');
+
+// What a pass keeps of the last one: the earliest posted day, and the day an advert appeared.
+const last = [{ url: 'a', posted: '2026-08-23' }, { url: 'b', posted: '2026-09-01', seen: '2026-09-10' }, { url: 'c' }];
+const next = remember(last, [{ url: 'a', posted: '2026-08-24' }, { url: 'b', posted: '2026-09-15' }, { url: 'c' }, { url: 'd' }], { knewAll: true, today: '2026-09-22' });
+eq(next.map(a => a.posted || ''), ['2026-08-23', '2026-09-01', '', ''], "a board that says '30+ days ago' every day, or gives the day of the last edit, never makes an advert younger");
+eq(next.map(a => a.seen || ''), ['', '2026-09-10', '', '2026-09-22'], 'an advert new to a complete list appeared today; the others keep what they had, and what nobody saw appear stays unknown');
+eq(remember(last, [{ url: 'd' }], { knewAll: false, today: '2026-09-22' })[0].seen, undefined, 'after an incomplete pass, a new advert may be an old one read late');
+eq([readAll({ reader: 'board' }, { pass: { ended: 'x', listed: 3 }, adverts: [1, 2, 3] }), readAll({ reader: 'board' }, { pass: { ended: 'x', listed: 900 }, adverts: new Array(500) }), readAll({ reader: 'board' }, { pass: null })], [true, false, false], 'a board read whole; one cut at its first adverts; one never read');
+eq([readAll({ reader: 'site' }, { pass: { ended: 'x', backlog: 0 } }), readAll({ reader: 'site' }, { pass: { ended: 'x', backlog: 40 } }), readAll({ reader: 'site' }, { pass: { ended: 'x' } })], [true, false, false], 'a site with no page left unread; one still filling; one read before the backlog was counted');
 
 // Who waits when a host says "too many requests".
 eq([sharesHost('greenhouse'), sharesHost('workable'), sharesHost('ashby')], [true, true, true], 'an ATS that answers for every board from one host: the group waits');
