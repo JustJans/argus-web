@@ -92,11 +92,13 @@ const { kept, sameUrl, sameRole } = dedupe(items);
 
 // ➤ Titles in English, as the bot shows them; the cache on disk means only new titles are asked.
 if (!args.includes('--no-translate')) {
-  const cachePath = join(ROOT, 'builder', 'state', 'translations.json');
+  // ➤ Keyed by the title alone since the titles are asked in batches; the old
+  // ➤ translations.json keyed them by title and town and is not read any more.
+  const cachePath = join(ROOT, 'builder', 'state', 'titles-en.json');
   const cache = loadCache(cachePath);
   const t = await translateTitles(kept, { cache, log });
   saveCache(cachePath, cache);
-  log(`titles: ${t.translated} in English (${t.asked} asked, ${t.fromCache} from the cache${t.limited ? ', translator rate-limited' : ''})`);
+  log(`titles: ${t.translated} in English (${t.asked} new titles asked in ${t.requests} requests${t.limited ? ', translator rate-limited' : ''})`);
 }
 const generatedAt = new Date().toISOString();
 const { files, families: familiesIndex, latest } = buildShards(kept, families);
