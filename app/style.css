@@ -148,6 +148,7 @@ details[open] > summary > .chev { transform: rotate(90deg); }
 .how .fine { margin: 24px 0 0; text-align: center; }
 .table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .today .table { max-width: 720px; }
+.today .table a { color: inherit; text-decoration: none; }
 .today .table th:nth-child(3), .today .table td:nth-child(3) { padding-left: 32px; }
 .table th { text-align: left; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in srgb, var(--text) 60%, transparent); padding: 7px; border-bottom: 1px solid var(--divider); }
 .table td { padding: 7px; border-bottom: 1px solid var(--hairline); }

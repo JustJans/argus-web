@@ -116,6 +116,9 @@ export function normaliseProfile(p = {}) {
     noWords: cleanTerms(p.noWords),
   };
 }
+// ➤ The profile a country of the front page's table opens: that country alone.
+export const countryProfile = cc => normaliseProfile({ countries: [cc] });
+
 // ➤ Nothing set at all: the page shows its front instead of a list.
 const EMPTY = JSON.stringify(normaliseProfile({}));
 export const isEmptyProfile = p => JSON.stringify(normaliseProfile(p)) === EMPTY;
