@@ -9,7 +9,7 @@ import { extractRequiredYears } from 'argus/server-bot/requirements.mjs';
 import { normalizeLocation } from 'argus/server-bot/scan.mjs';
 import { cleanTitle } from 'argus/server-bot/notify.mjs';
 import { requiredDegrees, requiredLanguages } from './screens.mjs';
-import { namesRemoteWork, workModeOf } from './work-mode.mjs';
+import { workModeOf } from './work-mode.mjs';
 import { readPay } from './pay.mjs';
 
 // ➤ The address without its campaign tail, trailing slash or fragment: what makes two
@@ -116,7 +116,7 @@ export function placeOf(location, compiled) {
     return state ? { cc: state, city } : { cc: c.iso, city: cityIn(raw, c) };
   }
   if ([...codes].some(c => US_STATES.has(c))) return { cc: 'us', city };
-  if (namesRemoteWork(raw)) return { cc: 'xx', city: '' };
+  if (/(?:^|[^a-z])remote(?![a-z])|home ?office|teletrabajo|télétravail|homeoffice|thuiswerk|distans/.test(f)) return { cc: 'xx', city: '' };
   for (const c of compiled) if (c.cityRe && c.cityRe.test(f)) return { cc: c.iso, city: cityIn(raw, c) };
   for (const [iso, names] of Object.entries(FAR_CITIES)) if (names.some(n => word(fold(n)).test(f))) return { cc: iso, city };
   return { cc: '', city };
@@ -157,8 +157,10 @@ export function toRecord(raw, families, compiledCountries, screens = null, rates
   const found = placeOfAdvert(raw, compiledCountries);
   const place = found.cc || !raw.country ? found
     : { cc: raw.country, city: raw.city || cityIn(raw.location || '', compiledCountries.find(c => c.iso === raw.country) || { cities: [], name: '' }) };
+  // ➤ Which remote adverts with no country belong in the pile is the place reader's rule, as
+  // ➤ it was: the work mode only describes an advert, it does not bring one in.
+  if (raw.remote && !place.cc) place.cc = 'xx';
   const mode = workModeOf(raw);
-  if (!place.cc && (mode === 'r' || raw.remote)) place.cc = 'xx';
   const text = withoutContacts(raw.description);
   const years = extractRequiredYears(`${raw.title || ''}. ${text}`);
   // ➤ The title and the location cleaned the way the bot cleans them before showing them.

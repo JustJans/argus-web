@@ -28,7 +28,6 @@ export const tagMode = text => mostFlexible([...String(text || '').matchAll(LINK
 // ➤ Annex Table A.2) and their neighbours, compared without accents or case.
 const REMOTE_PLACE = /(?:^|[^a-z0-9])(?:remote|remoto|home ?office|home-office|home based|teletravail|teletrabajo|teletreball|telelavoro|werk van thuis|thuiswerk(?:en)?|zdalnie|praca zdalna|jobba hemifran|distans(?:arbete)?|lavoro da casa|desde casa)(?![a-z0-9])/;
 const HYBRID_PLACE = /(?:^|[^a-z0-9])(?:hybrid|hybride|hibrido|ibrido|hybrydow[a-z]*)(?![a-z0-9])/;
-export const namesRemoteWork = location => REMOTE_PLACE.test(fold(String(location || '')));
 export function placeMode(location) {
   const f = fold(String(location || ''));
   return REMOTE_PLACE.test(f) ? 'remote' : HYBRID_PLACE.test(f) ? 'hybrid' : '';

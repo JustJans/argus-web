@@ -21,9 +21,11 @@ eq(['Remote - Germany', 'Berlin (Hybrid)', 'Télétravail', 'Werk van thuis', 'Z
 eq([workModeOf({ mode: 'hybrid', description: '#LI-Remote', location: 'Remote' }), workModeOf({ description: 'x #LI-Remote' }), workModeOf({ location: 'Berlin (Hybrid)' }), workModeOf({})], ['h', 'r', 'h', ''], "the source's field first, then a tag or the location; nothing said is nothing");
 eq([workModeOf({ modeTag: 'onsite', location: 'remote' }), workModeOf({ modeTag: 'hybrid', location: 'Berlin (Hybrid)' }), workModeOf({ modeTag: 'remote', location: 'Madrid, Spain' }), workModeOf({ mode: 'onsite', location: 'Remote' })], ['', 'h', 'r', 'o'], "a tag and a location that disagree say nothing for sure (a template's #LI-Onsite on a remote job); agreeing, or alone, they decide; the source's field overrules both");
 
-// ── The place reader agrees ─────────────────────────────────────────────
+// ── The mode describes an advert; it does not bring one in ──────────────
+// ➤ Which remote adverts with no country join the pile stays the place reader's rule: "Remoto"
+// ➤ names a remote job, often in Latin America, and does not make it European.
 const cc = compileCountries(JSON.parse(readFileSync(new URL('../catalogues/countries.json', import.meta.url), 'utf8')).countries);
-eq(['Télétravail', 'Werk van thuis', 'zdalnie', 'Remote'].map(l => placeOf(l, cc).cc), ['xx', 'xx', 'xx', 'xx'], 'a remote location with no country is the "no fixed country" group (Télétravail was missed before)');
+eq([placeMode('Remoto'), placeOf('Remoto', cc).cc, placeOf('Remote', cc).cc], ['remote', '', 'xx'], 'the mode is read, the placement is as it was');
 eq(placeOf('Remote - Germany', cc).cc, 'de', 'a remote job in a named country stays in that country');
 
 // ── Each source's own field ─────────────────────────────────────────────
@@ -55,6 +57,7 @@ const rec = toRecord({ title: 'Mechanical Engineer', company: 'Acme', location: 
 eq([rec.w, rec.p, rec.pa], ['h', [3500, 4500, 'EUR', 'm'], 54000], 'the record carries the letter, the pay as given and its year in euros');
 const bare = toRecord({ title: 'Mechanical Engineer', company: 'Acme', location: 'Delft, Netherlands', url: 'https://x.example/10', description: 'x' }, ['2144'], cc);
 eq(['w' in bare, 'p' in bare, 'pa' in bare], [false, false, false], 'and nothing when nothing is stated');
-eq(toRecord({ title: 'Engineer', url: 'https://x.example/11', description: '', mode: 'remote' }, ['2144'], cc).cc, 'xx', 'a remote advert with no country is in the "no fixed country" group');
+const remoteNowhere = toRecord({ title: 'Engineer', url: 'https://x.example/11', description: '', mode: 'remote' }, ['2144'], cc);
+eq([remoteNowhere.cc, remoteNowhere.w], ['', 'r'], 'a remote advert with no country is described as remote, and placed by the place reader alone');
 
 done();
