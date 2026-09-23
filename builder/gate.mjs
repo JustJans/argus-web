@@ -15,6 +15,8 @@ const T = titleRules(fold);
 // ➤ matches. Plain dictionary words.
 const ENGINEER_WORDS = ['engineer', 'ingeniero', 'ingeniera', 'enginyer', 'enginyera', 'ingénieur', 'ingénieure', 'ingenieur', 'ingenieurin', 'ingenjör', 'civilingenjör', 'ingeniør', 'sivilingeniør', 'insinööri', 'ingegnere', 'engenheiro', 'engenheira', 'inżynier', 'inženýr', 'inženýrka', 'inžinierius', 'inžinierė', 'inženieris', 'inženiere'];
 const GENERIC_FAMILY = '2149';
+// ➤ The index's name for the titles outside the vertical (no family is called that).
+const BLOCKERS = '#outside';
 // ➤ Where a computing title lands when ESCO names nothing more precise: software and
 // ➤ applications developers and analysts not elsewhere classified.
 const ICT_FAMILY = '2519';
@@ -120,14 +122,18 @@ export function compileFamilies(catalogue, codes = {}) {
     if (fams.length) bySsyk.set(id, fams);
   }
   const terms = familyTerms(catalogue, codes);
-  const titles = families.map(f => {
-    const res = {};
-    for (const [lang, labels] of Object.entries(terms[f.id].labels)) res[lang] = T.alternation(labels);
-    return { id: f.id, res, preferred: new Set(terms[f.id].preferred) };
-  });
+  const titles = families.map(f => ({ id: f.id, preferred: new Set(terms[f.id].preferred) }));
   const blockers = {};
   for (const b of Object.values(codes.isco?.blockers || {})) for (const [lang, labels] of Object.entries(b.labels || {})) (blockers[lang] ||= []).push(...labels);
-  for (const lang of Object.keys(blockers)) blockers[lang] = T.alternation(blockers[lang]);
+  // ➤ Per language, one index of every family's titles and of the titles outside the
+  // ➤ vertical (the blockers), read in one pass per title.
+  const index = {};
+  for (const lang of new Set([...families.flatMap(f => Object.keys(terms[f.id].labels)), ...Object.keys(blockers)])) {
+    const lists = {};
+    for (const f of families) if (terms[f.id].labels[lang]?.length) lists[f.id] = terms[f.id].labels[lang];
+    if (blockers[lang]?.length) lists[BLOCKERS] = blockers[lang];
+    index[lang] = T.index(lists);
+  }
   // ➤ Which ESCO occupation each title names, per family and language: a title's match says
   // ➤ which occupation it is, not only which family.
   const occupations = {};
@@ -137,20 +143,25 @@ export function compileFamilies(catalogue, codes = {}) {
       for (const l of list.filter(usableTitle)) { const k = T.clean(l); m.set(k, [...new Set([...(m.get(k) || []), o.code])]); }
     }
   }
-  return { families, byIsco, bySsyk, titles, blockers, occupations, generic: T.alternation(ENGINEER_WORDS), genericFamily: byIsco.get(GENERIC_FAMILY) || null, ictFamily: byIsco.get(ICT_FAMILY) || null };
+  return { families, byIsco, bySsyk, titles, index, occupations, generic: T.alternation(ENGINEER_WORDS), genericFamily: byIsco.get(GENERIC_FAMILY) || null, ictFamily: byIsco.get(ICT_FAMILY) || null };
 }
 
 // ➤ What a cleaned title names, by ESCO's titles: the families that stand by the rule, and
-// ➤ whether an outside occupation matched with nothing of ours over it.
+// ➤ whether an outside occupation matched with nothing of ours over it. The gate asks this
+// ➤ twice for each advert (its families, then its occupations): the last answer is kept.
 function titleFamilies(title, langs, gate) {
+  const key = `${title}\n${langs.join(',')}`;
+  if (gate.last?.key === key) return gate.last.value;
+  const found = langs.map(lang => (gate.index[lang] ? T.find(gate.index[lang], title) : new Map()));
   const hits = [];
-  for (const fam of gate.titles) for (const lang of langs) for (const text of T.matches(fam.res[lang], title)) hits.push({ id: fam.id, text, named: fam.preferred.has(text), lang });
-  const blocks = [];
-  for (const lang of langs) for (const text of T.matches(gate.blockers[lang], title)) blocks.push(text);
+  for (const fam of gate.titles) langs.forEach((lang, i) => { for (const text of found[i].get(fam.id) || []) hits.push({ id: fam.id, text, named: fam.preferred.has(text), lang }); });
+  const blocks = found.flatMap(f => f.get(BLOCKERS) || []);
   const kept = T.winners(hits, blocks);
   const all = [...hits.map(h => h.text), ...blocks];
   const blocked = !kept.length && blocks.some(b => !all.some(o => T.inside(b, o)));
-  return { families: [...new Set(kept.map(h => h.id))], blocked, texts: [...new Set(kept.map(h => h.text))], hits };
+  const value = { families: [...new Set(kept.map(h => h.id))], blocked, texts: [...new Set(kept.map(h => h.text))], hits };
+  gate.last = { key, value };
+  return value;
 }
 
 // ➤ The families of one advert. [] means outside the vertical.
