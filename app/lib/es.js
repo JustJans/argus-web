@@ -148,6 +148,9 @@ export default {
     'Copied': 'Copiado',
     'The pile is not published yet. Come back in a few hours.': 'La lista aún no está publicada. Vuelve dentro de unas horas.',
     'via {source}': 'vía {source}',
+    // ➤ The two sources named by what they are, not by a name of their own.
+    'employer site': 'web de la empresa',
+    'Intermediary': 'intermediario',
     'asks {n}+ years': 'pide {n}+ años',
     'requires {list}': 'exige {list}',
     'degree: {list}': 'titulación: {list}',
