@@ -4,6 +4,7 @@
 // ➤ at a time up to an offset of 2000: a group with more adverts than that is cut at the
 // ➤ newest 2100 and the cut is reported.
 import { getJson } from '../http.mjs';
+import { modeWord } from '../work-mode.mjs';
 
 export const id = 'jobtech';
 export const kind = 'feed';
@@ -16,7 +17,7 @@ const API = 'https://jobsearch.api.jobtechdev.se/search';
 const PAGE = 100;
 const MAX_OFFSET = 2000;
 
-function toRaw(hit) {
+export function toRaw(hit) {
   const a = hit.workplace_address || {};
   const city = a.municipality || a.region || '';
   return {
@@ -33,6 +34,9 @@ function toRaw(hit) {
     expires: (hit.application_deadline || '').slice(0, 10),
     codes: { ssyk: hit.occupation_group?.concept_id || '' },
     lang: 'sv',
+    // ➤ Its "workplace model": remote (Distansarbete) and hybrid (Hybridarbete) are read; "on
+    // ➤ site" (Arbete på plats) is not, being the form's default, set on remote adverts too.
+    mode: modeWord(hit.workplace_model?.label),
   };
 }
 

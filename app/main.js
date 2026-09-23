@@ -78,6 +78,7 @@ function profileFromForm() {
   const place = chosenPlace && { ...chosenPlace, km: Number($('#radius').value) };
   return normaliseProfile({
     families, specialties, countries, place, remote: $('#remote').checked, posted: Number($('#filters-form input[name="d"]:checked')?.value) || 0,
+    modes: checked('mode'), minPay: Number($('#min-pay').value) || 0, payStated: $('#pay-stated').checked,
     level: checked('level')[0] || 'any', maxYears: Number($('#max-years').value) || null, highest: $('#highest').value,
     languages: checked('lg'), degrees: checked('dg'), vetoes: checked('v'), roles: words('#roles'), noWords: words('#no-words'),
   });
@@ -196,6 +197,9 @@ function fillFilters(p) {
   for (const i of $$('#families-pick input[name="f"]')) i.checked = p.families.includes(i.value);
   for (const i of $$('#families-pick input[name="e"]')) i.checked = p.specialties.includes(i.value);
   for (const i of $$('#filters-form input[name="d"]')) i.checked = (Number(i.value) || 0) === p.posted;
+  for (const i of $$('#filters-form input[name="mode"]')) i.checked = p.modes.includes(i.value);
+  $('#min-pay').value = p.minPay ? String(p.minPay) : '';
+  $('#pay-stated').checked = p.payStated;
   for (const i of $$('#levels-pick input')) i.checked = i.value === p.level;
   $('#max-years').value = p.maxYears ? String(p.maxYears) : '';
   for (const i of $$('#languages-pick input')) i.checked = p.languages.includes(i.value);
@@ -216,7 +220,7 @@ function fillFilters(p) {
   text('#filters-toggle-label', head);
 }
 function activeGroups(p) {
-  const on = { country: p.countries.length || p.remote || p.place, occupations: p.families.length, posted: p.posted, level: p.level !== 'any' || p.maxYears, languages: p.languages.length, degrees: p.degrees.length || p.highest !== 'none', roles: p.roles.length, vetoes: p.vetoes.length || p.noWords.length };
+  const on = { country: p.countries.length || p.remote || p.place, occupations: p.families.length, posted: p.posted, mode: p.modes.length, pay: p.minPay || p.payStated, level: p.level !== 'any' || p.maxYears, languages: p.languages.length, degrees: p.degrees.length || p.highest !== 'none', roles: p.roles.length, vetoes: p.vetoes.length || p.noWords.length };
   return new Set(Object.keys(on).filter(k => on[k]));
 }
 
@@ -413,7 +417,7 @@ async function main() {
   const all = await Promise.all(names.map(name => getJson(`catalogues/${name}.json`)));
   cats = Object.fromEntries(names.map((name, i) => [name, all[i]]));
   ids = catalogueIds(cats);
-  ctx = { countryName, sourceName: s => index.sources?.[s]?.short || index.sources?.[s]?.name || s, isVia: s => !!index.sources?.[s]?.via, languageName, degreeName };
+  ctx = { countryName, sourceName: s => t(index.sources?.[s]?.short || index.sources?.[s]?.name || s), isVia: s => !!index.sources?.[s]?.via, languageName, degreeName };
   drawPile();
   drawStaticLists();
   wireControls();

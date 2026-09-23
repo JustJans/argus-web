@@ -4,7 +4,11 @@
 // ➤ are Argus's own (engine.js); the years, degree and language facts were read at build
 // ➤ time and travel with each advert.
 
-import { t, label, languageLabel } from './i18n.js';
+import { t, label, languageLabel, euros } from './i18n.js';
+
+// ➤ The profile's work modes by the letter the offers carry, and what an offer's letter says.
+const MODE_LETTERS = { onsite: 'o', hybrid: 'h', remote: 'r' };
+const MODE_REASONS = { o: 'on-site work', h: 'hybrid work', r: 'remote work' };
 
 // ➤ Any engineering degree satisfies an advert that asks for "an engineering degree".
 const ENGINEERING_DEGREES = new Set(['mechanical', 'electrical', 'electronics-telecom', 'civil', 'industrial', 'chemical', 'aerospace', 'naval', 'mining-metallurgy', 'materials', 'environmental', 'energy', 'automation-mechatronics', 'engineering-any']);
@@ -37,6 +41,12 @@ export function makeJudge(profile, catalogues, engine) {
   // ➤ distance keep, in the town's country, the adverts that close to it; as on the big sites, an
   // ➤ advert whose place could not be put on the map is not found by a search by town.
   const specialties = byPrefix(profile.specialties, code => code.slice(0, 4));
+  // ➤ Work modes chosen keep the offers that state one of them; an offer that states none is
+  // ➤ left out, as on the big sites' remote filters. A minimum pay leaves out the offers whose
+  // ➤ range stays under it (a range that reaches it is kept, as Google's job search does); the
+  // ➤ offers that state no pay stay unless the visitor keeps only those that state it.
+  const modes = new Set((profile.modes || []).map(m => MODE_LETTERS[m]));
+  const minPay = (profile.minPay || 0) * 1000;
   const inFamily = o => (o.f || []).some(f => families.has(f) && (!specialties.has(f) || (o.e || []).some(e => specialties.get(f).includes(e))));
   const place = profile.place;
   const near = o => !place || o.cc !== place.cc || (o.g && distanceKm(o.g, [place.lat, place.lon]) <= place.km);
@@ -55,6 +65,9 @@ export function makeJudge(profile, catalogues, engine) {
       else if (o.cc && !countries.has(o.cc)) return { ok: false, stage: 'COUNTRY', reason: t('in a country you did not choose ({cc})', { cc: o.cc.toUpperCase() }) };
     }
     if (!near(o)) return { ok: false, stage: 'PLACE', reason: o.g ? t('more than {km} km from {place}', { km: place.km, place: place.name }) : t('its place is not on the map') };
+    if (modes.size && !modes.has(o.w)) return { ok: false, stage: 'MODE', reason: o.w ? t(MODE_REASONS[o.w]) : t('does not say where the work is done') };
+    if (profile.payStated && !o.p) return { ok: false, stage: 'PAY', reason: t('does not state the pay') };
+    if (minPay && o.pa && o.pa < minPay) return { ok: false, stage: 'PAY', reason: t('pays up to {pay} a year', { pay: euros(o.pa) }) };
     if (profile.maxYears && o.y && o.y > profile.maxYears) return { ok: false, stage: 'YEARS', reason: t('asks for {n} years of experience (your cap is {max})', { n: o.y, max: profile.maxYears }) };
     // ➤ Degrees and languages screen only when the visitor listed some: left empty, the
     // ➤ question was not asked, and "none" would hide every advert that names one.

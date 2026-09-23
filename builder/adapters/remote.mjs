@@ -17,7 +17,7 @@ export const jobicy = {
   parse: j => (j?.jobs || []).map(r => ({
     source: 'jobicy', sourceId: String(r.id || ''),
     title: String(r.jobTitle || '').trim(), company: String(r.companyName || '').trim(),
-    location: String(r.jobGeo || ''), country: '', city: '', remote: true,
+    location: String(r.jobGeo || ''), country: '', city: '', remote: true, mode: 'remote',
     url: String(r.url || ''), description: text(r.jobDescription || r.jobExcerpt || ''),
     posted: day(r.pubDate), expires: '', codes: {}, lang: 'en',
   })),
@@ -34,7 +34,7 @@ export const remotive = {
   parse: j => (j?.jobs || []).map(r => ({
     source: 'remotive', sourceId: String(r.id || ''),
     title: String(r.title || '').trim(), company: String(r.company_name || '').trim(),
-    location: String(r.candidate_required_location || ''), country: '', city: '', remote: true,
+    location: String(r.candidate_required_location || ''), country: '', city: '', remote: true, mode: 'remote',
     url: String(r.url || ''), description: text(r.description || ''),
     posted: day(r.publication_date), expires: '', codes: {}, lang: 'en',
   })),
@@ -52,7 +52,7 @@ export const arbeitnow = {
   parse: j => (j?.data || []).map(r => ({
     source: 'arbeitnow', sourceId: String(r.slug || ''),
     title: String(r.title || '').trim(), company: String(r.company_name || '').trim(),
-    location: String(r.location || ''), country: '', city: '', remote: !!r.remote,
+    location: String(r.location || ''), country: '', city: '', remote: !!r.remote, mode: r.remote ? 'remote' : '',
     url: String(r.url || ''), description: text(decodeEntities(r.description || '')),
     posted: day(r.created_at), expires: '', codes: {}, lang: 'de',
   })),

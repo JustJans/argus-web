@@ -4,6 +4,7 @@
 // ➤ search engines: the same fields an ATS would hand over. Pure functions here; the
 // ➤ fetching is in the adapter and the scout.
 import { text, decodeEntities } from '../adapters/boards.mjs';
+import { tagMode } from '../work-mode.mjs';
 
 // ➤ robots.txt: the Disallow lines that bind everyone or us, the crawl delay, the sitemaps.
 export function parseRobots(txt, agent = 'argusweb') {
@@ -119,6 +120,20 @@ function microdataPostings(html, pageUrl) {
   }];
 }
 
+// ➤ The pay a JobPosting states (`baseSalary`), as its fields give it; builder/pay.mjs reads
+// ➤ and checks it. Sites fill the block loosely: the amount in `value` or in `minValue` and
+// ➤ `maxValue`, the period on the amount or on the salary, the currency on the salary or on
+// ➤ the posting (`salaryCurrency`).
+const isPartTime = type => { const t = [].concat(type || []).map(x => String(x).toUpperCase().replace(/[^A-Z]/g, '')); return t.includes('PARTTIME') && !t.includes('FULLTIME'); };
+export function salaryOf(node) {
+  const base = [].concat(node?.baseSalary || [])[0];
+  if (!base || typeof base !== 'object') return null;
+  const amount = base.value && typeof base.value === 'object' ? base.value : { value: base.value };
+  const min = amount.minValue ?? amount.value, max = amount.maxValue ?? amount.value;
+  if (min == null && max == null) return null;
+  return { min, max, currency: base.currency || node.salaryCurrency || '', period: amount.unitText || base.unitText || '', partTime: isPartTime(node.employmentType) };
+}
+
 // ➤ Every JobPosting on a page, with the fields the pile keeps: the JSON-LD blocks, else the
 // ➤ microdata. Nested organisations and places are read leniently: sites follow the schema
 // ➤ loosely.
@@ -157,11 +172,14 @@ export function jobPostings(html, pageUrl) {
       const location = [str(address.addressLocality), str(address.addressRegion), country].filter(Boolean).join(', ') || str(places[0]) || (node.jobLocationType === 'TELECOMMUTE' ? 'Remote' : '');
       const title = str(node.title) || str(node.name);
       if (!title) continue;
+      const telecommute = [].concat(node.jobLocationType || []).includes('TELECOMMUTE');
       out.push({
         title, company: str(node.hiringOrganization), location, country: /^[A-Za-z]{2}$/.test(country) ? country.toLowerCase() : '',
         url: str(node.url) || pageUrl, description: text(node.description || ''),
         posted: day(str(node.datePosted)), expires: day(str(node.validThrough)),
-        remote: node.jobLocationType === 'TELECOMMUTE' || /remote/i.test(location),
+        remote: telecommute || /remote/i.test(location),
+        mode: telecommute ? 'remote' : '', modeTag: tagMode(typeof node.description === 'string' ? node.description : ''),
+        pay: salaryOf(node),
       });
     }
   }

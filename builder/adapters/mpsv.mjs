@@ -42,7 +42,18 @@ export function toRaw(v, obce = {}, units = null) {
     location: [city, 'Czechia'].filter(Boolean).join(', '), country: 'cz', city,
     url: `${PAGE}${v.portalId}`, description: String(v.upresnujiciInformace?.cs || ''),
     posted: day(v.datumVlozeni), expires: day(v.expirace), codes: { isco }, lang: 'cs',
+    pay: payOf(v),
   };
+}
+
+// ➤ The wage in koruna: "from" on every vacancy, "to" on some. The wage type says whether the
+// ➤ figures are a month's or an hour's (the fields are named "monthly" either way); an hourly
+// ➤ wage comes with the weekly hours on most vacancies.
+const WAGE_PERIODS = { mesic: 'month', hod: 'hour' };
+function payOf(v) {
+  const period = WAGE_PERIODS[codeOf(v.typMzdy)];
+  if (!period || !v.mesicniMzdaOd) return null;
+  return { min: v.mesicniMzdaOd, max: v.mesicniMzdaDo || v.mesicniMzdaOd, currency: 'CZK', period, hoursPerWeek: Number(v.pocetHodinTydne) || 0 };
 }
 
 // ➤ The municipality codelist, "563960" → "Český Dub". Without it the adverts still go out,

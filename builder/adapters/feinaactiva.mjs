@@ -18,6 +18,16 @@ const unescape = s => String(s || '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1
 const tag = (block, name) => unescape((block.match(new RegExp(`<${name}>([\\s\\S]*?)</${name}>`)) || [])[1]);
 export const titleCase = s => String(s || '').toLowerCase().replace(/(^|[\s-])(\p{L})/gu, (m, p, ch) => p + ch.toUpperCase());
 
+// ➤ Its page reads "Salari mensual brut des de 1416 fins a 1550": a month, gross, in euros. The
+// ➤ working-hours field says how long a part-time week is: "Jornada parcial (20 hores - jornada
+// ➤ setmanal)" a week, "(3 hores - jornada diaria)" a day of a five-day week.
+export function payOf(min, max, workingHours) {
+  if (!min && !max) return null;
+  const h = String(workingHours || '').match(/\((\d+(?:[.,]\d+)?) hores - jornada (setmanal|diaria)\)/);
+  const hours = h ? Number(h[1].replace(',', '.')) * (h[2] === 'diaria' ? 5 : 1) : 0;
+  return { min, max, currency: 'EUR', period: 'month', hoursPerWeek: hours, partTime: /parcial/i.test(workingHours || '') };
+}
+
 export function parseFeinaActiva(xml) {
   const ads = String(xml || '').match(/<ad>[\s\S]*?<\/ad>/g) || [];
   return ads.map(block => {
@@ -32,6 +42,7 @@ export function parseFeinaActiva(xml) {
       location: [city, region, 'Spain'].filter(Boolean).join(', '), country: 'es', city,
       url: tag(block, 'url'), description: parts.join('\n'),
       posted: isoDay(tag(block, 'date')), expires: '', codes: {}, lang: 'ca',
+      pay: payOf(tag(block, 'salaryMin'), tag(block, 'salaryMax'), tag(block, 'workingHours')),
     };
   }).filter(r => r && r.url);
 }

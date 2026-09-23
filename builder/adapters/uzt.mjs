@@ -13,7 +13,7 @@ export const licence = {
 };
 
 const API = 'https://get.data.gov.lt/datasets/gov/uzt/ldv/Vieta';
-const FIELDS = ['darbo_vietos_id', 'profesijos_kodas', 'profesijos_pareigybes_pav', 'darbdavys', 'darbo_vietos_adresas', 'darbo_aprasymas_lt', 'reik_darbo_patirtis', 'reik_kompetencijos_lt', 'reik_gebejimai', 'reik_issilavinimo_pav', 'ikelimo_data', 'galioja_nuo', 'galioja_iki'];
+const FIELDS = ['darbo_vietos_id', 'profesijos_kodas', 'profesijos_pareigybes_pav', 'darbdavys', 'darbo_vietos_adresas', 'darbo_aprasymas_lt', 'reik_darbo_patirtis', 'reik_kompetencijos_lt', 'reik_gebejimai', 'reik_issilavinimo_pav', 'ikelimo_data', 'galioja_nuo', 'galioja_iki', 'vid_darbo_uzmokestis', 'prelim_darbo_uzmokestis', 'maks_darbo_uzmokestis', 'valiuta'];
 const PAGE = 'https://uzt.lt/laisvos-darbo-vietos/436/p1/skelbimas/';
 
 // ➤ "Savanorių pr. 176C, Vilnius, Lietuva" → Vilnius: the last part before the country.
@@ -33,7 +33,15 @@ export function toRaw(r) {
     url: `${PAGE}${r.darbo_vietos_id}`, description: text,
     posted: String(r.ikelimo_data || r.galioja_nuo || '').slice(0, 10), expires: String(r.galioja_iki || '').slice(0, 10),
     codes: { isco: String(r.profesijos_kodas || '') }, lang: 'lt',
+    pay: payOf(r),
   };
+}
+
+// ➤ The pay, "monthly, before taxes" in the dataset's own words: the base pay and, on most
+// ➤ vacancies, the top of its range.
+function payOf(r) {
+  const base = r.vid_darbo_uzmokestis || r.prelim_darbo_uzmokestis;
+  return base ? { min: base, max: r.maks_darbo_uzmokestis || base, currency: r.valiuta || 'EUR', period: 'month' } : null;
 }
 
 // ➤ One query per minor group of the vertical (the first three digits of the codes).

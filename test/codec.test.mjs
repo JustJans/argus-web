@@ -4,14 +4,14 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { harness } from 'argus/server-bot/test-harness.mjs';
-import { encodeProfile, decodeProfile, normaliseProfile, isEmptyProfile, catalogueIds, crc16, toBase64url, fromBase64url, VERSION } from '../app/lib/codec.js';
+import { encodeProfile, decodeProfile, normaliseProfile, isEmptyProfile, catalogueIds, crc16, toBase64url, fromBase64url, VERSION, MODES } from '../app/lib/codec.js';
 
 const { ok, eq, done } = harness('codec');
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const load = n => JSON.parse(readFileSync(join(ROOT, 'catalogues', `${n}.json`), 'utf-8'));
 const cats = catalogueIds({ families: load('families'), countries: load('countries'), languages: load('languages'), degrees: load('degrees'), vetoes: load('vetoes'), occupations: load('occupations') });
 
-eq(VERSION, 3, 'the code is at version 3');
+eq(VERSION, 4, 'the code is at version 4');
 eq(toBase64url(Uint8Array.from([0, 255, 16])), 'AP8Q', 'base64url of three bytes');
 eq([...fromBase64url('AP8Q')], [0, 255, 16], 'and back');
 eq([...fromBase64url(toBase64url(Uint8Array.from([1, 2])))], [1, 2], 'two bytes, no padding needed');
@@ -40,6 +40,17 @@ const typical = { families: ['2144', '3151'], specialties: ['2144.1.14', '2144.1
   eq(decodeProfile('AgMIAAAAAQAAAFoDAIEAAAADAAMKAhBtb29yaW5nIGVuZ2luZWVyD25hdmFsIGFyY2hpdGVjdAIBAAEIZHJlZGdpbmfxPQ', cats), normaliseProfile({ ...typical, specialties: [], place: null }), 'a version-2 code decodes to the same profile');
   eq(decodeProfile('AgQAAAAAAAAAAAAAAAAAAAAAAAAAWtg', cats).posted, 30, 'with its posted window, two bits then');
   eq([1, 3, 90].map(d => decodeProfile(encodeProfile({ posted: d }, cats), cats).posted), [1, 3, 90], 'version 3 has the day, three days and three months');
+  eq(decodeProfile('AwcIAAAAAAAAAAAAAAAAAAACAAMAAAAAAQZCaWxiYW8Q5v7bA7jg', cats), normaliseProfile({ families: ['2144'], countries: ['es', 'nl'], remote: true, posted: 7, place: { cc: 'es', name: 'Bilbao', lat: 43.26, lon: -2.93, km: 50 } }), 'a version-3 code decodes to the same profile, with no work mode and no pay');
+}
+{
+  // ➤ Version 4: the work modes and the pay.
+  const p = { families: ['2512'], countries: ['es'], modes: ['remote', 'hybrid'], minPay: 45, payStated: true, posted: 7, remote: true };
+  const back = decodeProfile(encodeProfile(p, cats), cats);
+  eq([back.modes, back.minPay, back.payStated, back.posted, back.remote], [['hybrid', 'remote'], 45, true, 7, true], 'work modes and pay ride along without disturbing the flags they share a byte with');
+  eq(MODES.map(m => decodeProfile(encodeProfile({ modes: [m] }, cats), cats).modes), [['onsite'], ['hybrid'], ['remote']], 'each mode alone');
+  eq(decodeProfile(encodeProfile({ minPay: 250 }, cats), cats).minPay, 250, 'a minimum over 127 thousand takes a second byte');
+  eq([normaliseProfile({ modes: ['remote', 'anywhere', 'remote'] }).modes, normaliseProfile({ minPay: -3 }).minPay, normaliseProfile({ minPay: 45.5 }).minPay, normaliseProfile({ minPay: 5000 }).minPay], [['remote'], 0, 0, 999], 'unknown modes drop out; a minimum is a whole number of thousands, up to 999');
+  ok(!isEmptyProfile({ modes: ['remote'] }) && !isEmptyProfile({ minPay: 30 }) && !isEmptyProfile({ payStated: true }), 'a work mode or a pay filter alone is a profile');
 }
 {
   const empty = encodeProfile({}, cats);

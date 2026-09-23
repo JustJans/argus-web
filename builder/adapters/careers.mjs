@@ -162,6 +162,7 @@ export function toRaw(job, site, url) {
     source: id, sourceId: url,
     title: job.title, company: job.company || site.name || '',
     location: job.location, country: job.country || site.country || '', city: '', remote: job.remote,
+    mode: job.mode || '', modeTag: job.modeTag || '', pay: job.pay || null,
     url, description: job.description, posted: job.posted, expires: job.expires, codes: {}, lang: site.lang || '',
   };
 }
