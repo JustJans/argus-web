@@ -18,7 +18,8 @@ eq(['Arbete på plats', 'unspecified', 'temporary', '', null].map(modeWord), [''
 eq([mostFlexible(['onsite', 'hybrid']), mostFlexible(['hybrid', 'remote', 'onsite']), mostFlexible([false, 'onsite']), mostFlexible([])], ['hybrid', 'remote', 'onsite', ''], 'several modes offered: the most flexible');
 eq([tagMode('We build ships. #LI-Hybrid #LI-JS1'), tagMode('#li-remote'), tagMode('#LI-On-site'), tagMode('#LI-DNI'), tagMode('')], ['hybrid', 'remote', 'onsite', '', ''], "LinkedIn's tags, in any case; other LinkedIn tags say nothing");
 eq(['Remote - Germany', 'Berlin (Hybrid)', 'Télétravail', 'Werk van thuis', 'Zdalnie', 'Home Office', 'Madrid, Spain'].map(placeMode), ['remote', 'hybrid', 'remote', 'remote', 'remote', 'remote', ''], "a location that names remote work, Indeed's words, accents or not");
-eq([workModeOf({ mode: 'hybrid', description: '#LI-Remote', location: 'Remote' }), workModeOf({ description: 'x #LI-Remote' }), workModeOf({ location: 'Berlin (Hybrid)' }), workModeOf({})], ['h', 'r', 'h', ''], "the source's field first, then a tag, then the location; nothing said is nothing");
+eq([workModeOf({ mode: 'hybrid', description: '#LI-Remote', location: 'Remote' }), workModeOf({ description: 'x #LI-Remote' }), workModeOf({ location: 'Berlin (Hybrid)' }), workModeOf({})], ['h', 'r', 'h', ''], "the source's field first, then a tag or the location; nothing said is nothing");
+eq([workModeOf({ modeTag: 'onsite', location: 'remote' }), workModeOf({ modeTag: 'hybrid', location: 'Berlin (Hybrid)' }), workModeOf({ modeTag: 'remote', location: 'Madrid, Spain' }), workModeOf({ mode: 'onsite', location: 'Remote' })], ['', 'h', 'r', 'o'], "a tag and a location that disagree say nothing for sure (a template's #LI-Onsite on a remote job); agreeing, or alone, they decide; the source's field overrules both");
 
 // ── The place reader agrees ─────────────────────────────────────────────
 const cc = compileCountries(JSON.parse(readFileSync(new URL('../catalogues/countries.json', import.meta.url), 'utf8')).countries);
@@ -43,11 +44,11 @@ eq(wd.map(r => r.mode), ['hybrid', 'onsite', ''], "Workday: remoteType in the em
 const ora = ATS.oracle.parse({ items: [{ requisitionList: [{ Id: '1', Title: 'Engineer', PrimaryLocation: 'Madrid, Spain', WorkplaceTypeCode: 'ORA_HYBRID' }, { Id: '2', Title: 'Engineer', PrimaryLocation: 'Madrid, Spain', WorkplaceTypeCode: 'ORA_REMOTE' }] }] }, 'x.oraclecloud.com/CX_1');
 eq(ora.map(r => [r.mode, r.remote]), [['hybrid', false], ['remote', true]], 'Oracle: WorkplaceTypeCode');
 const gh = ATS.greenhouse.parse({ jobs: [{ id: 1, title: 'Engineer', location: { name: 'Rotterdam' }, absolute_url: 'https://boards.greenhouse.io/x/jobs/1', updated_at: '2026-09-01T10:00:00Z', content: `&lt;p&gt;Ships.${' Long text.'.repeat(500)} #LI-Hybrid&lt;/p&gt;` }] }, 'x', 'Acme');
-eq([gh[0].mode, gh[0].description.includes('#LI-Hybrid')], ['hybrid', false], 'a tag at the end of a long advert is read before the text is cut');
+eq([gh[0].mode, gh[0].modeTag, workModeOf(gh[0]), gh[0].description.includes('#LI-Hybrid')], ['', 'hybrid', 'h', false], "a tag at the end of a long advert is read before the text is cut, apart from the source's own field");
 eq(jobtechRaw({ id: 1, headline: 'Ingenjör', workplace_model: { label: 'Hybridarbete' } }).mode, 'hybrid', 'JobTech: hybrid and remote are read');
 eq(jobtechRaw({ id: 2, headline: 'Ingenjör', workplace_model: { label: 'Arbete på plats' } }).mode, '', 'but not its default "on site"');
-const page = html => jobPostings(`<script type="application/ld+json">${html}</script>`, 'https://x.example/1')[0].mode;
-eq([page('{"@type":"JobPosting","title":"A","jobLocationType":"TELECOMMUTE"}'), page('{"@type":"JobPosting","title":"A","jobLocationType":["TELECOMMUTE"]}'), page('{"@type":"JobPosting","title":"A","description":"<p>Nice #LI-Hybrid</p>"}'), page('{"@type":"JobPosting","title":"A"}')], ['remote', 'remote', 'hybrid', ''], "employers' pages: TELECOMMUTE is fully remote, else a tag, else nothing");
+const page = html => workModeOf(jobPostings(`<script type="application/ld+json">${html}</script>`, 'https://x.example/1')[0]);
+eq([page('{"@type":"JobPosting","title":"A","jobLocationType":"TELECOMMUTE"}'), page('{"@type":"JobPosting","title":"A","jobLocationType":["TELECOMMUTE"]}'), page('{"@type":"JobPosting","title":"A","description":"<p>Nice #LI-Hybrid</p>"}'), page('{"@type":"JobPosting","title":"A"}')], ['r', 'r', 'h', ''], "employers' pages: TELECOMMUTE is fully remote, else a tag, else nothing");
 
 // ── Into the record ─────────────────────────────────────────────────────
 const rec = toRecord({ title: 'Mechanical Engineer', company: 'Acme', location: 'Delft, Netherlands', url: 'https://x.example/9', description: 'x', mode: 'hybrid', pay: { min: 3500, max: 4500, currency: 'EUR', period: 'month' } }, ['2144'], cc);

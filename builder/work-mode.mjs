@@ -1,8 +1,8 @@
 // ➤ Where the work is done: on site, hybrid or remote, or not said. Read from the advert's
 // ➤ source when it states it, else from a LinkedIn tag in the advert's text (#LI-Remote,
-// ➤ #LI-Hybrid, #LI-Onsite), else from a location that names remote work instead of a place.
-// ➤ The advert's wording is not read: word lists misread it about one time in six.
-// ➤ docs/research/work-mode.md has the sources.
+// ➤ #LI-Hybrid, #LI-Onsite) and a location that names remote work instead of a place, when
+// ➤ they do not contradict each other. The advert's wording is not read: word lists misread
+// ➤ it about one time in six. docs/research/work-mode.md has the sources.
 import { fold } from 'argus/server-bot/text.mjs';
 
 // ➤ The sources' words for the three, reduced to their letters: "On Site", "on-site",
@@ -34,10 +34,16 @@ export function placeMode(location) {
   return REMOTE_PLACE.test(f) ? 'remote' : HYBRID_PLACE.test(f) ? 'hybrid' : '';
 }
 
-// ➤ The mode of a RawOffer: its source's word (`mode`), else a tag in its text, else its
-// ➤ location. The letter the records carry: o, h or r; '' when nothing says.
+// ➤ The mode of a RawOffer: its source's own field (`mode`) when it has one. Else the LinkedIn
+// ➤ tag (`modeTag`, read by the adapter in the whole text, or found in the text kept) and the
+// ➤ location: one of them alone decides, and when they disagree ("#LI-Onsite" on an advert
+// ➤ whose location is "Remote", a template's tag) the advert says nothing for sure. The
+// ➤ letter the records carry: o, h or r; '' when nothing says.
 const LETTER = { onsite: 'o', hybrid: 'h', remote: 'r' };
 export function workModeOf(raw) {
-  const mode = modeWord(raw.mode) || tagMode(raw.description) || placeMode(raw.location);
-  return LETTER[mode] || '';
+  const field = modeWord(raw.mode);
+  if (field) return LETTER[field];
+  const tag = modeWord(raw.modeTag) || tagMode(raw.description);
+  const place = placeMode(raw.location);
+  return tag && place && tag !== place ? '' : LETTER[tag || place] || '';
 }

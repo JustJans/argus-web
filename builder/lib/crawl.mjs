@@ -178,7 +178,7 @@ export function jobPostings(html, pageUrl) {
         url: str(node.url) || pageUrl, description: text(node.description || ''),
         posted: day(str(node.datePosted)), expires: day(str(node.validThrough)),
         remote: telecommute || /remote/i.test(location),
-        mode: telecommute ? 'remote' : tagMode(typeof node.description === 'string' ? node.description : ''),
+        mode: telecommute ? 'remote' : '', modeTag: tagMode(typeof node.description === 'string' ? node.description : ''),
         pay: salaryOf(node),
       });
     }

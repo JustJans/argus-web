@@ -48,11 +48,13 @@ source's own data:
 
 1. **Three values and "not said"**: on-site, hybrid, remote. An advert that says nothing is
    unknown, never assumed.
-2. **Where the value comes from, in order:**
-   1. the source's own field, as in the table;
-   2. a LinkedIn tag in the advert's text (`#LI-Remote`, `#LI-Hybrid`, `#LI-Onsite`);
-   3. the location field, when it names remote work instead of a place ("Remote", "Home Office",
-      "Télétravail", "Teletrabajo"…, from Indeed's location words).
+2. **Where the value comes from:**
+   1. the source's own field, as in the table, which overrules the rest;
+   2. otherwise a LinkedIn tag in the advert's text (`#LI-Remote`, `#LI-Hybrid`, `#LI-Onsite`)
+      and the location field when it names remote work instead of a place ("Remote", "Home
+      Office", "Télétravail", "Teletrabajo"…, from Indeed's location words). Either alone
+      decides; when they disagree, the advert says nothing for sure. The test build had one:
+      a job located "remote" carried its template's `#LI-Onsite`.
 3. **Not used, and why.** The description's wording, because of the error rates above. JobTech's
    "Arbete på plats": it is the form's default, set on adverts whose text says remote or hybrid.
    Ashby's `isRemote`: it is also true for hybrid jobs.
