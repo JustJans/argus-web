@@ -8,6 +8,7 @@
 
 cadence_h:
   default: 24
+  barren: 168           # ➤ an employer's site whose vacancy pages never carry a JobPosting block
 
 # ➤ What one hourly run may spend.
 budget:

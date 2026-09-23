@@ -23,6 +23,18 @@ export const licence = {
 
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 const PAGES_A_SITE = 200;          // ➤ vacancy pages read in one pass, when the budget allows
+// ➤ A vacancy page that did not answer (a timeout, a server error) is tried again in the next
+// ➤ passes, three in all, and a site with five such pages in one pass is left until the next
+// ➤ one: Apache Nutch's defaults (db.fetch.retry.max, fetcher.max.exceptions.per.queue).
+const PAGE_TRIES = 3;
+const FAILURES_A_PASS = 5;
+// ➤ A site whose vacancy pages never carry a JobPosting block (fifty answered, not one with it)
+// ➤ is barren: a pass reads only a few new pages, in case it starts publishing the block, and
+// ➤ the crawler comes back weekly (cadence_h.barren in config/crawl.yml). Crawlers read less
+// ➤ often what brings nothing (docs/research/faster-runs.md).
+const BARREN_PAGES = 50;
+const BARREN_PROBE = 10;
+export const isBarren = pages => { const answered = Object.values(pages || {}).filter(p => !p.failed); return answered.length >= BARREN_PAGES && !answered.some(p => p.job); };
 const SITEMAP_CAP = 6;             // ➤ child sitemaps read from an index
 const LISTING_PAGES = 10;          // ➤ pages of a listing followed through its "next" link
 const DEEPER_A_SITE = 60;         // ➤ vacancy pages followed from a list the site names
@@ -170,8 +182,9 @@ export function toRaw(job, site, url) {
 // ➤ One pass over one site: where to read from, what it lists now, the pages that are new,
 // ➤ and the whole list of adverts it has at this moment. `store` is the site's own file
 // ➤ (`resolved` and `pages` are kept between passes); `budget` is what the run may still
-// ➤ spend (`left` pages in all, `pagesASite` on this one).
-export async function readSite(given, store, budget = {}, log = () => {}) {
+// ➤ spend (`left` pages in all, `pagesASite` on this one); `until`, when to stop reading pages
+// ➤ (the pages left are read in the next pass).
+export async function readSite(given, store, budget = {}, log = () => {}, until = Infinity) {
   const opts = { tries: 1, timeoutMs: given.found ? 6000 : 12000, gapMs: 400 };
   const site = await resolve(given, store, opts);
   // ➤ A feed (SuccessFactors' jobs.xml) is the whole list with the adverts' text: one read.
@@ -187,17 +200,18 @@ export async function readSite(given, store, budget = {}, log = () => {}) {
   if (robots.delay) opts.gapMs = Math.max(opts.gapMs, Math.min(robots.delay, 10) * 1000);
   const items = (await listed(site, opts)).filter(i => allowed(robots, new URL(i.url).pathname));
   const pages = (store.pages ||= {});
-  const wanted = items.filter(i => !pages[i.url] || (i.lastmod && pages[i.url].lastmod && i.lastmod > pages[i.url].lastmod));
-  const canRead = Math.max(0, Math.min(budget.pagesASite ?? PAGES_A_SITE, budget.left ?? PAGES_A_SITE));
+  const wanted = items.filter(i => { const p = pages[i.url]; return !p || (p.failed && p.failed < PAGE_TRIES) || (i.lastmod && p.lastmod && i.lastmod > p.lastmod); });
+  const canRead = Math.max(0, Math.min(isBarren(pages) ? BARREN_PROBE : budget.pagesASite ?? PAGES_A_SITE, budget.left ?? PAGES_A_SITE));
   // ➤ A sitemap often names the careers page itself ("/jobs", "/kariera") and not the
   // ➤ vacancies on it. A page with no JobPosting block that links to several vacancy pages of
   // ➤ its own site is such a list, and those pages are read too: one step further, no more.
   const queue = wanted.sort((a, b) => String(b.lastmod).localeCompare(String(a.lastmod))).slice(0, canRead).map(i => ({ url: i.url, lastmod: i.lastmod, from: '' }));
   const seen = new Set([...items.map(i => i.url), ...queue.map(q => q.url)]);
-  let fetched = 0, deeper = 0;
+  let fetched = 0, deeper = 0, failures = 0;
   const readNow = new Set();
   while (queue.length && fetched < canRead) {
     if (budget.left !== undefined && budget.left <= 0) break;
+    if (Date.now() >= until) break;
     if (budget.left !== undefined) budget.left--;
     const q = queue.shift();
     fetched++;
@@ -214,7 +228,15 @@ export async function readSite(given, store, budget = {}, log = () => {}) {
           queue.push({ url: u, lastmod: '', from: q.url });
         }
       }
-    } catch { pages[q.url] = { lastmod: q.lastmod, job: null, ...(q.from ? { from: q.from } : {}) }; }
+    } catch (e) {
+      // ➤ A host that says "too many requests" is left alone until the next pass. A page that
+      // ➤ is not there or not for us (404, 410, 403) is an answer: no advert. One that did not
+      // ➤ answer is not a page without an advert, and is tried again.
+      if (e.status === 429) { readNow.delete(q.url); break; }
+      const answered = e.status >= 400 && e.status < 500 && e.status !== 408;
+      pages[q.url] = { lastmod: q.lastmod, job: null, ...(answered ? {} : { failed: (pages[q.url]?.failed || 0) + 1 }), ...(q.from ? { from: q.from } : {}) };
+      if (!answered && ++failures >= FAILURES_A_PASS) break;
+    }
   }
   // ➤ Alive: what the list still names, and what a page it still names led to.
   const listedNow = new Set(items.map(i => i.url));
@@ -231,8 +253,10 @@ export async function readSite(given, store, budget = {}, log = () => {}) {
   // ➤ A site whose pages were all left unread because the run had spent its budget has not
   // ➤ been read at all: it must come back at once, not tomorrow.
   const postponed = !!wanted.length && !fetched && (budget.left ?? 1) <= 0;
-  // ➤ The pages it listed and could not read yet: while any are left, a page read for the first
-  // ➤ time may be old, so its day is not taken for the day it appeared.
-  const backlog = wanted.filter(i => !readNow.has(i.url)).length;
-  return { adverts, listed: items.length, fetched, postponed, backlog, blocks: read ? Object.values(pages).some(p => p.job) : true };
+  // ➤ The pages it listed and could not read yet (not reached, or not answering and to be tried
+  // ➤ again): while any are left, a page read for the first time may be old, so its day is not
+  // ➤ taken for the day it appeared.
+  const settled = u => readNow.has(u) && (!pages[u]?.failed || pages[u].failed >= PAGE_TRIES);
+  const backlog = wanted.filter(i => !settled(i.url)).length;
+  return { adverts, listed: items.length, fetched, postponed, backlog, blocks: read ? Object.values(pages).some(p => p.job) : true, barren: isBarren(pages) };
 }

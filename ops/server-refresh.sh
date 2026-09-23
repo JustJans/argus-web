@@ -15,6 +15,8 @@ if [ ! -d node_modules ] || { [ "$before" != "$after" ] && ! git diff --quiet "$
   flock -w 900 builder/state/crawl.lock npm ci --silent --no-audit --no-fund
 fi
 echo "[$(date -u +%FT%TZ)] refresh at $(git rev-parse --short HEAD)"
+started=$(date +%s)
 node builder/build-pile.mjs --out builder/out --explain
 node builder/build-site.mjs --data builder/out --out site
 node builder/publish.mjs
+echo "[$(date -u +%FT%TZ)] published in $(( $(date +%s) - started )) s"

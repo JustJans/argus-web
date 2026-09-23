@@ -33,14 +33,19 @@ const cfg = loadCrawlConfig();
 export const cadenceMs = (src, c = cfg) => (c.cadence_h[src.group] ?? c.cadence_h[src.kind] ?? c.cadence_h.default) * 3600_000;
 // ➤ Half an hour of jitter so the sources a run reads together do not come back together.
 const jitter = () => Math.round((Math.random() - 0.5) * 60 * 60_000);
+// ➤ After a failure the wait is drawn between half and the whole of it ("equal jitter", AWS
+// ➤ Architecture Blog, 2015): sites that failed together, often on one platform that was
+// ➤ busy, do not all come back in one run and fail together again.
+const spread = ms => Math.round(ms / 2 + Math.random() * ms / 2);
 
-// ➤ When a source is due again: after a good pass, its cadence; after a failure, longer each
-// ➤ time, and parked when it has failed for weeks. A source never read is due now.
-export function nextPass(src, entry, { ok, at = Date.now(), c = cfg } = {}) {
-  if (ok) return at + cadenceMs(src, c) + jitter();
+// ➤ When a source is due again: after a good pass, its cadence (a barren site's, a week);
+// ➤ after a failure, longer each time, and parked when it has failed for weeks. A source never
+// ➤ read is due now.
+export function nextPass(src, entry, { ok, at = Date.now(), c = cfg, barren = false } = {}) {
+  if (ok) return at + (barren ? (c.cadence_h.barren ?? 168) * 3600_000 : cadenceMs(src, c)) + jitter();
   const fails = (entry?.fails || 0) + 1;
-  if (fails >= c.park_after_fails) return at + 7 * 24 * 3600_000;
-  return at + (c.backoff_h[Math.min(fails, c.backoff_h.length) - 1] * 3600_000);
+  if (fails >= c.park_after_fails) return at + spread(7 * 24 * 3600_000);
+  return at + spread(c.backoff_h[Math.min(fails, c.backoff_h.length) - 1] * 3600_000);
 }
 
 // ➤ A store filled by hand or by a migration already knows when each source was read: its
@@ -100,8 +105,9 @@ async function pass(src, st, budget, tally) {
     remember(before, adverts, { knewAll: readAll(src, data), today: day(started) });
     Object.assign(data, { v: 1, group: src.group, key: src.key, kind: src.kind, adverts, pass: { started: new Date(started).toISOString(), ended: new Date().toISOString(), ok: true, seconds, ...meta } });
     saveSource(data);
-    Object.assign(entry, { last: data.pass.ended, ok: true, n: adverts.length, seconds, fails: 0, err: '', next: nextPass(src, entry, { ok: true }) });
+    Object.assign(entry, { last: data.pass.ended, ok: true, n: adverts.length, seconds, fails: 0, err: '', next: nextPass(src, entry, { ok: true, barren: !!meta.barren }) });
     if (meta.blocks === false) entry.blocks = false; else delete entry.blocks;
+    if (meta.barren) entry.barren = true; else delete entry.barren;
     tally.read++; tally.added += diff.added; tally.gone += diff.gone;
     (tally.groups[src.group] ||= { read: 0, failed: 0, added: 0, gone: 0, adverts: 0 });
     tally.groups[src.group].read++; tally.groups[src.group].added += diff.added; tally.groups[src.group].gone += diff.gone; tally.groups[src.group].adverts += adverts.length;
@@ -230,8 +236,9 @@ function dailyLine(st) {
   const passed = entries.filter(([, e]) => e.last && Date.now() - Date.parse(e.last) < 24 * 3600_000).length;
   const failing = entries.filter(([, e]) => (e.fails || 0) >= 3).length;
   const overdue = entries.filter(([, e]) => e.next && e.next < Date.now() - 12 * 3600_000).length;
+  const barren = entries.filter(([, e]) => e.barren).length;
   const oldest = entries.filter(([, e]) => e.last).sort((a, b) => Date.parse(a[1].last) - Date.parse(b[1].last))[0];
-  log(`DAY ${today} · ${passed} of ${entries.length} sources passed in 24 h · ${st.totals.adverts} adverts in ${st.totals.sources} files (${Math.round(st.totals.bytes / 1e6)} MB) · ${failing} failing · ${overdue} overdue${oldest ? ` · oldest pass ${hours(Date.now() - Date.parse(oldest[1].last))} h ${oldest[0]}` : ''}`);
+  log(`DAY ${today} · ${passed} of ${entries.length} sources passed in 24 h (${barren} barren, read weekly) · ${st.totals.adverts} adverts in ${st.totals.sources} files (${Math.round(st.totals.bytes / 1e6)} MB) · ${failing} failing · ${overdue} overdue${oldest ? ` · oldest pass ${hours(Date.now() - Date.parse(oldest[1].last))} h ${oldest[0]}` : ''}`);
   if (yesterday.adverts && st.totals.adverts < yesterday.adverts * 0.7) log(`ALERT the store shrank: ${yesterday.adverts} → ${st.totals.adverts} adverts`);
   if (overdue > entries.length * 0.1) log(`ALERT ${overdue} sources are more than 12 h overdue`);
   st.day = today;
@@ -256,14 +263,15 @@ function printStatus() {
   const byGroup = {};
   for (const src of sources) {
     const e = st.sources?.[sourceId(src)];
-    const g = (byGroup[src.group] ||= { n: 0, read: 0, failing: 0, adverts: 0, dueNow: 0 });
+    const g = (byGroup[src.group] ||= { n: 0, read: 0, failing: 0, barren: 0, adverts: 0, dueNow: 0 });
     g.n++;
     if (e?.last) { g.read++; g.adverts += e.n || 0; }
     if ((e?.fails || 0) >= 3) g.failing++;
+    if (e?.barren) g.barren++;
     if (!e || (e.next || 0) <= now) g.dueNow++;
   }
   for (const [g, v] of Object.entries(byGroup).sort((a, b) => b[1].n - a[1].n)) {
-    console.log(`  ${g.padEnd(16)} ${String(v.n).padStart(6)} sources · ${String(v.read).padStart(6)} read · ${String(v.adverts).padStart(7)} adverts · ${v.failing} failing · ${v.dueNow} due now`);
+    console.log(`  ${g.padEnd(16)} ${String(v.n).padStart(6)} sources · ${String(v.read).padStart(6)} read · ${String(v.adverts).padStart(7)} adverts · ${v.failing} failing${v.barren ? ` · ${v.barren} barren` : ''} · ${v.dueNow} due now`);
   }
   const paused = Object.entries(st.groups || {}).filter(([, v]) => (v.pausedUntil || 0) > now);
   for (const [g, v] of paused) console.log(`  ${g}: waiting until ${new Date(v.pausedUntil).toISOString().slice(11, 16)} ("too many requests")`);
