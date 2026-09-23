@@ -8,7 +8,7 @@ import { fold } from 'argus/server-bot/text.mjs';
 
 const letters = s => fold(String(s || '')).replace(/[^a-z0-9]/g, '');
 // ➤ What a careers site calls itself rather than the employer.
-const SITE_WORDS = /\s*\b(?:students?|graduates?|and|professionals?|careers?|external|ext|experienced|staff|jobs|hiring|portal|site|campus|internal)\b\s*/gi;
+const SITE_WORDS = /\s*\b(?:students?|graduates?|professionals?|careers?|external|ext|experienced|staff|jobs|hiring|portal|site|campus|internal)\b\s*/gi;
 const GENERIC = /^(?:corporate|global|international|experienced|external|careers?|jobs|students?|graduates?|professionals?|campus|internal|hiring|talent|us|uk|eu|emea|europe)$/i;
 const COUNTRIES = new Set(['germany', 'deutschland', 'poland', 'spain', 'france', 'italy', 'netherlands', 'belgium', 'sweden', 'norway', 'denmark', 'finland', 'austria', 'switzerland', 'portugal', 'ireland', 'united kingdom', 'uk', 'czechia', 'czech republic', 'hungary', 'romania', 'greece', 'europe', 'emea', 'usa', 'united states', 'canada', 'india', 'mexico', 'brazil', 'china', 'japan']);
 // ➤ Legal forms and what they leave dangling, taken off the end.
@@ -51,7 +51,9 @@ export function brandName(current, legal, slug) {
   const key = raw.replace(/(?:corporation|corp|group|hr|careers|career|jobs|inc|external|ext)$/, '') || raw;
   const words = legalWords(legal);
   // ➤ The name the site gave, without the words sites add ("TRUMPF Students" → TRUMPF).
-  const mended = tidy(now.replace(SITE_WORDS, ' ').replace(/\s+\d+$/, '').split(/\s+/));
+  // ➤ An "and" the site's words leave hanging goes with them ("Students and Graduates"); one
+  // ➤ inside a name stays ("Washington and Lee University").
+  const mended = tidy(now.replace(SITE_WORDS, ' ').replace(/\s+\d+$/, '').split(/\s+/)).replace(/^(?:and|&)(?:\s+|$)|\s+(?:and|&)$/gi, '');
   const broken = !mended || GENERIC.test(mended) || COUNTRIES.has(mended.toLowerCase());
   // ➤ The hunter names a board after the employer's domain, one glued word ("Jnj",
   // ➤ "Lloydsbankinggroup"): that is an address too.
