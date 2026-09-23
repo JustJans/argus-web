@@ -92,6 +92,13 @@ const ENGLISH = {
   3512: ['it support engineer', 'it support technician', 'helpdesk technician', 'service desk analyst'],
   3513: ['network technician', 'systems technician', 'it systems technician'],
 };
+// ➤ The French for a construction site's manager, which ESCO lacks: INSEE files "conducteur de
+// ➤ travaux" and "conducteur de chantier" together (PCS 481a, the technical and administrative
+// ➤ running of one or more sites), and ISCO-08's construction supervisors (3123) take "site
+// ➤ manager (construction)" among their examples. docs/research/french-site-managers.md.
+const FRENCH = {
+  3123: ['conducteur de travaux', 'conductrice de travaux', 'conducteur de chantier', 'conductrice de chantier'],
+};
 const SPANISH = {
   3123: ['jefe de obra', 'jefa de obra'],
   2512: ['ingeniero de software', 'ingeniera de software', 'ingeniero informático', 'ingeniera informática', 'desarrollador de software', 'desarrolladora de software', 'programador', 'programadora', 'desarrollador', 'desarrolladora'],
@@ -110,6 +117,7 @@ for (const g of GROUPS) {
       const extra = {};
       if (ENGLISH[code]) extra.en = ENGLISH[code];
       if (SPANISH[code]) extra.es = SPANISH[code];
+      if (FRENCH[code]) extra.fr = FRENCH[code];
       if (CATALAN[code]) extra.ca = CATALAN[code];
       if (Object.keys(extra).length) f.extra_terms = extra;
       families.push(f);
