@@ -8,7 +8,7 @@ import { salaryOf, jobPostings } from '../builder/lib/crawl.mjs';
 import { toRaw as mpsvRaw } from '../builder/adapters/mpsv.mjs';
 import { toRaw as uztRaw } from '../builder/adapters/uzt.mjs';
 import { nvaPay } from '../builder/adapters/nva.mjs';
-import { parseFeinaActiva } from '../builder/adapters/feinaactiva.mjs';
+import { parseFeinaActiva, payOf as catalanPay } from '../builder/adapters/feinaactiva.mjs';
 
 const { eq, ok, done } = harness('pay');
 const RATES = { EUR: 1, GBP: 0.8578, USD: 1.1463, CZK: 24.344, PLN: 4.348 };
@@ -28,6 +28,9 @@ eq(readPay({ min: 195, max: 195, currency: 'CZK', period: 'hour', hoursPerWeek: 
 eq(readPay({ min: 195, currency: 'CZK', period: 'hour', hoursPerWeek: 20 }, RATES).pa, 8300, 'half the hours, half the year');
 eq(readPay({ min: 25, max: 30, currency: 'EUR', period: 'hourly', partTime: true }), { p: [25, 30, 'EUR', 'h'] }, 'part-time by the hour: shown, but no year (the hours are unknown)');
 eq(readPay({ min: 1200, currency: 'EUR', period: 'month', partTime: true }).pa, 14400, 'part-time by the month: a year is twelve of them');
+eq(readPay({ min: 3500, currency: 'CZK', period: 'month', hoursPerWeek: 4 }, RATES), { p: [3500, 3500, 'CZK', 'm'], pa: 1700 }, 'a small pay for four hours a week is checked as the full-time pay it amounts to, and keeps its real year');
+eq([readPay({ min: 3500, currency: 'CZK', period: 'month' }, RATES), readPay({ min: 3500, currency: 'CZK', period: 'month', hoursPerWeek: 1 }, RATES)], [null, null], 'without the hours, or with fewer than four, it is too small a year: refused');
+eq(readPay({ min: 22, currency: 'EUR', period: 'hour', partTime: true, hoursPerWeek: 20 }).pa, 22900, 'part-time by the hour with its hours: a year after all');
 eq(readPay({ max: 60000, currency: 'EUR', period: 'YEAR' }).p, [60000, 60000, 'EUR', 'y'], 'one figure is a point');
 eq(readPay({ min: 3000, max: 3000, currency: 'EUR', period: 'YEAR' }), null, 'a month labelled as a year: under the believable year, refused');
 eq(readPay({ min: 55000, max: 65000, currency: 'EUR', period: 'MONTH' }), null, 'a year labelled as a month: over it, refused');
@@ -68,7 +71,7 @@ eq(salaryOf({ baseSalary: { '@type': 'MonetaryAmount', currency: 'EUR', value: {
 eq(salaryOf({ baseSalary: { currency: 'GBP', value: 42000, unitText: 'YEAR' } }), { min: 42000, max: 42000, currency: 'GBP', period: 'YEAR', partTime: false }, 'a bare number with the period on the salary');
 eq(salaryOf({ salaryCurrency: 'PLN', baseSalary: { value: { value: 12000, unitText: 'MONTH' } } }), { min: 12000, max: 12000, currency: 'PLN', period: 'MONTH', partTime: false }, 'the currency on the posting');
 eq(salaryOf({ baseSalary: { currency: 'EUR', value: { minValue: 20, maxValue: 25, unitText: 'HOUR' } }, employmentType: ['PART_TIME'] }).partTime, true, 'part-time when the posting says only that');
-eq([salaryOf({}), salaryOf({ baseSalary: 'Competitive' }), salaryOf({ baseSalary: { currency: 'EUR' } })], [null, null, null], 'no salary, a word, or a salary with no amount: nothing');
+eq([salaryOf({}), salaryOf({ baseSalary: 'Competitive' }), salaryOf({ baseSalary: { currency: 'EUR' } }), salaryOf({ baseSalary: { currency: 'EUR', value: { minValue: null, maxValue: null, unitText: 'YEAR' } } })], [null, null, null, null], 'no salary, a word, or a salary with no amount (an empty template): nothing');
 const page = jobPostings('<script type="application/ld+json">{"@type":"JobPosting","title":"Site Engineer","baseSalary":{"@type":"MonetaryAmount","currency":"EUR","value":{"@type":"QuantitativeValue","minValue":3000,"maxValue":3800,"unitText":"MONTH"}}}</script>', 'https://x.example/1')[0];
 eq(readPay(page.pay).p, [3000, 3800, 'EUR', 'm'], 'a page read end to end');
 
@@ -83,6 +86,7 @@ eq(uztRaw({ darbo_vietos_id: 'DV-2', profesijos_kodas: '214201', profesijos_pare
 eq([nvaPay('2300.000', '2600.000', 'Viena vesela slodze'), nvaPay('4.690', '4.690', 'Viena vesela slodze')], [{ min: 2300, max: 2600, currency: 'EUR', period: 'month' }, { min: 4.69, max: 4.69, currency: 'EUR', period: 'hour' }], 'Latvia, full time: over the minimum monthly wage a month, under €50 an hour');
 eq([nvaPay('300', '400', 'Viena vesela slodze'), nvaPay('900', '1000', 'Nepilna slodze'), nvaPay('', '', 'Viena vesela slodze')], [null, null, null], 'in between, part time, or empty: not read');
 const ca = parseFeinaActiva('<ads><ad><id>FA1</id><url>https://feinaactiva.gencat.cat/search/offers/detail/FA1</url><title>Enginyer</title><status>PUBLISHED</status><salaryMin>1416</salaryMin><salaryMax>1550</salaryMax></ad><ad><id>FA2</id><url>https://feinaactiva.gencat.cat/search/offers/detail/FA2</url><title>Tècnic</title><status>PUBLISHED</status></ad></ads>');
-eq(ca.map(r => r.pay), [{ min: '1416', max: '1550', currency: 'EUR', period: 'month' }, null], 'Catalonia: a monthly gross range, or nothing');
+eq(ca.map(r => r.pay), [{ min: '1416', max: '1550', currency: 'EUR', period: 'month', hoursPerWeek: 0, partTime: false }, null], 'Catalonia: a monthly gross range, or nothing');
+eq([catalanPay('900', '900', 'Jornada parcial (20 hores - jornada setmanal)'), catalanPay('600', '', 'Jornada parcial matí (3 hores - jornada diaria)')].map(p => [p.hoursPerWeek, p.partTime]), [[20, true], [15, true]], 'and the part-time hours its own field states, a week or a day of five');
 
 done();

@@ -38,12 +38,17 @@ function amount(value) {
 // ➤ pay of €25,000 or more labelled as a month's rises over €300,000.
 const YEAR_EUR = { least: 7000, most: 300000 };
 const WIDEST_RANGE = 5;
+// ➤ A full-time week; a part-time pay with its weekly hours stated is checked as the full-time
+// ➤ pay it amounts to (3,500 koruna a month for four hours a week is a real pay). Fewer than
+// ➤ four hours a week is taken for a slip of the source's form.
+const FULL_TIME_HOURS = 40;
+const FEWEST_HOURS = 4;
 
 // ➤ { min, max, currency, period } as the source gives them → { p, pa } or null.
 // ➤ p: [min, max, currency, period letter], the advert's own figures, for the card.
 // ➤ pa: the top of the range in euros a year, for the filter. An hourly pay uses the weekly
-// ➤ hours when the source states them; a part-time advert paid by the hour, day or week gets
-// ➤ no yearly figure (its hours are unknown). `rates` are the ECB's, units for one euro.
+// ➤ hours when the source states them; a part-time advert paid by the hour, day or week with
+// ➤ no hours stated gets no yearly figure. `rates` are the ECB's, units for one euro.
 export function readPay({ min, max, currency, period, hoursPerWeek = 0, partTime = false } = {}, rates = { EUR: 1 }) {
   const cur = currencyOf(currency);
   const per = periodOf(period);
@@ -54,10 +59,12 @@ export function readPay({ min, max, currency, period, hoursPerWeek = 0, partTime
   if (high < low || high > low * WIDEST_RANGE) return null;
   const rate = cur === 'EUR' ? 1 : rates[cur];
   if (!rate) return null;
-  const units = per === 'h' && hoursPerWeek > 0 ? hoursPerWeek * 52 : PER_YEAR[per];
+  const hours = hoursPerWeek >= FEWEST_HOURS && hoursPerWeek <= 60 ? hoursPerWeek : 0;
+  const units = per === 'h' && hours ? hours * 52 : PER_YEAR[per];
   const yearLow = low * units / rate, yearHigh = high * units / rate;
-  if (yearLow < YEAR_EUR.least || yearHigh > YEAR_EUR.most) return null;
+  const fullTime = hours ? Math.max(1, FULL_TIME_HOURS / hours) : 1;
+  if (yearLow * fullTime < YEAR_EUR.least || yearHigh > YEAR_EUR.most) return null;
   const pay = { p: [low, high, cur, per] };
-  if (!(partTime && 'hdw'.includes(per))) pay.pa = Math.round(yearHigh / 100) * 100;
+  if (!(partTime && 'hdw'.includes(per)) || (per === 'h' && hours)) pay.pa = Math.round(yearHigh / 100) * 100;
   return pay;
 }

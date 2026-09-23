@@ -130,7 +130,7 @@ export function salaryOf(node) {
   if (!base || typeof base !== 'object') return null;
   const amount = base.value && typeof base.value === 'object' ? base.value : { value: base.value };
   const min = amount.minValue ?? amount.value, max = amount.maxValue ?? amount.value;
-  if (min === undefined && max === undefined) return null;
+  if (min == null && max == null) return null;
   return { min, max, currency: base.currency || node.salaryCurrency || '', period: amount.unitText || base.unitText || '', partTime: isPartTime(node.employmentType) };
 }
 
