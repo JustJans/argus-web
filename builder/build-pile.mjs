@@ -16,6 +16,7 @@ import { compileTowns, locate } from './towns.mjs';
 import { loadCache, saveCache, translateTitles } from './translate.mjs';
 import { eachSource } from './store.mjs';
 import { licenceFor } from './sources.mjs';
+import { exchangeRates } from './exchange-rates.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 // ➤ Keys for the sources that need one (the intermediaries): builder/.env, one KEY=VALUE per
@@ -51,6 +52,9 @@ const europe = new Set(countries.map(c => c.iso));
 
 const startedAt = new Date();
 const log = line => console.log(`[${new Date().toISOString().slice(11, 19)}] ${line}`);
+// ➤ The ECB's euro rates, for pay in other currencies (one small file; the last one kept when
+// ➤ the ECB cannot be reached).
+const rates = await exchangeRates(join(ROOT, 'builder', 'state', 'ecb-rates.xml'));
 
 const items = [];
 const dropped = [];
@@ -81,7 +85,7 @@ for (const data of eachSource()) {
     if (!fam.length) { counts.outsideVertical++; drop('OUTSIDE VERTICAL', raw); continue; }
     const why = hygieneReason(raw);
     if (why) { counts.hygiene++; drop(`HYGIENE ${why}`, raw); continue; }
-    const rec = toRecord(raw, fam, cc, screens);
+    const rec = toRecord(raw, fam, cc, screens, rates.rates);
     if (occupations.length) rec.e = occupations;
     if (rec.x && rec.x < startedAt.toISOString().slice(0, 10)) { counts.stale++; drop('EXPIRED', raw); continue; }
     if (rec.cc && rec.cc !== 'xx' && !europe.has(rec.cc)) { counts.outsideEurope++; drop('OUTSIDE EUROPE', raw); continue; }
@@ -119,6 +123,7 @@ const perCountry = {};
 for (const rec of kept) perCountry[rec.cc || 'zz'] = (perCountry[rec.cc || 'zz'] || 0) + 1;
 const viaSources = new Set(Object.entries(sources).filter(([, v]) => v.via).map(([k]) => k));
 const viaCount = kept.filter(rec => viaSources.has(rec.s)).length;
+const withPay = kept.filter(rec => rec.p).length, withMode = kept.filter(rec => rec.w).length;
 
 // ➤ The last pile, to see whether this one is a fall rather than a build.
 const before = (() => { try { return JSON.parse(readFileSync(join(OUT, 'index.json'), 'utf8')); } catch { return null; } })();
@@ -132,7 +137,7 @@ const index = {
   v: 1, generated_at: generatedAt, crawled_at: crawledAt || generatedAt,
   expires_at: new Date(Date.parse(crawledAt || generatedAt) + 48 * 3600 * 1000).toISOString(), catalogue_v: 2,
   families: familiesIndex, latest, sources,
-  counts: { offers: kept.length, found: counts.found, by_country: perCountry, via: viaCount, sources: sourceFiles, companies: boardSources, on_map: onMap.placed },
+  counts: { offers: kept.length, found: counts.found, by_country: perCountry, via: viaCount, sources: sourceFiles, companies: boardSources, on_map: onMap.placed, with_pay: withPay, with_mode: withMode },
   status: { ok: kept.length > 0, seconds: Math.round((Date.now() - startedAt) / 1000) },
 };
 mkdirSync(OUT, { recursive: true });
@@ -146,4 +151,5 @@ log(`store: ${sourceFiles} sources, newest pass ${crawledAt || 'never'}`);
 log(`found ${counts.found} · outside vertical ${counts.outsideVertical} · outside Europe ${counts.outsideEurope} · hygiene ${counts.hygiene} · no link ${counts.noLink} · stale ${counts.stale} · duplicates ${sameUrl + sameRole}`);
 log(`kept ${kept.length} offers in ${Object.keys(files).length} shards → ${OUT}`);
 log(`on the map: ${onMap.placed} offers in ${onMap.list.length} towns`);
+log(`pay stated on ${withPay} offers (ECB rates of ${rates.day || 'no day: only pay in euros read'}); work mode stated on ${withMode}`);
 if (kept.length === 0) { log('nothing usable in the store: not publishing'); process.exit(1); }

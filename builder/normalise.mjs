@@ -1,13 +1,16 @@
 // ➤ From a source's RawOffer to the record the site serves: a stable id, the country and city
-// ➤ read off the location, the years, degrees and languages the text demands, and the families
-// ➤ the gate assigned. None of the advert's own text travels: the site shows the title, the
-// ➤ employer and the place, and links to the page for the rest.
+// ➤ read off the location, the years, degrees and languages the text demands, the work mode
+// ➤ and the pay the source states, and the families the gate assigned. None of the advert's
+// ➤ own text travels: the site shows the title, the employer and the place, and links to the
+// ➤ page for the rest.
 import { createHash } from 'crypto';
 import { fold } from 'argus/server-bot/text.mjs';
 import { extractRequiredYears } from 'argus/server-bot/requirements.mjs';
 import { normalizeLocation } from 'argus/server-bot/scan.mjs';
 import { cleanTitle } from 'argus/server-bot/notify.mjs';
 import { requiredDegrees, requiredLanguages } from './screens.mjs';
+import { namesRemoteWork, workModeOf } from './work-mode.mjs';
+import { readPay } from './pay.mjs';
 
 // ➤ The address without its campaign tail, trailing slash or fragment: what makes two
 // ➤ sightings of the same advert compare equal. Not Argus's normUrl, on purpose: that one
@@ -113,7 +116,7 @@ export function placeOf(location, compiled) {
     return state ? { cc: state, city } : { cc: c.iso, city: cityIn(raw, c) };
   }
   if ([...codes].some(c => US_STATES.has(c))) return { cc: 'us', city };
-  if (/(?:^|[^a-z])remote(?![a-z])|home ?office|teletrabajo|télétravail|homeoffice|thuiswerk|distans/.test(f)) return { cc: 'xx', city: '' };
+  if (namesRemoteWork(raw)) return { cc: 'xx', city: '' };
   for (const c of compiled) if (c.cityRe && c.cityRe.test(f)) return { cc: c.iso, city: cityIn(raw, c) };
   for (const [iso, names] of Object.entries(FAR_CITIES)) if (names.some(n => word(fold(n)).test(f))) return { cc: iso, city };
   return { cc: '', city };
@@ -146,13 +149,16 @@ export function placeOfAdvert(raw, compiledCountries) {
 // ➤ has named no day, and a card must not pretend otherwise.
 export const isoDay = v => (/^\d{4}-\d{2}-\d{2}/.test(String(v || '').trim()) ? String(v).trim().slice(0, 10) : '');
 
-export function toRecord(raw, families, compiledCountries, screens = null) {
+// ➤ `rates` are the ECB's euro rates (builder/exchange-rates.mjs): without them only pay in
+// ➤ euros is read.
+export function toRecord(raw, families, compiledCountries, screens = null, rates = undefined) {
   // ➤ What the advert says about where the work is beats what its source declares: a British
   // ➤ recruiter's advert for Singapore is in Singapore. The declared country is the fallback.
   const found = placeOfAdvert(raw, compiledCountries);
   const place = found.cc || !raw.country ? found
     : { cc: raw.country, city: raw.city || cityIn(raw.location || '', compiledCountries.find(c => c.iso === raw.country) || { cities: [], name: '' }) };
-  if (raw.remote && !place.cc) place.cc = 'xx';
+  const mode = workModeOf(raw);
+  if (!place.cc && (mode === 'r' || raw.remote)) place.cc = 'xx';
   const text = withoutContacts(raw.description);
   const years = extractRequiredYears(`${raw.title || ''}. ${text}`);
   // ➤ The title and the location cleaned the way the bot cleans them before showing them.
@@ -173,6 +179,9 @@ export function toRecord(raw, families, compiledCountries, screens = null) {
   if (Number.isFinite(years) && years > 0) rec.y = years;
   if (raw.lang) rec.tl = raw.lang;
   if (isoDay(raw.expires)) rec.x = isoDay(raw.expires);
+  if (mode) rec.w = mode;
+  const pay = raw.pay ? readPay(raw.pay, rates) : null;
+  if (pay) { rec.p = pay.p; if (pay.pa) rec.pa = pay.pa; }
   if (screens) {
     const dg = requiredDegrees(text, screens);
     const lg = requiredLanguages(text, screens);

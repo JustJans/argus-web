@@ -39,11 +39,23 @@ export function cityOf(place) {
   return parts.length ? parts[parts.length - 1] : '';
 }
 
+// ➤ The gross pay in euros, which NVA shows with no period ("Alga bruto 2300 - 2600 EUR").
+// ➤ Latvia's minimum monthly wage for full-time work is €780 (2026): on a full-time vacancy a
+// ➤ figure of at least that is a month's, and one under €50 can only be an hour's. Figures in
+// ➤ between, and part-time ones, are not read.
+const MINIMUM_MONTHLY_WAGE = 780;
+export function nvaPay(from, to, workload) {
+  const low = Number(from) || 0, high = Number(to) || low;
+  if (!low || !/vesela/i.test(String(workload || ''))) return null;
+  const period = low >= MINIMUM_MONTHLY_WAGE ? 'month' : high < 50 ? 'hour' : '';
+  return period ? { min: low, max: high, currency: 'EUR', period } : null;
+}
+
 export function parseNva(csv) {
   const rows = parseCsv(csv);
   const head = rows.shift() || [];
   const col = name => head.indexOf(name);
-  const [iId, iDate, iTitle, iSector, iDeadline, iPlace, iUrl] = ['Vakances_Nr', 'Aktualizacijas_datums', 'Vakances_nosaukums', 'Vakances_kategorija', 'Pieteiksanas_termins', 'Vieta', 'Vakances_paplasinats_apraksts'].map(col);
+  const [iId, iDate, iTitle, iSector, iDeadline, iPlace, iUrl, iFrom, iTo, iLoad] = ['Vakances_Nr', 'Aktualizacijas_datums', 'Vakances_nosaukums', 'Vakances_kategorija', 'Pieteiksanas_termins', 'Vieta', 'Vakances_paplasinats_apraksts', 'Alga_no', 'Alga_lidz', 'Slodzes_tips'].map(col);
   return rows.map(r => {
     const url = String(r[iUrl] || '').trim();
     if (!/^https?:\/\//.test(url)) return null;
@@ -55,6 +67,7 @@ export function parseNva(csv) {
       location: [place, 'Latvia'].filter(Boolean).join(', '), country: 'lv', city,
       url, description: String(r[iSector] || '').trim(),
       posted: String(r[iDate] || '').slice(0, 10), expires: String(r[iDeadline] || '').slice(0, 10), codes: {}, lang: 'lv',
+      pay: nvaPay(r[iFrom], r[iTo], r[iLoad]),
     };
   }).filter(Boolean);
 }

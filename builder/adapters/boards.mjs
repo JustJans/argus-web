@@ -11,6 +11,7 @@ import { dirname, join } from 'path';
 import yaml from 'js-yaml';
 import { getJson, getText, deadline } from '../http.mjs';
 import { parseGreenhouse, parseAshby, parseLever, parseSmartRecruiters, unescapeEntities } from 'argus/server-bot/scan.mjs';
+import { modeWord, mostFlexible, tagMode } from '../work-mode.mjs';
 
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 
@@ -33,11 +34,23 @@ export const text = html => decodeEntities(String(html || '').slice(0, 20000)
 
 const day = v => { const d = v ? new Date(v) : null; return d && !Number.isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : ''; };
 const remoteWord = s => /remote/i.test(String(s || ''));
+// ➤ Where the work is done: the board's own field, else a LinkedIn tag in the whole advert
+// ➤ (read before the text is cut to its first 4,000 characters; the tags sit at the end).
+const modeOf = (field, html) => field || tagMode(html);
 // ➤ Workday says when, not the day: "Posted Today", "Posted Yesterday", "Posted 3 Days Ago", "Posted 30+ Days Ago".
 const agoDay = s => { const m = String(s || '').match(/(\d+)\+?\s*days?/i); const n = /today/i.test(s) ? 0 : /yesterday/i.test(s) ? 1 : m ? Number(m[1]) : null; return n === null ? '' : new Date(Date.now() - n * 86400000).toISOString().slice(0, 10); };
 // ➤ A Workday slug is "tenant.dc/site" ("aviva.wd1/External"); an Oracle one "host/site".
 const wdParts = slug => { const [tenantDc, site] = String(slug).split('/'); const [tenant, dc = 'wd3'] = tenantDc.split('.'); return [tenant, dc, site || 'External']; };
 const oraParts = slug => { const i = String(slug).indexOf('/'); return i < 0 ? [String(slug), 'CX_1'] : [slug.slice(0, i), slug.slice(i + 1)]; };
+
+// ➤ Ashby's pay: the Salary part of its compensation summary, unless the employer chose not
+// ➤ to show pay on its board.
+function ashbyPay(job) {
+  if (job.shouldDisplayCompensationOnJobPostings === false) return null;
+  const s = (job.compensation?.summaryComponents || []).find(c => c?.compensationType === 'Salary');
+  return s ? { min: s.minValue, max: s.maxValue, currency: s.currencyCode, period: s.interval, partTime: job.employmentType === 'PartTime' } : null;
+}
+const TEAMTAILOR_MODES = { onsite: 'onsite', hybrid: 'hybrid', fully: 'remote' };
 
 export const ATS = {
   greenhouse: {
@@ -46,23 +59,34 @@ export const ATS = {
     parse: (j, slug, company = slug) => parseGreenhouse(j, company).map((p, i) => ({
       sourceId: String(j.jobs[i]?.id || ''), title: p.title, location: p.location, url: p.url,
       description: text(p.description), posted: day(j.jobs[i]?.updated_at), remote: remoteWord(p.location),
+      mode: tagMode(p.description),
     })),
   },
   ashby: {
     licence: { name: 'Ashby Job Board API', short: 'Ashby', url: 'https://developers.ashbyhq.com/docs/public-job-posting-api', licence: 'Public job board API', credit: '', needsKey: false },
-    url: slug => `https://api.ashbyhq.com/posting-api/job-board/${encodeURIComponent(slug)}`,
-    parse: (j, slug, company = slug) => parseAshby(j, company).map((p, i) => ({
-      sourceId: String(j.jobs[i]?.id || ''), title: p.title, location: p.location, url: p.url,
-      description: text(p.description), posted: day(j.jobs[i]?.publishedAt), remote: !!j.jobs[i]?.isRemote,
-    })),
+    url: slug => `https://api.ashbyhq.com/posting-api/job-board/${encodeURIComponent(slug)}?includeCompensation=true`,
+    parse: (j, slug, company = slug) => parseAshby(j, company).map((p, i) => {
+      const job = j.jobs[i] || {};
+      const mode = modeOf(modeWord(job.workplaceType), p.description);
+      return {
+        sourceId: String(job.id || ''), title: p.title, location: p.location, url: p.url,
+        description: text(p.description), posted: day(job.publishedAt), remote: mode === 'remote', mode, pay: ashbyPay(job),
+      };
+    }),
   },
   lever: {
     licence: { name: 'Lever Postings API', short: 'Lever', url: 'https://github.com/lever/postings-api', licence: 'Public postings API', credit: '', needsKey: false },
     url: slug => `https://api.lever.co/v0/postings/${encodeURIComponent(slug)}?mode=json`,
-    parse: (arr, slug, company = slug) => parseLever(arr, company).map((p, i) => ({
-      sourceId: String(arr[i]?.id || ''), title: p.title, location: p.location, url: p.url,
-      description: text(p.description), posted: day(arr[i]?.createdAt), remote: remoteWord(arr[i]?.workplaceType) || remoteWord(p.location),
-    })),
+    parse: (arr, slug, company = slug) => parseLever(arr, company).map((p, i) => {
+      const job = arr[i] || {};
+      const mode = modeOf(modeWord(job.workplaceType), p.description);
+      const s = job.salaryRange;
+      return {
+        sourceId: String(job.id || ''), title: p.title, location: p.location, url: p.url,
+        description: text(p.description), posted: day(job.createdAt), remote: mode === 'remote' || remoteWord(p.location), mode,
+        pay: s ? { min: s.min, max: s.max, currency: s.currency, period: s.interval, partTime: /part/i.test(job.categories?.commitment || '') } : null,
+      };
+    }),
   },
   smartrecruiters: {
     licence: { name: 'SmartRecruiters Posting API', short: 'SmartRecruiters', url: 'https://developers.smartrecruiters.com/docs/posting-api', licence: 'Public posting API, where the company enables it', credit: '', needsKey: false },
@@ -73,15 +97,21 @@ export const ATS = {
     parse: (j, slug, company = slug) => parseSmartRecruiters(j, company).map((p, i) => ({
       sourceId: String(j.content[i]?.id || ''), title: p.title, location: p.location, url: p.url,
       description: '', posted: day(j.content[i]?.releasedDate), remote: !!j.content[i]?.location?.remote,
+      mode: mostFlexible([j.content[i]?.location?.remote && 'remote', j.content[i]?.location?.hybrid && 'hybrid']),
     })).filter(p => p.url),
   },
   recruitee: {
     licence: { name: 'Recruitee Careers Site API', short: 'Recruitee', url: 'https://docs.recruitee.com/reference/intro-to-careers-site-api', licence: 'Public careers site API', credit: '', needsKey: false },
     url: slug => `https://${encodeURIComponent(slug)}.recruitee.com/api/offers/`,
-    parse: j => (j?.offers || []).map(p => ({
-      sourceId: String(p.id || ''), title: p.title || '', location: [p.city, p.country].filter(Boolean).join(', '), url: p.careers_url || '',
-      description: [text(p.description), text(p.requirements)].filter(Boolean).join('\n'), posted: day(p.published_at || p.created_at), remote: !!p.remote,
-    })),
+    parse: j => (j?.offers || []).map(p => {
+      const mode = modeOf(mostFlexible([p.remote && 'remote', p.hybrid && 'hybrid', p.on_site && 'onsite']), `${p.description || ''} ${p.requirements || ''}`);
+      const hours = Number(p.max_hours) > 0 && Number(p.max_hours) <= 60 ? Number(p.max_hours) : 0;
+      return {
+        sourceId: String(p.id || ''), title: p.title || '', location: [p.city, p.country].filter(Boolean).join(', '), url: p.careers_url || '',
+        description: [text(p.description), text(p.requirements)].filter(Boolean).join('\n'), posted: day(p.published_at || p.created_at), remote: mode === 'remote', mode,
+        pay: p.salary ? { min: p.salary.min, max: p.salary.max, currency: p.salary.currency, period: p.salary.period, hoursPerWeek: hours, partTime: /^parttime/.test(p.employment_type_code || '') } : null,
+      };
+    }),
   },
   workable: {
     daily: true,   // ➤ about a thousand calls a day for an IP, then 429 for a day: read once a day (config/crawl.yml)
@@ -95,6 +125,7 @@ export const ATS = {
         location: [loc.city || p.city, loc.region, loc.country || p.country].filter(Boolean).join(', '),
         url: p.url || p.application_url || p.shortlink || `https://apply.workable.com/${slug}/j/${p.shortcode}`,
         description: text(p.description || ''), posted: day(p.published_on || p.created_at), remote: !!(p.remote || p.telecommuting || /remote/i.test(p.workplace || '')),
+        mode: modeOf(p.telecommuting ? 'remote' : modeWord(p.workplace), p.description),
         company: j?.name || company,
       };
     }).filter(p => p.sourceId && p.title),
@@ -109,12 +140,16 @@ export const ATS = {
       const tag = (block, name) => decodeEntities((block.match(new RegExp(`<${name}[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</${name}>`)) || [])[1] || '').trim();
       const s = String(xml || '');
       const company = tag(s.split('<item>')[0] || '', 'title');
-      return (s.match(/<item>[\s\S]*?<\/item>/g) || []).map(block => ({
-        sourceId: tag(block, 'guid') || tag(block, 'link'), title: tag(block, 'title'),
-        location: tag(block, 'tt:name') || [tag(block, 'tt:city'), tag(block, 'tt:country')].filter(Boolean).join(', '), url: tag(block, 'link'),
-        description: text(tag(block, 'description')), posted: day(tag(block, 'pubDate')), remote: /remote|hybrid/i.test(tag(block, 'tt:remoteStatus') || tag(block, 'remoteStatus')),
-        company,
-      })).filter(p => p.url && p.title);
+      return (s.match(/<item>[\s\S]*?<\/item>/g) || []).map(block => {
+        const status = (tag(block, 'tt:remoteStatus') || tag(block, 'remoteStatus')).toLowerCase();
+        const mode = modeOf(TEAMTAILOR_MODES[status] || '', tag(block, 'description'));
+        return {
+          sourceId: tag(block, 'guid') || tag(block, 'link'), title: tag(block, 'title'),
+          location: tag(block, 'tt:name') || [tag(block, 'tt:city'), tag(block, 'tt:country')].filter(Boolean).join(', '), url: tag(block, 'link'),
+          description: text(tag(block, 'description')), posted: day(tag(block, 'pubDate')), remote: mode === 'remote', mode,
+          company,
+        };
+      }).filter(p => p.url && p.title);
     },
   },
   personio: {
@@ -125,10 +160,13 @@ export const ATS = {
       const tag = (block, name) => (block.match(new RegExp(`<${name}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</${name}>`)) || [])[1] || '';
       return (String(xml || '').match(/<position>[\s\S]*?<\/position>/g) || []).map(block => {
         const pid = tag(block, 'id').trim();
+        const salary = tag(block, 'salaryInformation');
+        const html = [...block.matchAll(/<value>([\s\S]*?)<\/value>/g)].map(m => m[1].replace(/^\s*<!\[CDATA\[/, '').replace(/\]\]>\s*$/, ''));
         return {
           sourceId: pid, title: tag(block, 'name').trim(), location: tag(block, 'office').trim(), url: `https://${slug}.jobs.personio.de/job/${pid}`,
-          description: [...block.matchAll(/<value>([\s\S]*?)<\/value>/g)].map(m => text(m[1].replace(/^\s*<!\[CDATA\[/, '').replace(/\]\]>\s*$/, ''))).join('\n'),
-          posted: day(tag(block, 'createdAt').trim()), remote: false,
+          description: html.map(text).join('\n'),
+          posted: day(tag(block, 'createdAt').trim()), remote: false, mode: tagMode(html.join(' ')),
+          pay: salary ? { min: tag(salary, 'min').trim(), max: tag(salary, 'max').trim(), currency: tag(salary, 'currencyCode').trim(), period: tag(salary, 'type').trim(), partTime: tag(block, 'schedule').trim() === 'part-time' } : null,
         };
       });
     },
@@ -148,7 +186,7 @@ export const ATS = {
       sourceId: String(p.bulletFields?.[0] || p.externalPath || ''), title: String(p.title || '').trim(),
       location: /^\d+\s+locations$/i.test(String(p.locationsText || '').trim()) ? '' : String(p.locationsText || ''),
       url: p.externalPath ? `https://${tenant}.${dc}.myworkdayjobs.com/en-US/${site}${p.externalPath}` : '',
-      description: '', posted: agoDay(p.postedOn), remote: remoteWord(p.locationsText),
+      description: '', posted: agoDay(p.postedOn), remote: remoteWord(p.locationsText) || modeWord(p.remoteType) === 'remote', mode: modeWord(p.remoteType),
     })).filter(p => p.url && p.title); },
   },
   oracle: {
@@ -160,7 +198,7 @@ export const ATS = {
     parse: (j, slug) => { const [host, site] = oraParts(slug); return (j?.items?.[0]?.requisitionList || []).map(p => ({
       sourceId: String(p.Id || ''), title: String(p.Title || '').trim(), location: String(p.PrimaryLocation || ''),
       url: p.Id ? `https://${host}/hcmUI/CandidateExperience/en/sites/${site}/requisitions/preview/${p.Id}` : '',
-      description: text(p.ShortDescriptionStr || ''), posted: day(p.PostedDate), remote: remoteWord(p.PrimaryLocation) || remoteWord(p.WorkplaceType),
+      description: text(p.ShortDescriptionStr || ''), posted: day(p.PostedDate), remote: remoteWord(p.PrimaryLocation) || modeWord(p.WorkplaceTypeCode) === 'remote', mode: modeWord(p.WorkplaceTypeCode),
     })).filter(p => p.url && p.title); },
   },
 };

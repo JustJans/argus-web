@@ -168,6 +168,11 @@ shards in eleven minutes.
    its names within the advert's country (the search by town and distance, as job sites do it); the employer's own address, expiry by `validThrough`, deadline
    or absence. Titles in another language get an English and a Spanish translation, a few
    thousand new ones a build, each asked once ever (`builder/state/titles-en.json`, `titles-es.json`).
+   The work mode (`w`: o, h or r) and the pay (`p`: the figures, currency and period as the
+   source states them; `pa`: the top of the range in euros a year) come from the sources' own
+   fields, never from the advert's wording (`builder/work-mode.mjs`, `builder/pay.mjs`,
+   `docs/research/work-mode.md`, `docs/research/salary.md`). Pay in other currencies uses the
+   ECB's euro reference rates, asked once a build and kept in `builder/state/ecb-rates.xml`.
 6. **Dedupe**: same address once; same employer and role once (the board copy wins over a
    feed's), as Jobfeed merges "different advertisements of this job".
 

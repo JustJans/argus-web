@@ -4,10 +4,12 @@
 // ➤ free words travel as short UTF-8 strings. A checksum rejects a mistyped code. Pure:
 // ➤ the same file runs in the browser and under Node's tests.
 
-// ➤ Version 3 (2026-09-23): specialties inside the families (ESCO's occupations), a town and a
-// ➤ distance around it, and more posted windows. A version-2 code reads as it always did; a version-1
-// ➤ code named families that no longer exist and is refused with a message to make a new one.
-export const VERSION = 3;
+// ➤ Version 4 (2026-09-23): the work modes wanted and the pay (a yearly minimum in thousands of
+// ➤ euros, and whether to keep only the offers that state pay). Version 3 (2026-09-23):
+// ➤ specialties inside the families (ESCO's occupations), a town and a distance around it, and
+// ➤ more posted windows. Codes of versions 2 and 3 read as they always did; a version-1 code
+// ➤ named families that no longer exist and is refused with a message to make a new one.
+export const VERSION = 4;
 const FAMILY_BYTES = 8, LANGUAGE_BYTES = 2, DEGREE_BYTES = 4;
 export const MAX_YEARS_STEPS = [null, 1, 2, 3, 5, 7, 10, 15];   // ➤ 3 bits
 export const LEVELS = ['any', 'junior', 'mid', 'senior'];         // ➤ 2 bits
@@ -17,6 +19,8 @@ const POSTED_V2 = [0, 7, 30];
 const MAX_FREE = 8;
 const MAX_TERM_BYTES = 24;
 export const RADIUS_KM = [5, 10, 25, 50, 100];                     // ➤ around the town, as job sites offer it
+export const MODES = ['onsite', 'hybrid', 'remote'];               // ➤ bits 4-6 of the flags; bit 7: only offers that state pay
+const MAX_PAY_THOUSANDS = 999;
 const MAX_PLACE_BYTES = 60;
 
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
@@ -28,14 +32,17 @@ export function toBase64url(bytes) {
   }
   return out;
 }
+// ➤ Strict, as RFC 4648 (3.5) allows: the bits left over after the last byte must be zero, so
+// ➤ a changed last character cannot slip through as the same code.
 export function fromBase64url(s) {
   const clean = String(s || '').replace(/[^A-Za-z0-9\-_]/g, '');
   const out = [];
   let buf = 0, bits = 0;
   for (const ch of clean) {
-    buf = (buf << 6) | B64.indexOf(ch); bits += 6;
+    buf = ((buf << 6) | B64.indexOf(ch)) & 0xffff; bits += 6;
     if (bits >= 8) { bits -= 8; out.push((buf >> bits) & 255); }
   }
+  if (bits >= 6 || buf & ((1 << bits) - 1)) throw new Error('code does not check out (a character is wrong or missing)');
   return Uint8Array.from(out);
 }
 
@@ -101,6 +108,9 @@ export function normaliseProfile(p = {}) {
     highest: HIGHEST.includes(p.highest) ? p.highest : 'none',
     remote: !!p.remote,
     posted: POSTED_STEPS.includes(p.posted) ? p.posted : 0,
+    modes: sorted((p.modes || []).filter(m => MODES.includes(m))),
+    minPay: Number.isInteger(p.minPay) && p.minPay > 0 ? Math.min(p.minPay, MAX_PAY_THOUSANDS) : 0,
+    payStated: !!p.payStated,
     roles: cleanTerms(p.roles),
     vetoes: sorted(p.vetoes),
     noWords: cleanTerms(p.noWords),
@@ -116,7 +126,8 @@ export function encodeProfile(profile, cats) {
   const p = normaliseProfile(profile);
   const w = new Writer();
   w.byte(VERSION);
-  w.byte((p.remote ? 1 : 0) | (POSTED_STEPS.indexOf(p.posted) << 1));
+  const modeBits = MODES.reduce((bits, m, i) => bits | (p.modes.includes(m) ? 1 << (4 + i) : 0), 0);
+  w.byte((p.remote ? 1 : 0) | (POSTED_STEPS.indexOf(p.posted) << 1) | modeBits | (p.payStated ? 128 : 0));
   w.bits(p.families, cats.families, FAMILY_BYTES);
   w.byte((LEVELS.indexOf(p.level) << 6) | (MAX_YEARS_STEPS.indexOf(p.maxYears) << 3) | HIGHEST.indexOf(p.highest));
   w.bits(p.languages, cats.languages, LANGUAGE_BYTES);
@@ -134,6 +145,7 @@ export function encodeProfile(profile, cats) {
   const pc = p.place ? cats.countries.indexOf(p.place.cc) : -1;
   if (pc < 0) w.varint(0);
   else { w.varint(pc + 1); w.string(p.place.name, MAX_PLACE_BYTES); w.int16(p.place.lat * 100); w.int16(p.place.lon * 100); w.byte(RADIUS_KM.indexOf(p.place.km)); }
+  w.varint(p.minPay);
   const crc = crc16(w.bytes);
   w.byte(crc >> 8); w.byte(crc);
   return toBase64url(Uint8Array.from(w.bytes));
@@ -169,8 +181,12 @@ export function decodeProfile(code, cats) {
     const pc = r.varint();
     if (pc) { const cc = cats.countries[pc - 1]; const name = r.string(MAX_PLACE_BYTES); const lat = r.int16() / 100; const lon = r.int16() / 100; place = { cc, name, lat, lon, km: RADIUS_KM[r.byte()] }; }
   }
+  // ➤ Version 3 ends here.
+  const modes = version >= 4 ? MODES.filter((_, i) => flags & (1 << (4 + i))) : [];
+  const payStated = version >= 4 && !!(flags & 128);
+  const minPay = version >= 4 ? r.varint() : 0;
   const posted = version === 2 ? POSTED_V2[(flags >> 1) & 3] : POSTED_STEPS[(flags >> 1) & 7];
-  return normaliseProfile({ families, specialties, countries, place, languages, degrees, level, maxYears, highest, remote: !!(flags & 1), posted: posted || 0, roles, vetoes, noWords });
+  return normaliseProfile({ families, specialties, countries, place, languages, degrees, level, maxYears, highest, remote: !!(flags & 1), posted: posted || 0, modes, minPay, payStated, roles, vetoes, noWords });
 }
 
 // ➤ The catalogue id lists in order, from the loaded catalogue files.

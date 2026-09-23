@@ -32,6 +32,8 @@ export function parseFeinaActiva(xml) {
       location: [city, region, 'Spain'].filter(Boolean).join(', '), country: 'es', city,
       url: tag(block, 'url'), description: parts.join('\n'),
       posted: isoDay(tag(block, 'date')), expires: '', codes: {}, lang: 'ca',
+      // ➤ Its page reads "Salari mensual brut des de 1416 fins a 1550": a month, gross, in euros.
+      pay: tag(block, 'salaryMin') || tag(block, 'salaryMax') ? { min: tag(block, 'salaryMin'), max: tag(block, 'salaryMax'), currency: 'EUR', period: 'month' } : null,
     };
   }).filter(r => r && r.url);
 }

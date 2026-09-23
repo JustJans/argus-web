@@ -19,6 +19,25 @@ export const countryLabel = cc => regions.of(cc.toUpperCase()) || cc.toUpperCase
 export const languageLabel = code => upper(languages.of(code) || code);
 export const number = n => Number(n || 0).toLocaleString(lang);
 
+// ➤ "€3,500–€4,500 a month", "3500-4500 € al mes": the pay an offer states, in its own currency
+// ➤ and period, written the page's way; cents only when an hourly pay has them.
+const PERIOD_TEXT = { y: '{pay} a year', m: '{pay} a month', w: '{pay} a week', d: '{pay} a day', h: '{pay} an hour' };
+export function payText([min, max, currency, period]) {
+  const cents = period === 'h' && !(Number.isInteger(min) && Number.isInteger(max)) ? 2 : 0;
+  let pay;
+  try {
+    const f = new Intl.NumberFormat(lang, { style: 'currency', currency, minimumFractionDigits: cents, maximumFractionDigits: cents });
+    pay = min === max ? f.format(min) : f.formatRange ? f.formatRange(min, max) : `${f.format(min)}–${f.format(max)}`;
+  } catch { pay = `${min === max ? number(min) : `${number(min)}–${number(max)}`} ${currency}`; }
+  return t(PERIOD_TEXT[period] || '{pay}', { pay });
+}
+// ➤ Euros a year, for the reasons an offer is left out: "€45,000".
+export const euros = n => new Intl.NumberFormat(lang, { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
+
+// ➤ The three work modes, by the letter the offers carry.
+const MODE_TEXT = { o: 'On-site', h: 'Hybrid', r: 'Remote' };
+export const workModeLabel = letter => (MODE_TEXT[letter] ? t(MODE_TEXT[letter]) : '');
+
 // ➤ "3 days ago", "hace 3 días": a day's distance from today, in days up to a month, then months.
 const relative = new Intl.RelativeTimeFormat(lang, { numeric: 'auto' });
 export function ago(iso, now = Date.now()) {

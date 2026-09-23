@@ -1,13 +1,13 @@
 # The profile code
 
-Version 3. Implemented in `app/lib/codec.js`, tested in `test/codec.test.mjs`.
+Version 4. Implemented in `app/lib/codec.js`, tested in `test/codec.test.mjs`.
 
 The code is base64url (`A-Z a-z 0-9 - _`, no padding) of these bytes:
 
 | Bytes | Content |
 |---|---|
-| 1 | version, `0x03` |
-| 1 | flags: bit 0 = remote work is fine; bits 1-3 = posted within (0 any time, 1 = a day, 2 = 3 days, 3 = 7 days, 4 = 30 days, 5 = 90 days) |
+| 1 | version, `0x04` |
+| 1 | flags: bit 0 = offers with no fixed country (remote) are fine; bits 1-3 = posted within (0 any time, 1 = a day, 2 = 3 days, 3 = 7 days, 4 = 30 days, 5 = 90 days); bits 4-6 = work modes wanted (on-site, hybrid, remote; none = any); bit 7 = only offers that state pay |
 | 8 | families (ISCO-08 unit groups), one bit per position in `catalogues/families.json` |
 | 1 | level (2 bits: any, junior, mid, senior) · years cap index (3 bits: none, 1, 2, 3, 5, 7, 10, 15) · highest degree (2 bits: none, bachelor, master, phd) |
 | 2 | languages, one bit per position in `catalogues/languages.json` |
@@ -18,10 +18,12 @@ The code is base64url (`A-Z a-z 0-9 - _`, no padding) of these bytes:
 | varint n, then n strings | deal-breaker words, as the role words |
 | varint n, then n varints | specialties: ESCO occupations as positions in `catalogues/occupations.json` (each brings its family, the first four digits of its code) |
 | varint, then the place | a town and a distance: its country's position in `catalogues/countries.json` plus one (0 = no town, and nothing follows), its name (UTF-8, at most 60 bytes), latitude and longitude in hundredths of a degree (two signed 16-bit numbers, big-endian), and the distance's step (one byte: 5, 10, 25, 50 or 100 km). The town's country joins the countries. |
+| varint | the minimum pay, in thousands of euros a year (0 = none) |
 | 2 | CRC-16/CCITT-FALSE of everything before, big-endian |
 
 Bitfields: position p of the catalogue is bit (p mod 8) of byte (p div 8); a position past the
-field is left out of the code.
+field is left out of the code. The base64url is strict (RFC 4648, 3.5): the bits left over after
+the last byte must be zero, so a changed last character is refused like any other.
 
 Sizes: an empty profile is 34 characters; a typical one 55 to 150; everything at once stays
 under 450.
@@ -32,6 +34,9 @@ does not have yet is ignored. A change of layout is a new version byte.
 
 ## History
 
+- **Version 4 (2026-09-23).** The work modes wanted, in the flags' four free bits with
+  "only offers that state pay", and a minimum yearly pay after the place. A version-3 code has
+  those bits clear and ends at its place: no work mode, no pay filter.
 - **Version 3 (2026-09-22).** Specialties inside the families (ESCO's occupations, so a visitor
   can keep only naval architects among the mechanical engineers), a town and a distance around
   it (the town travels with its coordinates, so a bookmark does not depend on the day's pile),
