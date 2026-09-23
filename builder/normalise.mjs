@@ -41,6 +41,7 @@ export function compileCountries(countries) {
   return countries.map(c => ({
     iso: c.iso, name: c.name,
     nameRe: new RegExp([c.name, ...(c.aliases || [])].map(word).join('|')),
+    nameAll: new RegExp([c.name, ...(c.aliases || [])].map(word).join('|'), 'g'),
     cityRe: (c.cities || []).length ? new RegExp((c.cities || []).map(word).join('|')) : null,
     cities: c.cities || [],
   }));
@@ -56,6 +57,34 @@ const STATE_TOWNS = { de: ['wilmington', 'newark', 'dover'], nl: ["st. john's", 
 // ➤ beside them they are the United States, before any town name is read, or "Naples, FL"
 // ➤ would be Naples in Italy.
 const US_STATES = new Set('ak az ar ca co ct fl ga hi id il in ia ks ky la ma mi mn ms mo ne nv nh nj nm ny nc nd oh ok or pa ri sc sd tn tx ut vt va wa wv wi wy dc'.split(' '));
+
+// ➤ Where in a text a pattern last ends, or -1.
+const lastEnd = (re, text) => { let end = -1; for (const m of text.matchAll(re)) end = m.index + m[0].length; return end; };
+const FAR_NAMES = Object.entries(FAR).map(([iso, names]) => [iso, new RegExp(names.map(n => `(?:^|[^a-z0-9])${n}(?![a-z0-9])`).join('|'), 'g')]);
+
+// ➤ The country a place names, read the way addresses are written, from the town to the country:
+// ➤ within one place the country named last is the country, so in "Sydney, New South Wales,
+// ➤ Australia" or "North Kingstown, Rhode Island, USA" the European word inside a state's name
+// ➤ (Wales, Island) is not one. A list of places ("Berlin, Germany; Austin, USA") keeps the first
+// ➤ that is in Europe. Answers { cc, european } or null when no country is named.
+function namedCountry(raw, compiled) {
+  let far = null;
+  for (const segment of raw.split(/[;|]|\s\/\s/)) {
+    const f = fold(segment);
+    let euro = null, euroEnd = -1, farIso = null, farEnd = -1;
+    for (const c of compiled) { const end = lastEnd(c.nameAll, f); if (end > euroEnd) { euro = c; euroEnd = end; } }
+    for (const [iso, re] of FAR_NAMES) { const end = lastEnd(re, f); if (end > farEnd) { farIso = iso; farEnd = end; } }
+    // ➤ A code outside Europe ending the place ("…, New South Wales, AU") names its country; a US
+    // ➤ state's ("Wallops Island, VA") only outranks the European word, and is read as the US
+    // ➤ further on, after the European codes.
+    const endCode = segment.match(/(?:^|[\s,(-])([A-Z]{2})\)?\s*$/)?.[1]?.toLowerCase();
+    if (endCode && FAR[endCode]) { farIso = endCode; farEnd = f.length; }
+    const stateEnd = endCode && US_STATES.has(endCode) ? f.length : -1;
+    if (euro && euroEnd > Math.max(farEnd, stateEnd)) return { cc: euro.iso, european: euro };
+    far ||= farIso;
+  }
+  return far ? { cc: far } : null;
+}
 
 // ➤ In this order: a European country named, a country outside Europe named or coded
 // ➤ ("Rockville, MD, US"), a European country coded (unless the code reads as a US state or
@@ -73,8 +102,10 @@ export function placeOf(location, compiled) {
   const lastCode = isoHit ? isoHit.at(-1).replace(/[^A-Z]/g, '').toLowerCase() : '';
   const city = raw.split(',')[0].trim().slice(0, 40);
   const word = n => new RegExp(`(?:^|[^a-z0-9])${n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![a-z0-9])`);
-  for (const c of compiled) if (c.nameRe.test(f)) return { cc: c.iso, city: cityIn(raw, c) };
-  for (const [iso, names] of Object.entries(FAR)) if (names.some(n => word(n).test(f)) || lastCode === iso) return { cc: iso, city };
+  const named = namedCountry(raw, compiled);
+  if (named?.european) return { cc: named.cc, city: cityIn(raw, named.european) };
+  if (named) return { cc: named.cc, city };
+  for (const iso of Object.keys(FAR)) if (lastCode === iso) return { cc: iso, city };
   for (const c of compiled) {
     if (!codes.has(c.iso)) continue;
     const state = STATE_CODES[c.iso] && !(c.cityRe && c.cityRe.test(f)) ? STATE_CODES[c.iso]
