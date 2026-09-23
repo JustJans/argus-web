@@ -7530,7 +7530,7 @@ companies:
     adverts: 24
     kept: 10
     where: hu 9 zz 1
-  - name: Broadbean
+  - name: Adient
     workday: adient.wd3/broadbean_external
     adverts: 31
     kept: 10
@@ -19775,7 +19775,7 @@ companies:
     adverts: 60
     kept: 4
     where: zz 4
-  - name: Orion
+  - name: Orion Advisor
     workday: orionadvisor.wd1/Orion_Careers
     adverts: 19
     kept: 4
@@ -24905,7 +24905,7 @@ companies:
     adverts: 40
     kept: 3
     where: zz 3
-  - name: Cov
+  - name: Covestro
     workday: covestro.wd3/cov_external
     adverts: 40
     kept: 3
@@ -46625,7 +46625,7 @@ companies:
     adverts: 39
     kept: 1
     where: zz 1
-  - name: Enza
+  - name: Enza Zaden
     workday: enzazaden.wd103/Enza-Careers
     adverts: 40
     kept: 1
@@ -46885,7 +46885,7 @@ companies:
     adverts: 40
     kept: 1
     where: zz 1
-  - name: One
+  - name: Skechers
     workday: skechers.wd5/One-career-site
     adverts: 40
     kept: 1
