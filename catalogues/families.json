@@ -499,6 +499,18 @@
           "jefe de obra",
           "jefa de obra"
         ],
+        "fr": [
+          "conducteur de travaux",
+          "conductrice de travaux",
+          "conducteur des travaux",
+          "conductrice des travaux",
+          "conducteur travaux",
+          "conductrice travaux",
+          "conducteur de chantier",
+          "conductrice de chantier",
+          "conducteur de chantiers",
+          "conductrice de chantiers"
+        ],
         "ca": [
           "cap d'obra",
           "encarregat d'obra",

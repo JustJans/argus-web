@@ -162,6 +162,15 @@ eq(familiesOf({ title: 'ARQUITECTO/TA TECNICO/CA - JEFE/FA DE OBRA', codes: {}, 
 eq(familiesOf({ title: 'ESPECIALISTA IT', codes: {}, lang: 'es' }, gate), ['2519'], 'a computing word with no occupation ESCO knows lands in the software group not elsewhere classified');
 ok(familiesOf({ title: "ENGINYER/A DE PONTS I CAMINS O D'OBRA CIVIL", codes: {}, lang: 'ca' }, gate).includes('2142'), 'the Catalan civil engineer');
 eq(matchableTitle("Enginyer/a d'automatització (m/f)"), 'enginyer d automatitzacio', 'gender marks and apostrophes go before the words are read');
+eq(['Conducteur(trice) Travaux Confirmé(e)', 'Technicien·ne informatique', 'Conducteur/trice de chantier', 'Ingénieur(e) (H/F)'].map(matchableTitle), ['conducteur travaux confirme', 'technicien informatique', 'conducteur de chantier', 'ingenieur'], 'and French endings in brackets, after a middle dot or a slash');
+{
+  // ➤ ESCO lists a bare "conducteur" among plant and ship operators: it names no occupation alone.
+  const fr = title => familiesOf({ title, lang: 'fr', codes: {} }, gate);
+  eq([fr('Conducteur de travaux – Bruxelles'), fr('Conducteur(trice) Travaux CVC'), fr('Conducteur/ Conductrice travaux, construction de bâtiments'), fr('Conducteur de chantiers - Voirie')], [['3123'], ['3123'], ['3123'], ['3123']], 'a French site manager is a construction supervisor, however the title is written');
+  eq([fr('Conducteur chariot élévateur'), fr('Conducteur/Conductrice de poids-lourd permis CE'), fr('Conducteur de ligne (H/F/X)')], [[], [], []], 'forklift, truck and line drivers are out, not plant operators');
+  eq(fr('Conducteur de bloc nucléaire'), ['3131'], 'a power plant operator with a title of its own stays one');
+  eq([fr('Ingénieur(e) Commercial(e)'), fr('Technicien(ne) informatique sur site')], [[], ['3512']], 'an ending in brackets no longer hides a sales title, nor keeps an IT technician out');
+}
 eq(familiesOf({ title: 'BŪVINŽENIERIS', codes: {}, lang: 'lv' }, gate), ['2142'], 'Latvian, by ESCO\'s Latvian titles');
 eq(familiesOf({ title: 'ELEKTROTEHNIĶIS (ELEKTRISKO IEKĀRTU SPECIĀLISTS)', codes: {}, lang: 'lv' }, gate), ['3113'], 'a Latvian electrical technician');
 eq(familiesOf({ title: 'PROGRAMMĒTĀJS', codes: {}, lang: 'lv' }, gate), ['2519'], 'a Latvian programmer, by the computing words');

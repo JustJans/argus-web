@@ -31,7 +31,7 @@ const ROLE_WORDS = ['technician', 'técnico', 'técnica', 'tècnic', 'tècnica',
   'coordinator', 'coordinador', 'coordinadora', 'coordinateur', 'coordinatrice', 'koordinator', 'koordinatör', 'coördinator', 'coordinatore',
   'supervisor', 'supervisora', 'superviseur', 'superviseuse', 'arbetsledare', 'foreman', 'capataz',
   'manager', 'gerente', 'gestor', 'gestora', 'responsable', 'responsible', 'leader', 'lead', 'líder', 'ledare', 'director', 'directora', 'directeur', 'directrice', 'jefe', 'jefa', 'chef', 'head', 'cap',
-  'operator', 'operador', 'operadora', 'opérateur', 'opératrice', 'operatör', 'operatore', 'operaio', 'operario', 'operaria',
+  'operator', 'operador', 'operadora', 'opérateur', 'opératrice', 'operatör', 'operatore', 'operaio', 'operario', 'operaria', 'conducteur', 'conductrice',
   'inspector', 'inspectora', 'inspecteur', 'inspectrice', 'controller', 'controlador', 'controladora', 'contrôleur', 'officer', 'oficial',
   'specialist', 'especialista', 'spécialiste', 'specialista', 'specialistka', 'specialistas', 'specialistė', 'speciālists', 'speciāliste', 'vadovas', 'vadovė', 'vadītājs', 'vadītāja', 'vedoucí', 'mistr', 'meistras', 'meistars', 'consultant', 'consultor', 'consultora', 'analyst', 'analista', 'designer', 'diseñador', 'diseñadora', 'dissenyador', 'dissenyadora', 'planner', 'planificador', 'planificadora', 'assistant', 'asistente', 'auxiliar'];
 const GENERIC_WORDS = new Set([...ENGINEER_WORDS, ...ROLE_WORDS].map(T.clean));
@@ -90,9 +90,14 @@ const languagesFor = lang => lang === 'ca' ? ['ca', 'es', 'en'] : lang && lang !
 const COUNTRY_LANGS = { es: ['es'], ad: ['es'], fr: ['fr'], mc: ['fr'], lu: ['fr', 'de'], be: ['nl', 'fr'], nl: ['nl'], de: ['de'], at: ['de'], li: ['de'], ch: ['de', 'fr', 'it'], it: ['it'], sm: ['it'], pt: ['pt'], se: ['sv'], no: ['no'], dk: ['da'], fi: ['fi', 'sv'], pl: ['pl'], cz: ['cs'], sk: ['cs'], lt: ['lt'], lv: ['lv'] };
 export const languagesOfCountry = cc => COUNTRY_LANGS[cc] || [];
 
-// ➤ A title as the gate reads it: gender marks ("Ingeniero/a", "Arquitecto/ta", "(m/w/d)", "H/F")
-// ➤ go, then the shared folding. Not Argus's cleanTitle, which tidies a title for display.
-export const matchableTitle = t => T.clean(fold(t || '').replace(/\/(?:a|o|as|os|es|ra|ora|ores|e|in|f|d|ta|ca|fa|na|la|da|va|ia|ica|ico|era|ona|essa|iva)(?![a-z])/g, '').replace(/\((?:m|w|d|f|h|x|\/|\s)+\)/g, ' '));
+// ➤ A title as the gate reads it: gender marks ("Ingeniero/a", "Arquitecto/ta", "(m/w/d)", "H/F",
+// ➤ and French endings in brackets or after a middle dot: "Conducteur(trice)", "Ingénieur(e)",
+// ➤ "technicien·ne") go, then the shared folding. Not Argus's cleanTitle, which tidies a title
+// ➤ for display.
+export const matchableTitle = t => T.clean(fold(t || '')
+  .replace(/\/(?:a|o|as|os|es|ra|ora|ores|e|in|f|d|ta|ca|fa|na|la|da|va|ia|ica|ico|era|ona|essa|iva|trice|rice|euse|ere|ne|ienne)(?![a-z])/g, '')
+  .replace(/(?<=[a-z])(?:\((?:e|es|ne|trice|rice|ice|euse|ere)\)|·(?:e|es|ne|trice|rice|euse|ere))(?![a-z])/g, '')
+  .replace(/\((?:m|w|d|f|h|x|\/|\s)+\)/g, ' '));
 
 // ➤ The job titles of every family, per language, and the names among them (ESCO's preferred
 // ➤ labels and the catalogue's own extra terms). The gate, the site (for the CV reader) and the
