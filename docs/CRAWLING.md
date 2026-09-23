@@ -141,17 +141,24 @@ shards in eleven minutes.
      weeks and never twice.
    - `discover.mjs "Name"`: one company by name.
 2. **Reading** (`builder/crawl.mjs`, every hour): the crawler takes the sources whose last pass
-   is older than their cadence (`builder/config/crawl.yml`: a feed or an ATS board every six
-   hours, an employer's site once a day), reads each one whole and writes what it gave to that
-   source's own file in the store (`builder/state/adverts/<group>/<key>.json`, written to a
-   scratch file and renamed). A careers site keeps the pages it has already read, so a pass
-   costs one sitemap plus the pages that are new; an advert that leaves the sitemap has closed.
+   is older than their cadence (`builder/config/crawl.yml`: every source once a day, a barren
+   site once a week), reads each one whole and writes what it gave to that source's own file in
+   the store (`builder/state/adverts/<group>/<key>.json`, written to a scratch file and
+   renamed). A careers site keeps the pages it has already read, so a pass costs one sitemap
+   plus the pages that are new; an advert that leaves the sitemap has closed. A vacancy page
+   that did not answer (a timeout, a server error) is tried again in the next passes, three
+   tries in all, and a site with five such pages in one pass is left until the next one; a
+   page that is not there (404, 410, 403) is an answer. A pass stops reading pages a minute
+   before its deadline and keeps what it read. A site with fifty pages that answered and not
+   one JobPosting block is barren: it is read once a week, and a pass reads only ten of its new
+   pages, in case it starts publishing the block (`docs/research/faster-runs.md`).
    Each pass keeps, per advert, the earliest day it was said to be posted (Workday's "30+ days
    ago" and Greenhouse's last edit never make an advert younger) and, for an advert that names
    no day, the day it first appeared in a list the last pass had read whole.
    Every read has a deadline, "too many requests" pauses that group until the host says come
-   back, a source that fails waits six hours, then a day, then two, and is parked after a
-   fortnight. `builder/state/STOP` stops everything.
+   back, a source that fails waits up to six hours, then up to a day, then up to two (each wait
+   drawn between half and the whole, so sources that failed together do not come back
+   together), and is parked after a fortnight. `builder/state/STOP` stops everything.
 3. **Publishing** (`builder/build-pile.mjs`, every three hours): the pile is built from the
    store and nothing else, so a slow site never delays a publish and a publish never waits for
    the network. A source nobody could read for ten days leaves the pile; a build that would

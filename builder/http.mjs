@@ -30,7 +30,8 @@ export function deadline(promise, ms) {
 
 // ➤ GET a URL (or POST it, with `method` and `body`); answers the Response, or throws after
 // ➤ the last failed try. `gapMs` is the minimum distance between two calls to the same host
-// ➤ (default 250 ms); `timeoutMs` the wait for one answer (default 20 s).
+// ➤ (default 250 ms); `timeoutMs` the wait for one answer (default 20 s). An error that came
+// ➤ with an HTTP answer carries its `status`.
 export async function get(url, { headers = {}, gapMs = 250, tries = 3, timeoutMs = TIMEOUT_MS, method = 'GET', body } = {}) {
   const host = new URL(url).hostname;
   if (blocked.get(host) > Date.now()) throw tooMany(host, blocked.get(host));
@@ -45,21 +46,23 @@ export async function get(url, { headers = {}, gapMs = 250, tries = 3, timeoutMs
         if (until - Date.now() > 60_000) break;   // ➤ a long wait: not worth a try now
         continue;
       }
-      if (res.status >= 500) { lastError = new Error(`${res.status} from ${host}`); continue; }
+      if (res.status >= 500) { lastError = Object.assign(new Error(`${res.status} from ${host}`), { status: res.status }); continue; }
       return res;
     } catch (e) { lastError = e; }
   }
   throw lastError || new Error(`no answer from ${host}`);
 }
 
+const refused = (res, url) => Object.assign(new Error(`${res.status} for ${url}`), { status: res.status });
+
 export async function getJson(url, opts) {
   const res = await get(url, { ...opts, headers: { Accept: 'application/json', ...(opts?.headers || {}) } });
-  if (!res.ok) throw new Error(`${res.status} for ${url}`);
+  if (!res.ok) throw refused(res, url);
   return res.json();
 }
 
 export async function getText(url, opts) {
   const res = await get(url, opts);
-  if (!res.ok) throw new Error(`${res.status} for ${url}`);
+  if (!res.ok) throw refused(res, url);
   return res.text();
 }

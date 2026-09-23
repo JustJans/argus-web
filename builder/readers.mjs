@@ -26,8 +26,9 @@ export function adapterCtx(log = () => {}, fail = () => {}) {
 
 // ➤ src: a source from builder/sources.mjs · data: its file in the store, which the reader may
 // ➤ change (a careers site keeps what it resolved and the pages it has read) · budget: what the
-// ➤ run may still spend. Answers { adverts, meta } or throws.
-export async function readSource(src, data, { budget = {}, log = () => {}, fail = () => {} } = {}) {
+// ➤ run may still spend · until: when a careers site stops reading pages, so the pass ends in
+// ➤ time with what it read. Answers { adverts, meta } or throws.
+export async function readSource(src, data, { budget = {}, log = () => {}, fail = () => {}, until = Infinity } = {}) {
   if (src.reader === 'adapter') {
     const adverts = [];
     for await (const raw of src.adapter.fetchAll(adapterCtx(log, fail))) adverts.push(raw);
@@ -39,15 +40,19 @@ export async function readSource(src, data, { budget = {}, log = () => {}, fail 
     return { adverts: jobs.map(p => wrapBoardAdvert(src.ats, src.company, p)), meta: { listed: all.length } };
   }
   if (src.reader === 'site') {
-    const r = await careers.readSite(src.site, data, budget, log);
-    return { adverts: r.adverts, meta: { listed: r.listed, fetched: r.fetched, blocks: r.blocks, backlog: r.backlog } };
+    const r = await careers.readSite(src.site, data, budget, log, until);
+    return { adverts: r.adverts, meta: { listed: r.listed, fetched: r.fetched, blocks: r.blocks, backlog: r.backlog, barren: r.barren, postponed: r.postponed } };
   }
   throw new Error(`no reader for ${src.reader}`);
 }
 
 // ➤ A pass with the source's own deadline: a read that neither answers nor fails must not
-// ➤ hold a lane for ever.
-export const readWithDeadline = (src, data, opts) => deadline(readSource(src, data, opts), src.deadlineMs || 300_000);
+// ➤ hold a lane for ever. A careers site stops reading pages a minute before it (a quarter of
+// ➤ the time for a short one), so a slow site keeps what it read instead of losing the pass.
+export function readWithDeadline(src, data, opts) {
+  const ms = src.deadlineMs || 300_000;
+  return deadline(readSource(src, data, { ...opts, until: Date.now() + ms - Math.min(60_000, ms / 4) }), ms);
+}
 
 // ➤ What changed since the last pass, for the log and the status: an advert is the same when
 // ➤ its address is.

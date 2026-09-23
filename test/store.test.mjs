@@ -50,8 +50,15 @@ eq([cadenceMs(site, cfg) / HOUR, cadenceMs(board, cfg) / HOUR, cadenceMs({ group
 const at = Date.parse('2026-09-07T12:00:00.000Z');
 const good = nextPass(site, {}, { ok: true, at, c: cfg });
 ok(good >= at + 23.5 * HOUR && good <= at + 24.5 * HOUR, 'a good pass comes back in a day, give or take half an hour');
-eq([nextPass(site, {}, { ok: false, at, c: cfg }) - at, nextPass(site, { fails: 1 }, { ok: false, at, c: cfg }) - at], [6 * HOUR, 24 * HOUR], 'a failure waits longer each time');
-eq(nextPass(site, { fails: 2 }, { ok: false, at, c: cfg }) - at, 7 * 24 * HOUR, 'a source that keeps failing is parked for a week');
+const waits = (entry, n = 200) => { const w = Array.from({ length: n }, () => (nextPass(site, entry, { ok: false, at, c: cfg }) - at) / HOUR); return [Math.min(...w), Math.max(...w)]; };
+const [first, second, parked] = [waits({}), waits({ fails: 1 }), waits({ fails: 2 })];
+ok(first[0] >= 3 && first[1] <= 6 && second[0] >= 12 && second[1] <= 24, 'a failure waits longer each time: three to six hours, then twelve to twenty-four');
+ok(parked[0] >= 84 && parked[1] <= 168, 'a source that keeps failing is parked for half a week to a week');
+ok(first[1] - first[0] > 1, 'sources that failed together come back at different times');
+const weekly = nextPass(site, {}, { ok: true, at, c: { ...cfg, cadence_h: { ...cfg.cadence_h, barren: 168 } }, barren: true });
+ok(weekly >= at + 167.5 * HOUR && weekly <= at + 168.5 * HOUR, 'a barren site comes back in a week');
+ok(nextPass(site, {}, { ok: true, at, c: cfg, barren: true }) >= at + 167.5 * HOUR, 'a week too when the settings give barren sites no cadence of their own');
+ok(nextPass(site, {}, { ok: false, at, c: cfg, barren: true }) - at <= 6 * HOUR, 'a barren site that fails waits like any other');
 
 // The queue: due first, the most overdue first, and only so many never read.
 const now = Date.parse('2026-09-07T12:00:00.000Z');
