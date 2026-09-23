@@ -15,8 +15,9 @@ links.
 ## Decisions
 
 - Each country's name and count open the list of that country's offers: a profile with that
-  country alone, the same one the Country filter would make. The row of offers with no fixed
-  country opens remote work anywhere (the "Remote" work mode).
+  country alone, the same one the Country filter would make.
+- The row of offers with no fixed country stays text. No filter opens that group alone, and the
+  "Remote" work mode at large would show a count that does not match the row's.
 - The table looks exactly as before: no underline or link colour, at the owner's request. Only
   the pointer changes over it, and a keyboard's focus shows its outline (WCAG 2.4.7).
 - The count is clickable too, but it is hidden from screen readers and from the Tab key: they

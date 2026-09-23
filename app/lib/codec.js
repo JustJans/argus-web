@@ -116,9 +116,8 @@ export function normaliseProfile(p = {}) {
     noWords: cleanTerms(p.noWords),
   };
 }
-// ➤ The profile a country of the front page's table opens: that country alone. The row of
-// ➤ offers with no fixed country ('xx', not a country of the catalogue) opens remote work anywhere.
-export const countryProfile = cc => normaliseProfile(cc === 'xx' ? { modes: ['remote'] } : { countries: [cc] });
+// ➤ The profile a country of the front page's table opens: that country alone.
+export const countryProfile = cc => normaliseProfile({ countries: [cc] });
 
 // ➤ Nothing set at all: the page shows its front instead of a list.
 const EMPTY = JSON.stringify(normaliseProfile({}));

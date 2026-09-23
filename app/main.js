@@ -246,9 +246,10 @@ function drawPile() {
   tbody.replaceChildren();
   // ➤ Each country opens its offers: its name is the link, and its count leads there too for a
   // ➤ pointer (hidden from the keyboard and screen readers, which meet the name). They look as
-  // ➤ plain text, as the table always did.
+  // ➤ plain text, as the table always did. The row with no fixed country stays text: no filter
+  // ➤ opens that group alone, and remote work at large would not match its count.
   const link = (cc, content, quiet) => {
-    if (cc !== 'xx' && !ids.countries.includes(cc)) return document.createTextNode(content);
+    if (!ids.countries.includes(cc)) return document.createTextNode(content);
     const a = document.createElement('a');
     a.href = `#p=${encodeProfile(countryProfile(cc), ids)}`;
     a.textContent = content;
