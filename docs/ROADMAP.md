@@ -38,6 +38,9 @@ The structure is built for the changes already known. Each item names the seam.
   reads one vacancy per new Workday board and names the board after the brand its address
   carries ("bakerhughes" → Baker Hughes, "bah" → Booz Allen Hamilton); `--dry` shows the changes.
   On the server, the Sunday round does the same for the boards the hunter found (`--found`).
+- **Towns**: `node builder/tools/places.mjs` rebuilds `catalogues/codes/places.json` from GeoNames'
+  cities5000 and admin1 files (the commands are in its header); towns of fewer than 5,000 people
+  and regions ("Hampshire", "Yvelines") are not on the map yet.
 - **One company by domain**: `node builder/tools/hunt.mjs acme.com [--write]` finds the careers
   pages, the platform and the adverts; Workday and Oracle sites read once `builder/config/vendors.yml`
   says so.

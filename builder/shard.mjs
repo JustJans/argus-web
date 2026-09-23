@@ -25,6 +25,14 @@ export function latestOf(records, { max = LATEST, days = LATEST_DAYS, now = Date
   return { offers: out, since };
 }
 
+// ➤ How many adverts name each occupation, per family: the specialties the filters list inside
+// ➤ a family, the fullest first. An occupation's code starts with its family's ("2144.1.14").
+export function occupationCounts(records) {
+  const out = {};
+  for (const rec of records) for (const code of rec.e || []) { const fam = code.slice(0, 4); if (!rec.f.includes(fam)) continue; const m = (out[fam] ||= {}); m[code] = (m[code] || 0) + 1; }
+  return out;
+}
+
 // ➤ records → { files: {name: content}, families: index block }. The same offers give the same
 // ➤ bytes (no date inside a shard, a fixed order), so a publish moves only what changed. `now`
 // ➤ is the day the newest part counts back from.
@@ -39,7 +47,8 @@ export function buildShards(records, families, now = Date.now()) {
   }
   const files = {};
   const index = {};
-  for (const f of families) index[f.id] = { label: f.label, group: f.group, countries: {} };
+  const occupations = occupationCounts(records);
+  for (const f of families) index[f.id] = { label: f.label, group: f.group, countries: {}, ...(occupations[f.id] ? { occupations: occupations[f.id] } : {}) };
   for (const [key, g] of groups) {
     g.offers.sort((a, b) => (b.d || '').localeCompare(a.d || '') || String(a.id).localeCompare(String(b.id)));
     const parts = [];

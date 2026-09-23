@@ -7,11 +7,12 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { compileFamilies, familiesOf, hygieneReason, languagesOfCountry } from './gate.mjs';
+import { compileFamilies, classifier, hygieneReason, languagesOfCountry } from './gate.mjs';
 import { compileCountries, placeOfAdvert, toRecord } from './normalise.mjs';
 import { compileScreens } from './screens.mjs';
 import { dedupe } from './dedupe.mjs';
 import { buildShards, writePile } from './shard.mjs';
+import { compileTowns, locate } from './towns.mjs';
 import { loadCache, saveCache, translateTitles } from './translate.mjs';
 import { eachSource } from './store.mjs';
 import { licenceFor } from './sources.mjs';
@@ -40,6 +41,7 @@ const codes = {
 };
 const countries = JSON.parse(readFileSync(join(ROOT, 'catalogues', 'countries.json'), 'utf-8')).countries;
 const gate = compileFamilies(catalogue, codes);
+const classify = classifier(gate);
 const cc = compileCountries(countries);
 const screens = compileScreens({
   degrees: JSON.parse(readFileSync(join(ROOT, 'catalogues', 'degrees.json'), 'utf-8')),
@@ -75,11 +77,12 @@ for (const data of eachSource()) {
     if (!/^https?:\/\//.test(String(raw.url || ''))) { counts.noLink++; drop('NO LINK', raw); continue; }
     // ➤ A source that names no language: the title is read in its country's languages as well.
     if (!raw.lang) raw.hintLangs = languagesOfCountry(placeOfAdvert(raw, cc).cc || String(raw.country || '').toLowerCase());
-    const fam = familiesOf(raw, gate);
+    const { families: fam, occupations } = classify(raw);
     if (!fam.length) { counts.outsideVertical++; drop('OUTSIDE VERTICAL', raw); continue; }
     const why = hygieneReason(raw);
     if (why) { counts.hygiene++; drop(`HYGIENE ${why}`, raw); continue; }
     const rec = toRecord(raw, fam, cc, screens);
+    if (occupations.length) rec.e = occupations;
     if (rec.x && rec.x < startedAt.toISOString().slice(0, 10)) { counts.stale++; drop('EXPIRED', raw); continue; }
     if (rec.cc && rec.cc !== 'xx' && !europe.has(rec.cc)) { counts.outsideEurope++; drop('OUTSIDE EUROPE', raw); continue; }
     // ➤ Company boards are read the world over: an advert of theirs whose place names nothing
@@ -92,15 +95,20 @@ if (!sourceFiles) { log('the store is empty: run builder/crawl.mjs first'); proc
 
 const { kept, sameUrl, sameRole } = dedupe(items);
 
-// ➤ Titles in English, as the bot shows them; the cache on disk means only new titles are asked.
+// ➤ Each advert on the map, for the search by town and distance: its town found in GeoNames.
+const towns = compileTowns(JSON.parse(readFileSync(join(ROOT, 'catalogues', 'codes', 'places.json'), 'utf-8')));
+const onMap = locate(kept, towns);
+
+// ➤ Titles in English, as the bot shows them, and in Spanish for the Spanish site; a cache on
+// ➤ disk per language (keyed by the title alone) means only new titles are asked.
 if (!args.includes('--no-translate')) {
-  // ➤ Keyed by the title alone since the titles are asked in batches; the old
-  // ➤ translations.json keyed them by title and town and is not read any more.
-  const cachePath = join(ROOT, 'builder', 'state', 'titles-en.json');
-  const cache = loadCache(cachePath);
-  const t = await translateTitles(kept, { cache, log });
-  saveCache(cachePath, cache);
-  log(`titles: ${t.translated} in English (${t.asked} new titles asked in ${t.requests} requests${t.spare ? `, ${t.spare} through the spare translator` : ''}${t.limited ? ', the first translator is shut to this machine' : ''})`);
+  for (const [target, field, name] of [['en', 'te', 'English'], ['es', 'ts', 'Spanish']]) {
+    const cachePath = join(ROOT, 'builder', 'state', `titles-${target}.json`);
+    const cache = loadCache(cachePath);
+    const t = await translateTitles(kept, { target, field, cache, log });
+    saveCache(cachePath, cache);
+    log(`titles: ${t.translated} in ${name} (${t.asked} new titles asked in ${t.requests} requests${t.spare ? `, ${t.spare} through the spare translator` : ''}${t.limited ? ', the first translator is shut to this machine' : ''})`);
+  }
 }
 const generatedAt = new Date().toISOString();
 const { files, families: familiesIndex, latest } = buildShards(kept, families);
@@ -124,11 +132,12 @@ const index = {
   v: 1, generated_at: generatedAt, crawled_at: crawledAt || generatedAt,
   expires_at: new Date(Date.parse(crawledAt || generatedAt) + 48 * 3600 * 1000).toISOString(), catalogue_v: 2,
   families: familiesIndex, latest, sources,
-  counts: { offers: kept.length, found: counts.found, by_country: perCountry, via: viaCount, sources: sourceFiles, companies: boardSources },
+  counts: { offers: kept.length, found: counts.found, by_country: perCountry, via: viaCount, sources: sourceFiles, companies: boardSources, on_map: onMap.placed },
   status: { ok: kept.length > 0, seconds: Math.round((Date.now() - startedAt) / 1000) },
 };
 mkdirSync(OUT, { recursive: true });
-const extras = {};
+// ➤ The towns with offers, for the place search; loaded only when a visitor types a town.
+const extras = { 'places.json': JSON.stringify({ v: 1, places: onMap.list }) };
 if (EXPLAIN) extras['explain.txt'] = dropped.map(([why, raw]) => `[${why}] ${raw.title} | ${raw.company} | ${raw.location} (${raw.source})`).join('\n') + '\n';
 writePile(OUT, files, index, extras);
 writeFileSync(join(OUT, 'status.json'), JSON.stringify({ generated_at: generatedAt, crawled_at: crawledAt, offers: kept.length, found: counts.found, sources: sourceFiles, dropped: counts, duplicates: { sameUrl, sameRole }, by_country: perCountry }, null, 2));
@@ -136,4 +145,5 @@ writeFileSync(join(OUT, 'status.json'), JSON.stringify({ generated_at: generated
 log(`store: ${sourceFiles} sources, newest pass ${crawledAt || 'never'}`);
 log(`found ${counts.found} · outside vertical ${counts.outsideVertical} · outside Europe ${counts.outsideEurope} · hygiene ${counts.hygiene} · no link ${counts.noLink} · stale ${counts.stale} · duplicates ${sameUrl + sameRole}`);
 log(`kept ${kept.length} offers in ${Object.keys(files).length} shards → ${OUT}`);
+log(`on the map: ${onMap.placed} offers in ${onMap.list.length} towns`);
 if (kept.length === 0) { log('nothing usable in the store: not publishing'); process.exit(1); }

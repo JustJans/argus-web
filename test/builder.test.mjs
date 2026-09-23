@@ -6,10 +6,11 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { harness } from 'argus/server-bot/test-harness.mjs';
-import { compileFamilies, familiesOf, hygieneReason, matchableTitle } from '../builder/gate.mjs';
+import { compileFamilies, familiesOf, occupationsOf, classifier, hygieneReason, matchableTitle } from '../builder/gate.mjs';
 import { compileCountries, placeOf, placeOfAdvert, normUrl, idFor, toRecord } from '../builder/normalise.mjs';
 import { dedupe, roleKey } from '../builder/dedupe.mjs';
-import { buildShards, latestOf } from '../builder/shard.mjs';
+import { buildShards, latestOf, occupationCounts } from '../builder/shard.mjs';
+import { compileTowns, townOf, locate } from '../builder/towns.mjs';
 import { shardFiles } from '../app/lib/shards.js';
 import { parseLanbide, isoDay } from '../builder/adapters/lanbide.mjs';
 import { parseFeinaActiva } from '../builder/adapters/feinaactiva.mjs';
@@ -28,6 +29,7 @@ import { parseRobots, allowed, parseSitemap, looksLikeJob, pathShape, jobLinks, 
 import { toRaw as careersRaw } from '../builder/adapters/careers.mjs';
 import { deadline } from '../builder/http.mjs';
 import { brandName } from '../builder/lib/names.mjs';
+import { bothGenders, spanishName, buildOccupations } from '../builder/tools/occupations.mjs';
 
 const { ok, eq, done } = harness('builder');
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -74,6 +76,55 @@ eq(familiesOf({ title: 'Technical Support Engineer - Digital Marketing', codes: 
 eq(familiesOf({ title: "Ingénieur d'affaires confirmé", codes: {}, hintLangs: ['fr'] }, gate), [], 'a French business engineer sells');
 eq([hygieneReason({ title: 'shift supervisor - Store# 08570' }) !== null, hygieneReason({ title: 'Werkstudent IT Servicemanagement' }) !== null, hygieneReason({ title: 'Quality Control Operator' }) !== null], [true, true, true], 'shop shifts, working students and operatives are hygiene');
 eq(hygieneReason({ title: 'SAP Retail Consultant' }), null, 'a SAP Retail consultant is not a shop job');
+
+// The specialties: which ESCO occupation a title names, inside the families it was given.
+const occ = (title, extra = {}) => { const raw = { title, codes: {}, ...extra }; return occupationsOf(raw, familiesOf(raw, gate), gate); };
+eq([occ('Naval Architect'), occ('Wind Energy Engineer'), occ('Software Tester'), occ('Data Scientist')], [['2144.1.14'], ['2149.7.6'], ['2519.6'], ['2511.3']], 'a title that is an occupation names it');
+eq(occ('Marine Engineer / Naval Architect'), ['2144.1.10', '2144.1.14'], 'a title with two occupations names both');
+eq([occ('Senior Mechanical Design Engineer'), occ('Java Developer'), occ('Bauingenieur (m/w/d)', { hintLangs: ['de'] })], [['2144.1'], ['2512.3'], ['2142.1']], "a title filed by the discipline it names is that discipline's own occupation");
+eq(occupationsOf({ title: 'Naval Architect', codes: {} }, ['2142'], gate), [], 'only occupations of the families the advert was given');
+eq(occ('Engineer'), [], 'a bare engineer names no occupation');
+{
+  const classify = classifier(gate);
+  const first = classify({ title: 'Naval Architect', codes: {} });
+  first.families.push('x');
+  eq([classify({ title: 'Naval Architect', codes: {} }), classify({ title: 'Bauingenieur', codes: {}, hintLangs: ['de'] }).families], [{ families: ['2144'], occupations: ['2144.1.14'] }, ['2142']], "the build-wide gate answers as the gate does, a title worked out once, and no advert can change another's answer");
+}
+eq(occupationCounts([{ f: ['2144'], e: ['2144.1.14'] }, { f: ['2144', '3151'], e: ['2144.1.14', '2144.1.10'] }, { f: ['2142'], e: ['2144.1.14'] }]), { 2144: { '2144.1.14': 2, '2144.1.10': 1 } }, 'the index counts the occupations per family, each under its own');
+// Towns: an advert's place found in GeoNames by any of its names, within its country.
+{
+  const towns = compileTowns({ places: [
+    [1, 'Munich', 'de', 'Bavaria', 48.1374, 11.5755, 1505005, ['München', 'Muenchen']],
+    [2, 'Frankfurt am Main', 'de', 'Hesse', 50.1155, 8.6842, 650000, ['Frankfurt']],
+    [3, 'Frankfurt (Oder)', 'de', 'Brandenburg', 52.3471, 14.5506, 57107, ['Frankfurt']],
+    [4, 'Cornellà de Llobregat', 'es', 'Catalonia', 41.35, 2.0833, 87173, []],
+    [5, 'Ulm', 'de', 'Baden-Wurttemberg', 48.3984, 9.9916, 126329, []],
+    [6, 'Terrassa', 'es', 'Catalonia', 41.5667, 2.0167, 215121, []],
+    [7, 'Barcelona', 'es', 'Catalonia', 41.3888, 2.159, 1686208, []],
+  ] });
+  const name = rec => townOf(rec, towns)?.town.name || null;
+  eq([name({ cc: 'de', ci: 'München', l: 'München, Bayern' }), name({ cc: 'es', ci: '', l: '08940 Cornellà de Llobregat, Barcelona provincia' })], ['Munich', 'Cornellà de Llobregat'], 'a town by any of its names, and without its postcode');
+  eq([name({ cc: 'de', ci: 'Frankfurt', l: 'Frankfurt (Oder), Brandenburg' }), name({ cc: 'de', ci: 'Frankfurt', l: 'Frankfurt, Hessen' })], ['Frankfurt (Oder)', 'Frankfurt am Main'], 'two towns of one name: the one in the region named, else the bigger');
+  eq(name({ cc: 'es', ci: 'Barcelona', l: 'Terrassa, BARCELONA, ES' }), 'Terrassa', 'the most precise piece first: a town in the province of Barcelona is that town');
+  eq([name({ cc: 'de', ci: 'Ulm-Jungingen', l: 'Ulm-Jungingen, BW' }), name({ cc: 'es', ci: 'München', l: 'München' }), name({ cc: 'de', ci: '', l: 'bundesweit, DE' })], ['Ulm', null, null], "a district finds its town; a town is looked for in its own country only; no town, no place");
+  const recs = [{ cc: 'de', ci: 'München', l: 'München' }, { cc: 'de', ci: 'Munich', l: 'Munich' }, { cc: 'de', ci: 'München', l: 'München, DE' }, { cc: 'xx', ci: '', l: 'Remote' }];
+  const { placed, list } = locate(recs, towns);
+  eq([placed, recs[0].g, recs[3].g], [3, [48.14, 11.58], undefined], 'each advert gets its coordinates, rounded to a kilometre or so');
+  eq(list, [['München', 'Munich', 'Bavaria', 'de', 48.14, 11.58, 3]], 'the towns with offers, under the name their adverts use most');
+}
+
+// The catalogue of specialties: ESCO's Spanish in both genders, and a file that only grows.
+eq([bothGenders(['ingeniero mecánico', 'ingeniera mecánica']), bothGenders(['desarrollador de software', 'desarrolladora de software']), bothGenders(['técnico', 'técnica']), bothGenders(['piloto', 'piloto'])], ['ingeniero/a mecánico/a', 'desarrollador/a de software', 'técnico/a', 'piloto'], 'the two genders in one, word by word');
+eq(bothGenders(['jefe de obra', 'jefa de obra']), 'jefe de obra', 'a pair that differs otherwise keeps the first');
+eq(spanishName('ingeniero especializado en energía eólica/ingeniera especializada en energía eólica'), 'ingeniero/a especializado/a en energía eólica', "ESCO's slash pair becomes one name");
+{
+  const fams = { families: [{ id: '2144', isco: ['2144'] }] };
+  const isco = v => ({ units: { 2144: { occupations: v.map(([code, en]) => ({ code, title: en, preferred: { en: [en] } })) } } });
+  const first = buildOccupations(fams, isco([['2144.1', 'mechanical engineer'], ['2144.1.14', 'naval architect']]));
+  const later = buildOccupations(fams, isco([['2144.1', 'mechanical engineer'], ['2144.1.2', 'agricultural engineer']]), first);
+  eq(later.map(o => o.code), ['2144.1', '2144.1.14', '2144.1.2'], 'what was published keeps its place and what is new goes last');
+  eq(later[1].retired, true, 'an occupation ESCO dropped stays, marked retired, so old codes keep their meaning');
+}
 eq(familiesOf({ title: 'Automatikos inžinierius', codes: { isco: '214911' }, lang: 'lt' }, gate), ['2149'], 'a six-digit Lithuanian LPK code, the same way');
 
 // ── The gate: titles, by ESCO's names ───────────────────────────────────
@@ -145,6 +196,8 @@ eq([placeOf('Erfurt, TH, DE', cc).cc, placeOf('Rockville, MD or Hawthorne, CA', 
 eq(placeOf('Fort Myers, FL; Hybrid; La Belle, FL; Naples, FL', cc).cc, 'us', 'places split by semicolons are read, and Naples, Florida is not Naples in Italy');
 eq([placeOf('Munich, DE; Austin, TX', cc).cc, placeOf('Madrid, ES; Barcelona, ES', cc).cc], ['de', 'es'], 'a European place in a mixed list keeps the advert in Europe');
 eq(placeOf('Naples, Italy', cc).cc, 'it', 'and Naples with its country is still Italy');
+eq([placeOf('Sydney, New South Wales, Australia', cc).cc, placeOf('Sydney, New South Wales, AU', cc).cc, placeOf('North Kingstown, Rhode Island, USA', cc).cc, placeOf('Wallops Island, VA', cc).cc, placeOf('New Holland, PA, US', cc).cc], ['au', 'au', 'us', 'us', 'us'], 'a European word inside a place elsewhere (Wales, Island, Holland) is not its country: the country named last is');
+eq([placeOf('Cardiff, Wales', cc).cc, placeOf('Reykjavík, Iceland', cc).cc, placeOf('Berlin, Germany; Austin, TX, USA', cc).cc], ['gb', 'is', 'de'], 'the European ones still are, and a list keeps its European place');
 eq(placeOf('KR - Seoul', cc).cc, 'kr', 'a code outside Europe anywhere in the text');
 eq(placeOf('New York', cc).cc, 'us', 'a big city outside Europe, unnamed country');
 eq(placeOf('São Paulo', cc).cc, 'br', 'accents and all');

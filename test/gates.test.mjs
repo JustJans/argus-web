@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { harness } from 'argus/server-bot/test-harness.mjs';
 import * as engine from 'argus/server-bot/filters.mjs';
-import { makeJudge, sortOffers } from '../app/lib/gates.js';
+import { makeJudge, sortOffers, distanceKm } from '../app/lib/gates.js';
 import { normaliseProfile } from '../app/lib/codec.js';
 import { shardFiles, loadShards } from '../app/lib/shards.js';
 
@@ -45,6 +45,19 @@ eq(judge({ ...base, lg: ['en'] }).ok, true, 'a language spoken is fine');
   eq(spainOnly({ f: ['2144'], t: 'Ingeniero mecánico', cc: 'es', dg: ['mechanical'], lg: ['es'] }).ok, true, 'ticking only a country hides nothing for degree or language');
   const withDegree = makeJudge(normaliseProfile({ degrees: ['electrical'] }), cats, engine);
   eq(withDegree({ f: ['2144'], t: 'Ingeniero mecánico', cc: 'es', dg: ['mechanical'] }).stage, 'DEGREE', 'once the visitor lists degrees, the screen applies');
+}
+{
+  // ➤ Specialties narrow a family; cities narrow a country; the rest stays as it was.
+  const naval = makeJudge(normaliseProfile({ families: ['2144', '2142'], specialties: ['2144.1.14'] }), cats, engine);
+  eq([naval({ f: ['2144'], e: ['2144.1.14'], t: 'Naval Architect' }).ok, naval({ f: ['2144'], e: ['2144.1'], t: 'Mechanical Engineer' }).stage, naval({ f: ['2144'], t: 'Werktuigbouwkundige' }).stage], [true, 'FAMILY', 'FAMILY'], 'a mechanical engineer is out once only naval architects were chosen, and so is one that names no specialty');
+  eq(naval({ f: ['2142'], t: 'Site Engineer' }).ok, true, 'a family with no specialty chosen keeps all of its adverts');
+  // ➤ Barcelona and 25 km: Cornellà (7 km) and Rubí (17 km) are in, Manresa (47 km) and Madrid
+  // ➤ are not, and neither is a Spanish advert the map could not place; other countries are untouched.
+  const bcn = makeJudge(normaliseProfile({ countries: ['nl'], place: { cc: 'es', name: 'Barcelona, Catalonia', lat: 41.39, lon: 2.16, km: 25 } }), cats, engine);
+  const at = (cc, g) => bcn({ f: ['2144'], t: 'Ingeniero', cc, g });
+  eq([at('es', [41.35, 2.08]).ok, at('es', [41.49, 2.03]).ok, at('es', [41.73, 1.83]).stage, at('es', [40.42, -3.70]).stage], [true, true, 'PLACE', 'PLACE'], 'within the distance of the town, or not');
+  eq([at('es', undefined).stage, at('nl', [52.01, 4.36]).ok], ['PLACE', true], 'an advert off the map is not found by town; another country chosen keeps all of its adverts');
+  ok(Math.abs(distanceKm([48.86, 2.35], [51.51, -0.13]) - 344) < 2, 'Paris to London is some 344 km as the crow flies');
 }
 {
   const sorted = sortOffers([{ cc: 'nl', d: '2026-09-01' }, { cc: 'es', d: '2026-08-01' }, { cc: 'es', d: '2026-09-02' }, { cc: 'xx', d: '2026-09-03' }, { cc: 'fr', d: '2026-09-03' }], profile);

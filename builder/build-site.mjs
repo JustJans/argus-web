@@ -1,4 +1,5 @@
-// ➤ Assembles the folder GitHub Pages serves: the pages at their fixed addresses; the scripts,
+// ➤ Assembles the folder GitHub Pages serves: the pages at their fixed addresses, and their
+// ➤ Spanish twins under es/ (builder/spanish.mjs); the scripts,
 // ➤ styles, Argus's title engine and the PDF reader under v/<hash of their contents>/ (see
 // ➤ fingerprint.mjs); the catalogues the app reads; and the pile the builder wrote (--data,
 // ➤ default builder/out) under data/. The explain report stays out: it is a working file.
@@ -9,6 +10,7 @@ import { dirname, join } from 'path';
 import { writeEngine } from './engine-bundle.mjs';
 import { filesUnder, hashTree, rewriteAssetLinks, recordVersion } from './fingerprint.mjs';
 import { familyTerms } from './gate.mjs';
+import { PAGES as TWINS, toSpanish, alternates } from './spanish.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const args = process.argv.slice(2);
@@ -38,10 +40,19 @@ const isPage = f => f.endsWith('.html');
 const files = filesUnder(stage);
 const isAsset = p => files.includes(p) && !isPage(p);
 const version = hashTree(stage, f => !isPage(f));
-for (const page of files.filter(isPage)) {
+const writePage = (page, html) => {
   const out = join(SITE, page);
   mkdirSync(dirname(out), { recursive: true });
-  writeFileSync(out, rewriteAssetLinks(readFileSync(join(stage, page), 'utf8'), page, version, isAsset));
+  writeFileSync(out, rewriteAssetLinks(html, page, version, isAsset));
+};
+for (const page of files.filter(isPage)) {
+  let html = readFileSync(join(stage, page), 'utf8');
+  // ➤ A page with a Spanish twin names it, and the twin names the page, for search engines.
+  if (TWINS.includes(page)) {
+    html = html.replace('</head>', alternates(page));
+    writePage(`es/${page}`, toSpanish(html, page));
+  }
+  writePage(page, html);
   rmSync(join(stage, page));
 }
 const vDir = join(SITE, 'v');

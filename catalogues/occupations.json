@@ -1,0 +1,2435 @@
+{
+ "_about": "ESCO's occupations under each family (ISCO-08 unit group), the specialties a visitor can pick inside a family. code = ESCO's code, whose first four digits are its family's; label = ESCO's English title; es = the Spanish one, both genders in one. Built by builder/tools/occupations.mjs from codes/isco.json. The position is the index in the profile code. APPEND ONLY: an occupation ESCO drops stays, marked retired.",
+ "occupations": [
+  {
+   "code": "2141.1",
+   "label": "Clothing technologist",
+   "es": "Técnico/a en tecnología de la confección textil"
+  },
+  {
+   "code": "2141.2",
+   "label": "Food and beverage packaging technologist",
+   "es": "Técnico/a en envasado de alimentos y bebidas"
+  },
+  {
+   "code": "2141.3",
+   "label": "Industrial engineer",
+   "es": "Ingeniero/a industrial"
+  },
+  {
+   "code": "2141.3.1",
+   "label": "Manufacturing engineer",
+   "es": "Ingeniero/a industrial especialista en tecnologías de fabricación"
+  },
+  {
+   "code": "2141.3.2",
+   "label": "Production engineer",
+   "es": "Ingeniero/a de producción industrial"
+  },
+  {
+   "code": "2141.3.2.1",
+   "label": "Automation engineer",
+   "es": "Ingeniero/a de automatización"
+  },
+  {
+   "code": "2141.3.2.2",
+   "label": "Food production engineer",
+   "es": "Ingeniero/a de producción de alimentos"
+  },
+  {
+   "code": "2141.3.3",
+   "label": "Surface engineer",
+   "es": "Ingeniero/a de materiales de superficie"
+  },
+  {
+   "code": "2141.4",
+   "label": "Leather goods industrial engineer",
+   "es": "Ingeniero/a industrial especializado/a en artículos de piel y cuero"
+  },
+  {
+   "code": "2141.5",
+   "label": "Leather production planner",
+   "es": "Planificador/a de producción de artículos de piel y cuero"
+  },
+  {
+   "code": "2141.6",
+   "label": "Logistics analyst",
+   "es": "Analista de logística"
+  },
+  {
+   "code": "2141.7",
+   "label": "Maintenance and repair engineer",
+   "es": "Técnico/a de mantenimiento y reparación"
+  },
+  {
+   "code": "2141.8",
+   "label": "Packaging production manager",
+   "es": "Responsable de producción de sistemas de embalaje y envasado"
+  },
+  {
+   "code": "2141.9",
+   "label": "Process engineer",
+   "es": "Ingeniero/a de procesos"
+  },
+  {
+   "code": "2141.10",
+   "label": "Textile technologist",
+   "es": "Especialista en tecnologías textiles"
+  },
+  {
+   "code": "2142.1",
+   "label": "Civil engineer",
+   "es": "Ingeniero/a civil"
+  },
+  {
+   "code": "2142.1.1",
+   "label": "Airport planning engineer",
+   "es": "Ingeniero/a especializado/a en planificación aeroportuaria"
+  },
+  {
+   "code": "2142.1.2",
+   "label": "Construction engineer",
+   "es": "Ingeniero/a de construcción"
+  },
+  {
+   "code": "2142.1.3",
+   "label": "Drainage engineer",
+   "es": "Ingeniero/a especialista en drenaje e hidráulica"
+  },
+  {
+   "code": "2142.1.4",
+   "label": "Geological engineer",
+   "es": "Ingeniero/a geólogo/a"
+  },
+  {
+   "code": "2142.1.5",
+   "label": "Hydropower engineer",
+   "es": "Ingeniero/a especialista en centrales hidroeléctricas"
+  },
+  {
+   "code": "2142.1.6",
+   "label": "Mining geotechnical engineer",
+   "es": "Ingeniero/a geotécnico/a"
+  },
+  {
+   "code": "2142.1.7",
+   "label": "Pipeline engineer",
+   "es": "Ingeniero/a especializado/a en gasoductos y oleoductos"
+  },
+  {
+   "code": "2142.1.8",
+   "label": "Rail project engineer",
+   "es": "Ingeniero/a civil especializado/a en vías férreas"
+  },
+  {
+   "code": "2142.1.9",
+   "label": "Transport engineer",
+   "es": "Ingeniero/a de transportes"
+  },
+  {
+   "code": "2142.1.10",
+   "label": "Wastewater engineer",
+   "es": "Ingeniero/a de aguas residuales y saneamiento"
+  },
+  {
+   "code": "2142.1.11",
+   "label": "Water engineer",
+   "es": "Ingeniero/a hidráulico/a"
+  },
+  {
+   "code": "2143.1",
+   "label": "Environmental engineer",
+   "es": "Ingeniero/a medioambiental"
+  },
+  {
+   "code": "2143.1.1",
+   "label": "Environmental mining engineer",
+   "es": "Ingeniero/a de minas especializado/a en el impacto medioambiental de la minería"
+  },
+  {
+   "code": "2143.1.2",
+   "label": "ICT environmental manager",
+   "es": "Gestor/a de proyectos de TIC medioambientales"
+  },
+  {
+   "code": "2143.1.3",
+   "label": "Recycling specialist",
+   "es": "Especialista en reciclaje"
+  },
+  {
+   "code": "2143.1.4",
+   "label": "Waste treatment engineer",
+   "es": "Ingeniero/a especializado/a en tratamiento de residuos"
+  },
+  {
+   "code": "2143.2",
+   "label": "Environmental expert",
+   "es": "Experto/a en medio ambiente"
+  },
+  {
+   "code": "2144.1",
+   "label": "Mechanical engineer",
+   "es": "Ingeniero/a mecánico/a"
+  },
+  {
+   "code": "2144.1.1",
+   "label": "Aerospace engineer",
+   "es": "Ingeniero/a aeroespacial"
+  },
+  {
+   "code": "2144.1.1.1",
+   "label": "Aerodynamics engineer",
+   "es": "Ingeniero/a aerodinámico/a"
+  },
+  {
+   "code": "2144.1.2",
+   "label": "Agricultural engineer",
+   "es": "Ingeniero/a agrícola"
+  },
+  {
+   "code": "2144.1.2.1",
+   "label": "Agricultural equipment design engineer",
+   "es": "Ingeniero/a especialista en diseño de equipo agrícola"
+  },
+  {
+   "code": "2144.1.3",
+   "label": "Automotive engineer",
+   "es": "Ingeniero/a de automoción"
+  },
+  {
+   "code": "2144.1.4",
+   "label": "Container equipment design engineer",
+   "es": "Ingeniero/a especializado/a en el diseño de equipos de contenedores"
+  },
+  {
+   "code": "2144.1.5",
+   "label": "Engine designer",
+   "es": "Diseñador/a de maquinaria"
+  },
+  {
+   "code": "2144.1.6",
+   "label": "Equipment engineer",
+   "es": "Ingeniero/a de mantenimiento"
+  },
+  {
+   "code": "2144.1.7",
+   "label": "Fluid power engineer",
+   "es": "Ingeniero/a especializado/a en transmisión hidráulica y neumática"
+  },
+  {
+   "code": "2144.1.8",
+   "label": "Heating, ventilation, air conditioning engineer",
+   "es": "Ingeniero/a de climatización"
+  },
+  {
+   "code": "2144.1.9",
+   "label": "Industrial tool design engineer",
+   "es": "Ingeniero/a en diseño de herramientas industriales"
+  },
+  {
+   "code": "2144.1.10",
+   "label": "Marine engineer",
+   "es": "Ingeniero/a marino/a"
+  },
+  {
+   "code": "2144.1.11",
+   "label": "Mechatronics engineer",
+   "es": "Ingeniero/a mecatrónico/a"
+  },
+  {
+   "code": "2144.1.12",
+   "label": "Mine mechanical engineer",
+   "es": "Ingeniero/a mecánico/a de minas"
+  },
+  {
+   "code": "2144.1.13",
+   "label": "Mine ventilation engineer",
+   "es": "Ingeniero/a de minas especialista en ventilación"
+  },
+  {
+   "code": "2144.1.14",
+   "label": "Naval architect",
+   "es": "Arquitecto/a naval"
+  },
+  {
+   "code": "2144.1.15",
+   "label": "Optomechanical engineer",
+   "es": "Ingeniero/a en optomecánica"
+  },
+  {
+   "code": "2144.1.16",
+   "label": "Packing machinery engineer",
+   "es": "Ingeniero/a en maquinaria de embalaje"
+  },
+  {
+   "code": "2144.1.17",
+   "label": "Precision engineer",
+   "es": "Ingeniero/a de precisión"
+  },
+  {
+   "code": "2144.1.18",
+   "label": "Rolling stock engineer",
+   "es": "Ingeniero/a de material rodante"
+  },
+  {
+   "code": "2144.1.19",
+   "label": "Rotating equipment engineer",
+   "es": "Ingeniero/a especializado/a en equipos de rotación"
+  },
+  {
+   "code": "2144.1.20",
+   "label": "Steam engineer",
+   "es": "Ingeniero/a especializado/a en máquinas de vapor"
+  },
+  {
+   "code": "2144.1.21",
+   "label": "Tooling engineer",
+   "es": "Ingeniero/a especializado/a en diseño de herramientas"
+  },
+  {
+   "code": "2144.1.22",
+   "label": "Welding engineer",
+   "es": "Ingeniero/a de soldadura"
+  },
+  {
+   "code": "2145.1",
+   "label": "Chemical engineer",
+   "es": "Ingeniero/a químico/a"
+  },
+  {
+   "code": "2145.1.1",
+   "label": "Biochemical engineer",
+   "es": "Ingeniero/a bioquímico/a"
+  },
+  {
+   "code": "2145.1.2",
+   "label": "Brewmaster",
+   "es": "Maestro/a cervecero/a"
+  },
+  {
+   "code": "2145.1.3",
+   "label": "Cider master",
+   "es": "Maestro/a sidrero/a"
+  },
+  {
+   "code": "2145.1.4",
+   "label": "Food technologist",
+   "es": "Tecnólogo/a de alimentos"
+  },
+  {
+   "code": "2145.1.5",
+   "label": "Gas distribution engineer",
+   "es": "Ingeniero/a especializado/a en distribución de gas"
+  },
+  {
+   "code": "2145.1.6",
+   "label": "Gas production engineer",
+   "es": "Ingeniero/a especializado/a en producción de gas"
+  },
+  {
+   "code": "2145.1.7",
+   "label": "Oenologist",
+   "es": "Enólogo/a"
+  },
+  {
+   "code": "2145.1.8",
+   "label": "Paper engineer",
+   "es": "Ingeniero/a especializado/a en fabricación de papel"
+  },
+  {
+   "code": "2145.1.9",
+   "label": "Pharmaceutical engineer",
+   "es": "Ingeniero/a farmacéutico/a"
+  },
+  {
+   "code": "2145.2",
+   "label": "Synthetic materials engineer",
+   "es": "Ingeniero/a en materiales sintéticos"
+  },
+  {
+   "code": "2146.1",
+   "label": "Assayer",
+   "es": "Ensayador/a"
+  },
+  {
+   "code": "2146.2",
+   "label": "Drilling engineer",
+   "es": "Ingeniero/a en perforaciones"
+  },
+  {
+   "code": "2146.3",
+   "label": "Explosives engineer",
+   "es": "Ingeniero/a de explosivos"
+  },
+  {
+   "code": "2146.4",
+   "label": "Liquid fuel engineer",
+   "es": "Ingeniero/a especializado/a en combustibles líquidos"
+  },
+  {
+   "code": "2146.5",
+   "label": "Metallurgist",
+   "es": "Metalúrgico/a"
+  },
+  {
+   "code": "2146.5.1",
+   "label": "Chemical metallurgist",
+   "es": "Químico/a metalúrgico/a"
+  },
+  {
+   "code": "2146.5.2",
+   "label": "Process metallurgist",
+   "es": "Metalúrgico/a especialista en procesos"
+  },
+  {
+   "code": "2146.6",
+   "label": "Mine development engineer",
+   "es": "Ingeniero/a de minas especialista en proyección y desarrollo"
+  },
+  {
+   "code": "2146.7",
+   "label": "Mine health and safety engineer",
+   "es": "Ingeniero/a de minas especialista en salud y seguridad"
+  },
+  {
+   "code": "2146.8",
+   "label": "Mine planning engineer",
+   "es": "Ingeniero/a de minas especialista en planificación"
+  },
+  {
+   "code": "2146.9",
+   "label": "Mineral processing engineer",
+   "es": "Ingeniero/a de minas especializado/a en procesamiento del mineral"
+  },
+  {
+   "code": "2146.10",
+   "label": "Petroleum engineer",
+   "es": "Ingeniero/a del petróleo"
+  },
+  {
+   "code": "2146.11",
+   "label": "Quarry engineer",
+   "es": "Ingeniero/a de minas especialista en canteras"
+  },
+  {
+   "code": "2149.1",
+   "label": "Acoustical engineer",
+   "es": "Ingeniero/a acústico/a"
+  },
+  {
+   "code": "2149.2",
+   "label": "Application engineer",
+   "es": "Ingeniero/a de aplicaciones"
+  },
+  {
+   "code": "2149.2.1",
+   "label": "Calculation engineer",
+   "es": "Ingeniero/a de cálculo"
+  },
+  {
+   "code": "2149.2.2",
+   "label": "Component engineer",
+   "es": "Ingeniero/a de componentes"
+  },
+  {
+   "code": "2149.2.3",
+   "label": "Contract engineer",
+   "es": "Ingeniero/a especialista en contratos"
+  },
+  {
+   "code": "2149.2.4",
+   "label": "Design engineer",
+   "es": "Ingeniero/a de diseño"
+  },
+  {
+   "code": "2149.2.5",
+   "label": "Installation engineer",
+   "es": "Ingeniero/a de instalaciones"
+  },
+  {
+   "code": "2149.2.6",
+   "label": "Logistics engineer",
+   "es": "Ingeniero/a en logística"
+  },
+  {
+   "code": "2149.2.7",
+   "label": "Quality engineer",
+   "es": "Ingeniero/a de control de calidad"
+  },
+  {
+   "code": "2149.2.7.1",
+   "label": "Compliance engineer",
+   "es": "Ingeniero/a especializado/a en normalización y certificación"
+  },
+  {
+   "code": "2149.2.8",
+   "label": "Research engineer",
+   "es": "Ingeniero/a de investigación"
+  },
+  {
+   "code": "2149.3",
+   "label": "Aviation ground systems engineer",
+   "es": "Ingeniero/a especializado/a en infraestructuras aeroportuarias"
+  },
+  {
+   "code": "2149.4",
+   "label": "Bioengineer",
+   "es": "Bioingeniero/a"
+  },
+  {
+   "code": "2149.4.1",
+   "label": "Biomedical engineer",
+   "es": "Ingeniero/a biomédico/a"
+  },
+  {
+   "code": "2149.5",
+   "label": "Commissioning engineer",
+   "es": "Ingeniero/a especialista en finalización de proyectos"
+  },
+  {
+   "code": "2149.6",
+   "label": "Dismantling engineer",
+   "es": "Ingeniero/a especializado/a en desmantelamiento de equipos industriales y edificios"
+  },
+  {
+   "code": "2149.7",
+   "label": "Energy engineer",
+   "es": "Ingeniero/a en energía"
+  },
+  {
+   "code": "2149.7.1",
+   "label": "Energy systems engineer",
+   "es": "Ingeniero/a en sistemas de energía"
+  },
+  {
+   "code": "2149.7.2",
+   "label": "Nuclear engineer",
+   "es": "Ingeniero/a nuclear"
+  },
+  {
+   "code": "2149.7.3",
+   "label": "Renewable energy engineer",
+   "es": "Ingeniero/a en energías renovables"
+  },
+  {
+   "code": "2149.7.4",
+   "label": "Solar energy engineer",
+   "es": "Ingeniero/a en energía solar"
+  },
+  {
+   "code": "2149.7.5",
+   "label": "Thermal engineer",
+   "es": "Ingeniero/a térmico/a"
+  },
+  {
+   "code": "2149.7.6",
+   "label": "Wind energy engineer",
+   "es": "Ingeniero/a especializado/a en energía eólica"
+  },
+  {
+   "code": "2149.8",
+   "label": "Health and safety engineer",
+   "es": "Ingeniero/a en salud y seguridad"
+  },
+  {
+   "code": "2149.8.1",
+   "label": "Fire prevention and protection engineer",
+   "es": "Ingeniero/a de prevención y protección contra incendios"
+  },
+  {
+   "code": "2149.9",
+   "label": "Materials engineer",
+   "es": "Ingeniero/a de materiales"
+  },
+  {
+   "code": "2149.9.1",
+   "label": "Nanoengineer",
+   "es": "Ingeniero/a especializado/a en nanotecnología"
+  },
+  {
+   "code": "2149.9.2",
+   "label": "Wood technology engineer",
+   "es": "Ingeniero/a en tecnología de la madera"
+  },
+  {
+   "code": "2149.10",
+   "label": "Optical engineer",
+   "es": "Ingeniero/a en óptica"
+  },
+  {
+   "code": "2149.10.1",
+   "label": "Photonics engineer",
+   "es": "Ingeniero/a fotónico/a"
+  },
+  {
+   "code": "2149.11",
+   "label": "Patent engineer",
+   "es": "Ingeniero/a en patentes"
+  },
+  {
+   "code": "2149.12",
+   "label": "Quantity surveyor",
+   "es": "Ingeniero/a de control de costes"
+  },
+  {
+   "code": "2149.13",
+   "label": "Robotics engineer",
+   "es": "Ingeniero/a en robótica"
+  },
+  {
+   "code": "2149.14",
+   "label": "Test engineer",
+   "es": "Ingeniero/a de pruebas"
+  },
+  {
+   "code": "2149.15",
+   "label": "Textile, leather and footwear researcher",
+   "es": "Investigador/a sobre productos textiles, de piel y calzado"
+  },
+  {
+   "code": "2151.1",
+   "label": "Electrical engineer",
+   "es": "Ingeniero/a eléctrico/a"
+  },
+  {
+   "code": "2151.1.1",
+   "label": "Electric power generation engineer",
+   "es": "Ingeniero/a especializado/a en generación de energía eléctrica"
+  },
+  {
+   "code": "2151.1.2",
+   "label": "Electromagnetic engineer",
+   "es": "Ingeniero/a especialista en electromagnetismo"
+  },
+  {
+   "code": "2151.1.3",
+   "label": "Electromechanical engineer",
+   "es": "Ingeniero/a electromecánico/a"
+  },
+  {
+   "code": "2151.1.4",
+   "label": "Mine electrical engineer",
+   "es": "Ingeniero/a eléctrico/a de minas"
+  },
+  {
+   "code": "2151.1.5",
+   "label": "Power distribution engineer",
+   "es": "Ingeniero/a especializado/a en distribución de electricidad"
+  },
+  {
+   "code": "2151.1.6",
+   "label": "Substation engineer",
+   "es": "Ingeniero/a de subestaciones"
+  },
+  {
+   "code": "2152.1",
+   "label": "Electronics engineer",
+   "es": "Ingeniero/a electrónico/a"
+  },
+  {
+   "code": "2152.1.1",
+   "label": "Computer hardware engineer",
+   "es": "Ingeniero/a especializado/a en equipos informáticos"
+  },
+  {
+   "code": "2152.1.2",
+   "label": "Flight test engineer",
+   "es": "Ingeniero/a de pruebas de vuelo"
+  },
+  {
+   "code": "2152.1.3",
+   "label": "Instrumentation engineer",
+   "es": "Ingeniero/a de instrumentación"
+  },
+  {
+   "code": "2152.1.4",
+   "label": "Language engineer",
+   "es": "Ingeniero/a lingüístico/a"
+  },
+  {
+   "code": "2152.1.5",
+   "label": "Medical device engineer",
+   "es": "Ingeniero/a especializado/a en productos sanitarios"
+  },
+  {
+   "code": "2152.1.6",
+   "label": "Microelectronics engineer",
+   "es": "Ingeniero/a en microelectrónica"
+  },
+  {
+   "code": "2152.1.6.1",
+   "label": "Integrated circuit design engineer",
+   "es": "Ingeniero/a de diseño de circuitos integrados"
+  },
+  {
+   "code": "2152.1.7",
+   "label": "Microsystem engineer",
+   "es": "Ingeniero/a de microsistemas"
+  },
+  {
+   "code": "2152.1.8",
+   "label": "Optoelectronic engineer",
+   "es": "Ingeniero/a especialista en optoelectrónica"
+  },
+  {
+   "code": "2152.1.9",
+   "label": "Satellite engineer",
+   "es": "Ingeniero/a de satélites"
+  },
+  {
+   "code": "2152.1.10",
+   "label": "Sensor engineer",
+   "es": "Ingeniero/a en sensórica"
+  },
+  {
+   "code": "2153.1",
+   "label": "Telecommunications engineer",
+   "es": "Ingeniero/a de telecomunicaciones"
+  },
+  {
+   "code": "2153.1.1",
+   "label": "Telecommunications analyst",
+   "es": "Analista de telecomunicaciones"
+  },
+  {
+   "code": "2161.1",
+   "label": "Architect",
+   "es": "Arquitecto/a"
+  },
+  {
+   "code": "2161.1.1",
+   "label": "Interior architect",
+   "es": "Interiorista"
+  },
+  {
+   "code": "2162.1",
+   "label": "Landscape architect",
+   "es": "Arquitecto/a paisajista"
+  },
+  {
+   "code": "2162.1.1",
+   "label": "Landscape designer",
+   "es": "Diseñador/a paisajístico/a"
+  },
+  {
+   "code": "2164.1",
+   "label": "Land planner",
+   "es": "Especialista en ordenación territorial"
+  },
+  {
+   "code": "2164.2",
+   "label": "Transport planner",
+   "es": "Responsable de regulación del tráfico vial"
+  },
+  {
+   "code": "2164.3",
+   "label": "Urban planner",
+   "es": "Urbanista"
+  },
+  {
+   "code": "2165.1",
+   "label": "Cadastral technician",
+   "es": "Técnico/a del catastro"
+  },
+  {
+   "code": "2165.2",
+   "label": "Cartographer",
+   "es": "Cartógrafo/a"
+  },
+  {
+   "code": "2165.3",
+   "label": "Geographic information systems specialist",
+   "es": "Especialista en sistemas de información geográfica"
+  },
+  {
+   "code": "2165.4",
+   "label": "Land surveyor",
+   "es": "Agrimensor/a"
+  },
+  {
+   "code": "2165.4.1",
+   "label": "Hydrographic surveyor",
+   "es": "Supervisor/a hidrográfico/a"
+  },
+  {
+   "code": "2165.4.2",
+   "label": "Mine surveyor",
+   "es": "Jefe de planificación de mina"
+  },
+  {
+   "code": "3111.1",
+   "label": "Chemistry technician",
+   "es": "Técnico/a de laboratorio de industrias químicas"
+  },
+  {
+   "code": "3111.1.1",
+   "label": "Chromatographer",
+   "es": "Técnico/a en operaciones de laboratorio especializado/a en cromatografías"
+  },
+  {
+   "code": "3111.2",
+   "label": "Environmental technician",
+   "es": "Técnico/a en protección ambiental"
+  },
+  {
+   "code": "3111.2.1",
+   "label": "Air pollution analyst",
+   "es": "Técnico/a en salud ambiental especializado/a en contaminación del aire"
+  },
+  {
+   "code": "3111.2.2",
+   "label": "Groundwater monitoring technician",
+   "es": "Técnico/a en salud ambiental especializado/a en aguas subterráneas"
+  },
+  {
+   "code": "3111.3",
+   "label": "Food analyst",
+   "es": "Analista de alimentos"
+  },
+  {
+   "code": "3111.4",
+   "label": "Geology technician",
+   "es": "Técnico/a en geología"
+  },
+  {
+   "code": "3111.5",
+   "label": "Hydrographic surveying technician",
+   "es": "Técnico/a en estudios hidrográficos"
+  },
+  {
+   "code": "3111.6",
+   "label": "Leather laboratory technician",
+   "es": "Técnico/a de laboratorio para artículos de piel y cuero"
+  },
+  {
+   "code": "3111.7",
+   "label": "Material testing technician",
+   "es": "Técnico/a en ensayo de materiales"
+  },
+  {
+   "code": "3111.8",
+   "label": "Meteorology technician",
+   "es": "Técnico/a de meteorología"
+  },
+  {
+   "code": "3111.9",
+   "label": "Metrology technician",
+   "es": "Técnico/a de metrología"
+  },
+  {
+   "code": "3111.10",
+   "label": "Nuclear technician",
+   "es": "Técnico/a de central nuclear"
+  },
+  {
+   "code": "3111.11",
+   "label": "Physics technician",
+   "es": "Técnico/a de laboratorio físico"
+  },
+  {
+   "code": "3111.12",
+   "label": "Radiation protection technician",
+   "es": "Técnico/a de protección radiológica"
+  },
+  {
+   "code": "3111.13",
+   "label": "Remote sensing technician",
+   "es": "Técnico/a en teledetección"
+  },
+  {
+   "code": "3111.14",
+   "label": "Soil surveying technician",
+   "es": "Técnico/a especialista en geología y estudio de la composición y propiedades de los terrenos"
+  },
+  {
+   "code": "3112.1",
+   "label": "Civil engineering technician",
+   "es": "Ingeniero/a técnico/a civil"
+  },
+  {
+   "code": "3112.1.1",
+   "label": "Bridge inspector",
+   "es": "Inspector/a de puentes"
+  },
+  {
+   "code": "3112.1.2",
+   "label": "Building inspector",
+   "es": "Inspector/a técnico/a de edificios"
+  },
+  {
+   "code": "3112.1.3",
+   "label": "Construction quality inspector",
+   "es": "Inspector/a de calidad de la construcción"
+  },
+  {
+   "code": "3112.1.4",
+   "label": "Construction quality manager",
+   "es": "Especialista en control y aseguramiento de la calidad en la construcción"
+  },
+  {
+   "code": "3112.1.5",
+   "label": "Energy assessor",
+   "es": "Asesor/a energético/a"
+  },
+  {
+   "code": "3112.1.5.1",
+   "label": "Domestic energy assessor",
+   "es": "Asesor/a energético/a para viviendas"
+  },
+  {
+   "code": "3112.1.6",
+   "label": "Fire inspector",
+   "es": "Inspector/a de seguridad contra incendios"
+  },
+  {
+   "code": "3112.1.7",
+   "label": "Fire protection technician",
+   "es": "Técnico/a de seguridad contra incendios"
+  },
+  {
+   "code": "3112.1.8",
+   "label": "Fire safety tester",
+   "es": "Especialista en verificación de instalaciones y simulacros contra incendios"
+  },
+  {
+   "code": "3112.1.9",
+   "label": "Landfill supervisor",
+   "es": "Gestor/a de residuos"
+  },
+  {
+   "code": "3112.1.10",
+   "label": "Rail maintenance technician",
+   "es": "Técnico/a en mantenimiento de material rodante ferroviario"
+  },
+  {
+   "code": "3112.1.11",
+   "label": "Road maintenance technician",
+   "es": "Técnico/a de mantenimiento de carreteras"
+  },
+  {
+   "code": "3112.1.12",
+   "label": "Sewerage maintenance technician",
+   "es": "Técnico/a de mantenimiento de redes de saneamiento y alcantarillado"
+  },
+  {
+   "code": "3112.1.13",
+   "label": "Water engineering technician",
+   "es": "Técnico/a de ingeniería hidráulica"
+  },
+  {
+   "code": "3112.2",
+   "label": "Construction safety inspector",
+   "es": "Inspector/a de seguridad de obras de construcción"
+  },
+  {
+   "code": "3112.3",
+   "label": "Construction safety manager",
+   "es": "Responsable de seguridad de obras de construcción"
+  },
+  {
+   "code": "3112.4",
+   "label": "Corrosion technician",
+   "es": "Técnico/a de corrosión"
+  },
+  {
+   "code": "3112.5",
+   "label": "Energy analyst",
+   "es": "Auditor/a energético/a"
+  },
+  {
+   "code": "3112.6",
+   "label": "Energy conservation officer",
+   "es": "Técnico/a especializado/a en eficiencia energética en edificios"
+  },
+  {
+   "code": "3112.7",
+   "label": "Energy consultant",
+   "es": "Agente en materia de energía"
+  },
+  {
+   "code": "3112.8",
+   "label": "Railway infrastructure inspector",
+   "es": "Inspector/a de infraestructuras ferroviarias"
+  },
+  {
+   "code": "3112.9",
+   "label": "Surveying technician",
+   "es": "Topógrafo/a"
+  },
+  {
+   "code": "3113.1",
+   "label": "Electrical engineering technician",
+   "es": "Ingeniero/a técnico/a en electricidad"
+  },
+  {
+   "code": "3113.1.1",
+   "label": "Calibration technician",
+   "es": "Técnico/a de calibración"
+  },
+  {
+   "code": "3113.1.2",
+   "label": "Electromechanical engineering technician",
+   "es": "Ingeniero/a técnico/a en electromecánica"
+  },
+  {
+   "code": "3113.2",
+   "label": "Hydropower technician",
+   "es": "Técnico/a en energía hidráulica"
+  },
+  {
+   "code": "3114.1",
+   "label": "Electronics engineering technician",
+   "es": "Ingeniero/a técnico/a en electrónica"
+  },
+  {
+   "code": "3114.1.1",
+   "label": "Avionics inspector",
+   "es": "Inspector/a de aviónica"
+  },
+  {
+   "code": "3114.1.2",
+   "label": "Computer hardware engineering technician",
+   "es": "Ingeniero/a técnico/a en informática especializado/a en desarrollo de hardware"
+  },
+  {
+   "code": "3114.1.3",
+   "label": "Computer hardware test technician",
+   "es": "Técnico/a de hardware para pruebas y verificación de equipos informáticos"
+  },
+  {
+   "code": "3114.1.4",
+   "label": "Instrumentation engineering technician",
+   "es": "Ingeniero/a técnico/a de instrumentación"
+  },
+  {
+   "code": "3114.1.5",
+   "label": "Medical device engineering technician",
+   "es": "Ingeniero/a técnico/a especializado/a en productos sanitarios"
+  },
+  {
+   "code": "3114.1.6",
+   "label": "Microelectronics engineering technician",
+   "es": "Ingeniero/a técnico/a en microelectrónica"
+  },
+  {
+   "code": "3114.1.7",
+   "label": "Microsystem engineering technician",
+   "es": "Ingeniero/a técnico/a de microsistemas"
+  },
+  {
+   "code": "3114.1.8",
+   "label": "Optoelectronic engineering technician",
+   "es": "Ingeniero/a técnico/a en optoelectrónica"
+  },
+  {
+   "code": "3114.1.9",
+   "label": "Sensor engineering technician",
+   "es": "Ingeniero/a técnico/a en sensórica"
+  },
+  {
+   "code": "3115.1",
+   "label": "Mechanical engineering technician",
+   "es": "Ingeniero/a técnico/a de mecánica"
+  },
+  {
+   "code": "3115.1.1",
+   "label": "Aerospace engineering technician",
+   "es": "Ingeniero/a técnico/a aeroespacial"
+  },
+  {
+   "code": "3115.1.2",
+   "label": "Aircraft engine inspector",
+   "es": "Inspector/a de motores de aeronaves"
+  },
+  {
+   "code": "3115.1.3",
+   "label": "Aircraft engine tester",
+   "es": "Especialista en ensayos y control de calidad de motores de aeronaves"
+  },
+  {
+   "code": "3115.1.4",
+   "label": "Automotive engineering technician",
+   "es": "Ingeniero/a técnico/a de automoción"
+  },
+  {
+   "code": "3115.1.5",
+   "label": "Heating, ventilation, air conditioning and refrigeration engineering technician",
+   "es": "Ingeniero/a técnico/a de climatización"
+  },
+  {
+   "code": "3115.1.6",
+   "label": "Industrial maintenance supervisor",
+   "es": "Supervisor/a de mantenimiento industrial"
+  },
+  {
+   "code": "3115.1.7",
+   "label": "Marine engineering technician",
+   "es": "Ingeniero/a técnico/a naval"
+  },
+  {
+   "code": "3115.1.8",
+   "label": "Marine surveyor",
+   "es": "Inspector/a naval"
+  },
+  {
+   "code": "3115.1.9",
+   "label": "Material stress analyst",
+   "es": "Analista de resistencia de materiales"
+  },
+  {
+   "code": "3115.1.10",
+   "label": "Mechatronics engineering technician",
+   "es": "Ingeniero/a técnico/a de mecatrónica"
+  },
+  {
+   "code": "3115.1.11",
+   "label": "Motor vehicle engine inspector",
+   "es": "Inspector/a de motores de vehículos"
+  },
+  {
+   "code": "3115.1.12",
+   "label": "Motor vehicle engine tester",
+   "es": "Especialista en ensayos y control de calidad de motores de vehículos"
+  },
+  {
+   "code": "3115.1.13",
+   "label": "Optomechanical engineering technician",
+   "es": "Ingeniero/a técnico/a de optomecánica"
+  },
+  {
+   "code": "3115.1.14",
+   "label": "Pneumatic engineering technician",
+   "es": "Ingeniero/a técnico/a en sistemas neumáticos"
+  },
+  {
+   "code": "3115.1.15",
+   "label": "Production engineering technician",
+   "es": "Ingeniero/a técnico/a de producción"
+  },
+  {
+   "code": "3115.1.16",
+   "label": "Rolling stock engineering technician",
+   "es": "Ingeniero/a técnico/a de material rodante"
+  },
+  {
+   "code": "3115.1.17",
+   "label": "Rolling stock engine inspector",
+   "es": "Inspector/a ferroviario/a de locomotoras"
+  },
+  {
+   "code": "3115.1.18",
+   "label": "Rolling stock engine tester",
+   "es": "Especialista en ensayos y control de calidad de motores de material rodante"
+  },
+  {
+   "code": "3115.1.19",
+   "label": "Rolling stock inspector",
+   "es": "Inspector/a ferroviario/a de vagones"
+  },
+  {
+   "code": "3115.1.20",
+   "label": "Vessel engine inspector",
+   "es": "Inspector/a de motores de buques y embarcaciones de recreo"
+  },
+  {
+   "code": "3115.1.21",
+   "label": "Vessel engine tester",
+   "es": "Especialista en ensayos y control de calidad de motores de buques y embarcaciones de recreo"
+  },
+  {
+   "code": "3115.1.22",
+   "label": "Welding inspector",
+   "es": "Inspector/a de soldaduras"
+  },
+  {
+   "code": "3116.1",
+   "label": "Chemical engineering technician",
+   "es": "Ingeniero/a técnico/a químico/a"
+  },
+  {
+   "code": "3116.1.1",
+   "label": "Asphalt laboratory technician",
+   "es": "Técnico/a de laboratorio de asfaltos"
+  },
+  {
+   "code": "3116.1.2",
+   "label": "Chemical manufacturing quality technician",
+   "es": "Técnico/a en control de calidad de productos químicos"
+  },
+  {
+   "code": "3116.1.3",
+   "label": "Colour sampling technician",
+   "es": "Técnico/a en tintura de cueros y pieles"
+  },
+  {
+   "code": "3116.1.4",
+   "label": "Hazardous waste technician",
+   "es": "Técnico/a en gestión de residuos peligrosos"
+  },
+  {
+   "code": "3117.1",
+   "label": "Desalination technician",
+   "es": "Técnico/a de planta desaladora"
+  },
+  {
+   "code": "3117.2",
+   "label": "Geotechnician",
+   "es": "Técnico/a en geotecnia"
+  },
+  {
+   "code": "3117.3",
+   "label": "Metallurgical technician",
+   "es": "Técnico/a de metalurgia"
+  },
+  {
+   "code": "3117.4",
+   "label": "Mine safety officer",
+   "es": "Inspector/a de seguridad minera"
+  },
+  {
+   "code": "3117.5",
+   "label": "Mine surveying technician",
+   "es": "Ingeniero/a técnico/a de minas"
+  },
+  {
+   "code": "3118.1",
+   "label": "3D printing technician",
+   "es": "Técnico/a en impresión 3D"
+  },
+  {
+   "code": "3118.2",
+   "label": "Clothing CAD technician",
+   "es": "Técnico/a de diseño textil asistido por ordenador"
+  },
+  {
+   "code": "3118.3",
+   "label": "Drafter",
+   "es": "Dibujante técnico/a"
+  },
+  {
+   "code": "3118.3.1",
+   "label": "Aerospace engineering drafter",
+   "es": "Ingeniero/a técnico/a aeroespacial especializado/a en diseño técnico"
+  },
+  {
+   "code": "3118.3.2",
+   "label": "Architectural drafter",
+   "es": "Arquitecto/a técnico/a especializado/a en diseño técnico"
+  },
+  {
+   "code": "3118.3.3",
+   "label": "Automotive engineering drafter",
+   "es": "Ingeniero/a técnico/a de automoción especializado/a en diseño técnico"
+  },
+  {
+   "code": "3118.3.4",
+   "label": "Civil drafter",
+   "es": "Ingeniero/a técnico/a civil especializado/a en diseño técnico"
+  },
+  {
+   "code": "3118.3.5",
+   "label": "Computer-aided design operator",
+   "es": "Operador de diseño de productos asistido por ordenador/operadora de diseño productos asistido por ordenador"
+  },
+  {
+   "code": "3118.3.6",
+   "label": "Electrical drafter",
+   "es": "Técnico/a en diseño de sistemas eléctricos"
+  },
+  {
+   "code": "3118.3.7",
+   "label": "Electromechanical drafter",
+   "es": "Técnico/a en diseño electromecánico"
+  },
+  {
+   "code": "3118.3.8",
+   "label": "Electronics drafter",
+   "es": "Técnico/a en diseño electrónico"
+  },
+  {
+   "code": "3118.3.9",
+   "label": "Heating, ventilation, air conditioning (and refrigeration) drafter",
+   "es": "Técnico/a en diseño de instalaciones de climatización"
+  },
+  {
+   "code": "3118.3.10",
+   "label": "Marine engineering drafter",
+   "es": "Ingeniero/a técnico/a naval especializado/a en diseño técnico"
+  },
+  {
+   "code": "3118.3.11",
+   "label": "Mechanical engineering drafter",
+   "es": "Ingeniero/a técnico/a en mecánica especializado/a en diseño técnico"
+  },
+  {
+   "code": "3118.3.12",
+   "label": "Product development engineering drafter",
+   "es": "Ingeniero/a técnico/a en desarrollo de productos especializado/a en diseño"
+  },
+  {
+   "code": "3118.3.13",
+   "label": "Rolling stock engineering drafter",
+   "es": "Ingeniero/a técnico/a de material rodante especializado/a en diseño técnico"
+  },
+  {
+   "code": "3118.4",
+   "label": "Printed circuit board designer",
+   "es": "Diseñador/a de placas de circuitos impresos"
+  },
+  {
+   "code": "3119.1",
+   "label": "Airport maintenance technician",
+   "es": "Técnico/a de mantenimiento de aeropuertos"
+  },
+  {
+   "code": "3119.2",
+   "label": "Automation engineering technician",
+   "es": "Ingeniero/a técnico/a de automatización"
+  },
+  {
+   "code": "3119.2.1",
+   "label": "Robotics engineering technician",
+   "es": "Ingeniero/a técnico/a en robótica"
+  },
+  {
+   "code": "3119.3",
+   "label": "Aviation safety officer",
+   "es": "Inspector/a de seguridad aérea"
+  },
+  {
+   "code": "3119.4",
+   "label": "Commissioning technician",
+   "es": "Técnico/a de puesta en servicio"
+  },
+  {
+   "code": "3119.5",
+   "label": "Food technician",
+   "es": "Técnico/técnica de alimentación"
+  },
+  {
+   "code": "3119.6",
+   "label": "Footwear product developer",
+   "es": "Especialista en desarrollo de productos de calzado"
+  },
+  {
+   "code": "3119.7",
+   "label": "Footwear production technician",
+   "es": "Técnico/a de producción de calzado"
+  },
+  {
+   "code": "3119.8",
+   "label": "Industrial engineering technician",
+   "es": "Ingeniero/a técnico/a industrial"
+  },
+  {
+   "code": "3119.9",
+   "label": "Leather goods manufacturing technician",
+   "es": "Técnico/a en fabricación de artículos de marroquinería"
+  },
+  {
+   "code": "3119.10",
+   "label": "Leather goods product developer",
+   "es": "Especialista en desarrollo de artículos de piel y cuero"
+  },
+  {
+   "code": "3119.11",
+   "label": "Photonics engineering technician",
+   "es": "Ingeniero/a técnico/a de fotónica"
+  },
+  {
+   "code": "3119.12",
+   "label": "Pipeline compliance coordinator",
+   "es": "Coordinador/a del cumplimiento de los requisitos técnicos y de calidad de infraestructuras de gasoductos y oleoductos"
+  },
+  {
+   "code": "3119.13",
+   "label": "Process engineering technician",
+   "es": "Ingeniero/a técnico/a de procesos"
+  },
+  {
+   "code": "3119.14",
+   "label": "Product development engineering technician",
+   "es": "Ingeniero/a técnico/a en diseño y desarrollo de productos"
+  },
+  {
+   "code": "3119.15",
+   "label": "Quality engineering technician",
+   "es": "Ingeniero/a técnico/a de control de calidad"
+  },
+  {
+   "code": "3119.15.1",
+   "label": "Footwear quality control laboratory technician",
+   "es": "Técnico/a de laboratorio para el control de calidad del calzado"
+  },
+  {
+   "code": "3119.15.2",
+   "label": "Footwear quality technician",
+   "es": "Técnico/a de calidad del calzado"
+  },
+  {
+   "code": "3119.15.3",
+   "label": "Leather goods quality control laboratory technician",
+   "es": "Técnico/a de laboratorio para el control de calidad de artículos de piel y cuero"
+  },
+  {
+   "code": "3119.15.4",
+   "label": "Leather goods quality technician",
+   "es": "Técnico/a de control de calidad de artículos de piel y cuero"
+  },
+  {
+   "code": "3119.15.5",
+   "label": "Textile chemical quality technician",
+   "es": "Técnico/a en control de calidad de química textil"
+  },
+  {
+   "code": "3119.15.6",
+   "label": "Textile quality technician",
+   "es": "Técnico/a de control de calidad de productos textiles"
+  },
+  {
+   "code": "3119.16",
+   "label": "Textile process controller",
+   "es": "Controlador/a de procesos textiles"
+  },
+  {
+   "code": "3119.17",
+   "label": "Utilities inspector",
+   "es": "Inspector/a de instalaciones y de seguridad industrial"
+  },
+  {
+   "code": "3121.1",
+   "label": "Mine supervisor",
+   "es": "Supervisor/a de mina"
+  },
+  {
+   "code": "3121.1.1",
+   "label": "Mine shift manager",
+   "es": "Gerente de explotación minera"
+  },
+  {
+   "code": "3122.1",
+   "label": "Dairy processing technician",
+   "es": "Técnico/a de procesamiento de productos lácteos"
+  },
+  {
+   "code": "3122.2",
+   "label": "Food production planner",
+   "es": "Planificador/planificadora de producción de alimentos"
+  },
+  {
+   "code": "3122.3",
+   "label": "Industrial assembly supervisor",
+   "es": "Supervisor/a de montaje industrial"
+  },
+  {
+   "code": "3122.3.1",
+   "label": "Aircraft assembly supervisor",
+   "es": "Supervisor/a de montaje de aeronaves"
+  },
+  {
+   "code": "3122.3.2",
+   "label": "Container equipment assembly supervisor",
+   "es": "Supervisor/a de montaje de equipamiento de contenedores"
+  },
+  {
+   "code": "3122.3.3",
+   "label": "Footwear assembly supervisor",
+   "es": "Supervisor/a de montaje de calzado"
+  },
+  {
+   "code": "3122.3.4",
+   "label": "Machinery assembly supervisor",
+   "es": "Supervisor/a de montaje de maquinaria"
+  },
+  {
+   "code": "3122.3.5",
+   "label": "Motor vehicle assembly supervisor",
+   "es": "Supervisor/a de montaje de vehículos de motor"
+  },
+  {
+   "code": "3122.3.6",
+   "label": "Rolling stock assembly supervisor",
+   "es": "Supervisor/a de montaje de material rodante"
+  },
+  {
+   "code": "3122.3.7",
+   "label": "Vessel assembly supervisor",
+   "es": "Supervisor/a de montaje de buques y embarcaciones de recreo"
+  },
+  {
+   "code": "3122.3.8",
+   "label": "Wood assembly supervisor",
+   "es": "Supervisor/a de montaje de industria de la madera"
+  },
+  {
+   "code": "3122.4",
+   "label": "Production supervisor",
+   "es": "Supervisor/a de producción"
+  },
+  {
+   "code": "3122.4.1",
+   "label": "Animal feed supervisor",
+   "es": "Supervisor/a de alimentación animal"
+  },
+  {
+   "code": "3122.4.2",
+   "label": "Chemical processing supervisor",
+   "es": "Supervisor/a de procesos químicos"
+  },
+  {
+   "code": "3122.4.3",
+   "label": "Distillery supervisor",
+   "es": "Supervisor/a de destilería"
+  },
+  {
+   "code": "3122.4.4",
+   "label": "Electrical equipment production supervisor",
+   "es": "Supervisor/a de producción de equipo eléctrico"
+  },
+  {
+   "code": "3122.4.5",
+   "label": "Electronics production supervisor",
+   "es": "Supervisor/a de producción de equipo electrónico"
+  },
+  {
+   "code": "3122.4.6",
+   "label": "Footwear production supervisor",
+   "es": "Supervisor/a de producción de calzado"
+  },
+  {
+   "code": "3122.4.7",
+   "label": "Green coffee coordinator",
+   "es": "Coordinador/coordinadora de café verde"
+  },
+  {
+   "code": "3122.4.8",
+   "label": "Leather goods production supervisor",
+   "es": "Supervisor/a de fabricación de prendas y marroquinería de piel y cuero"
+  },
+  {
+   "code": "3122.4.9",
+   "label": "Machine operator supervisor",
+   "es": "Supervisor/a de operadores de máquinas"
+  },
+  {
+   "code": "3122.4.10",
+   "label": "Malt house supervisor",
+   "es": "Supervisor/a de maltería"
+  },
+  {
+   "code": "3122.4.11",
+   "label": "Metal production supervisor",
+   "es": "Supervisor/a del procesamiento de metales"
+  },
+  {
+   "code": "3122.4.12",
+   "label": "Optical instrument production supervisor",
+   "es": "Supervisor/a de fabricación de instrumentos ópticos"
+  },
+  {
+   "code": "3122.4.13",
+   "label": "Paper mill supervisor",
+   "es": "Supervisor/a de industria papelera"
+  },
+  {
+   "code": "3122.4.14",
+   "label": "Plastic and rubber products manufacturing supervisor",
+   "es": "Supervisor/a de industrias de transformación de plásticos y caucho"
+  },
+  {
+   "code": "3122.4.15",
+   "label": "Precision mechanics supervisor",
+   "es": "Supervisor/a de mecánica de precisión"
+  },
+  {
+   "code": "3122.4.16",
+   "label": "Print studio supervisor",
+   "es": "Supervisor/a de procesos de impresión y encuadernación"
+  },
+  {
+   "code": "3122.4.17",
+   "label": "Textile operations manager",
+   "es": "Director/a de operaciones de la industria textil"
+  },
+  {
+   "code": "3122.4.18",
+   "label": "Wood production supervisor",
+   "es": "Supervisor/a de producción de industria de la madera"
+  },
+  {
+   "code": "3122.5",
+   "label": "Waste management supervisor",
+   "es": "Supervisor/a de gestión de residuos"
+  },
+  {
+   "code": "3123.1",
+   "label": "Construction general supervisor",
+   "es": "Supervisor/a general de construcción"
+  },
+  {
+   "code": "3123.1.1",
+   "label": "Bricklaying supervisor",
+   "es": "Capataz de construcción"
+  },
+  {
+   "code": "3123.1.2",
+   "label": "Bridge construction supervisor",
+   "es": "Supervisor/a de construcción de puentes"
+  },
+  {
+   "code": "3123.1.3",
+   "label": "Carpenter supervisor",
+   "es": "Supervisor/a de carpintería en obra"
+  },
+  {
+   "code": "3123.1.4",
+   "label": "Concrete finisher supervisor",
+   "es": "Supervisor/a de operaciones de hormigón"
+  },
+  {
+   "code": "3123.1.5",
+   "label": "Construction painting supervisor",
+   "es": "Supervisor/a de pintura en obra"
+  },
+  {
+   "code": "3123.1.6",
+   "label": "Construction scaffolding supervisor",
+   "es": "Supervisor/a de estructuras de andamios"
+  },
+  {
+   "code": "3123.1.7",
+   "label": "Crane crew supervisor",
+   "es": "Supervisor/a de operaciones con grúas en obra"
+  },
+  {
+   "code": "3123.1.8",
+   "label": "Demolition supervisor",
+   "es": "Supervisor/a de demolición"
+  },
+  {
+   "code": "3123.1.9",
+   "label": "Dismantling supervisor",
+   "es": "Supervisor/a de desmantelamiento de equipos industriales y edificios"
+  },
+  {
+   "code": "3123.1.10",
+   "label": "Dredging supervisor",
+   "es": "Supervisor/a de dragado"
+  },
+  {
+   "code": "3123.1.11",
+   "label": "Electrical supervisor",
+   "es": "Supervisor/a de instalaciones eléctricas"
+  },
+  {
+   "code": "3123.1.12",
+   "label": "Glass installation supervisor",
+   "es": "Supervisor/a de instalaciones de cristal y vidrio"
+  },
+  {
+   "code": "3123.1.13",
+   "label": "Insulation supervisor",
+   "es": "Supervisor/a de instalaciones de aislamiento"
+  },
+  {
+   "code": "3123.1.14",
+   "label": "Lift installation supervisor",
+   "es": "Supervisor/a de instalaciones de ascensores"
+  },
+  {
+   "code": "3123.1.15",
+   "label": "Paperhanger supervisor",
+   "es": "Supervisor/a de empapelado"
+  },
+  {
+   "code": "3123.1.16",
+   "label": "Plastering supervisor",
+   "es": "Supervisor/a de trabajos en yeso y escayola"
+  },
+  {
+   "code": "3123.1.17",
+   "label": "Plumbing supervisor",
+   "es": "Supervisor/a de obras de fontanería"
+  },
+  {
+   "code": "3123.1.18",
+   "label": "Power lines supervisor",
+   "es": "Supervisor/a de tendido eléctrico"
+  },
+  {
+   "code": "3123.1.19",
+   "label": "Rail construction supervisor",
+   "es": "Supervisor/a de obras de construcción y mantenimiento de infraestructuras ferroviarias"
+  },
+  {
+   "code": "3123.1.20",
+   "label": "Road construction supervisor",
+   "es": "Supervisor/a de obras viales"
+  },
+  {
+   "code": "3123.1.21",
+   "label": "Roofing supervisor",
+   "es": "Supervisor/a de obras de instalación de tejados"
+  },
+  {
+   "code": "3123.1.22",
+   "label": "Sewer construction supervisor",
+   "es": "Supervisor/a de obras de alcantarillado"
+  },
+  {
+   "code": "3123.1.23",
+   "label": "Structural ironwork supervisor",
+   "es": "Supervisor/a de obras de estructuras metálicas"
+  },
+  {
+   "code": "3123.1.24",
+   "label": "Terrazzo setter supervisor",
+   "es": "Supervisor/a de obras de instalación de suelos"
+  },
+  {
+   "code": "3123.1.25",
+   "label": "Tiling supervisor",
+   "es": "Supervisor/a de obras de alicatado"
+  },
+  {
+   "code": "3123.1.26",
+   "label": "Water conservation technician supervisor",
+   "es": "Supervisor/a de sistemas de conservación de recursos hídricos"
+  },
+  {
+   "code": "3123.2",
+   "label": "Underwater construction supervisor",
+   "es": "Supervisor/a de construcción subacuática"
+  },
+  {
+   "code": "3131.1",
+   "label": "Power production plant operator",
+   "es": "Operador/a en instalaciones de producción de energía"
+  },
+  {
+   "code": "3131.1.1",
+   "label": "Electrical power distributor",
+   "es": "Responsable técnico/a de redes y centros de distribución de energía eléctrica"
+  },
+  {
+   "code": "3131.1.2",
+   "label": "Electrical transmission system operator",
+   "es": "Operador/a de sistemas de transmisión eléctrica"
+  },
+  {
+   "code": "3131.1.3",
+   "label": "Fossil-fuel power plant operator",
+   "es": "Operador/a de central de combustible fósil"
+  },
+  {
+   "code": "3131.1.4",
+   "label": "Geothermal power plant operator",
+   "es": "Operador/a de central geotérmica"
+  },
+  {
+   "code": "3131.1.5",
+   "label": "Hydroelectric plant operator",
+   "es": "Operador/a de central hidroeléctrica"
+  },
+  {
+   "code": "3131.1.6",
+   "label": "Nuclear reactor operator",
+   "es": "Operador/a de reactor en central nuclear"
+  },
+  {
+   "code": "3131.1.7",
+   "label": "Power plant control room operator",
+   "es": "Operador/a de sala de control en central nuclear"
+  },
+  {
+   "code": "3131.1.8",
+   "label": "Solar power plant operator",
+   "es": "Operador/a de central solar fotovoltaica"
+  },
+  {
+   "code": "3131.1.9",
+   "label": "Steam turbine operator",
+   "es": "Operador/a de turbinas de vapor"
+  },
+  {
+   "code": "3132.1",
+   "label": "Incinerator operator",
+   "es": "Operador/a de planta de incineración de residuos"
+  },
+  {
+   "code": "3132.2",
+   "label": "Liquid waste treatment plant operator",
+   "es": "Operador/a de planta de tratamiento de residuos líquidos"
+  },
+  {
+   "code": "3132.3",
+   "label": "Solid waste operator",
+   "es": "Operador/a de planta de tratamiento de residuos sólidos"
+  },
+  {
+   "code": "3132.4",
+   "label": "Wastewater treatment operator",
+   "es": "Operador/a de planta de tratamiento de aguas residuales"
+  },
+  {
+   "code": "3132.5",
+   "label": "Wastewater treatment technician",
+   "es": "Técnico/a de planta de tratamiento de aguas residuales"
+  },
+  {
+   "code": "3132.6",
+   "label": "Water plant technician",
+   "es": "Técnico/a de planta de aguas"
+  },
+  {
+   "code": "3132.7",
+   "label": "Water treatment systems operator",
+   "es": "Operador/a de sistemas de tratamiento de aguas"
+  },
+  {
+   "code": "3133.1",
+   "label": "Chemical processing plant controller",
+   "es": "Controlador/a de instalaciones de procesamiento de productos químicos"
+  },
+  {
+   "code": "3133.1.1",
+   "label": "Air separation plant operator",
+   "es": "Operador/a de planta de separación del aire"
+  },
+  {
+   "code": "3133.1.2",
+   "label": "Biogas technician",
+   "es": "Técnico/a de planta de biogás"
+  },
+  {
+   "code": "3133.1.3",
+   "label": "Chemical plant control room operator",
+   "es": "Operador/a de sala de control de planta química"
+  },
+  {
+   "code": "3133.1.4",
+   "label": "Gas processing plant supervisor",
+   "es": "Supervisor/a de planta de tratamiento de gas"
+  },
+  {
+   "code": "3133.1.5",
+   "label": "Gas station operator",
+   "es": "Operador/a de instalación de gas"
+  },
+  {
+   "code": "3134.1",
+   "label": "Gas processing plant control room operator",
+   "es": "Operador de sala de control de planta de tratamiento de gas/operadora de sala de control de tratamiento de gas"
+  },
+  {
+   "code": "3134.2",
+   "label": "Gas processing plant operator",
+   "es": "Operador/a de planta de tratamiento de gas"
+  },
+  {
+   "code": "3134.3",
+   "label": "Oil refinery control room operator",
+   "es": "Operador/a de sala de control de refinería de petróleo"
+  },
+  {
+   "code": "3134.4",
+   "label": "Petroleum pump system operator",
+   "es": "Operador/a de equipo en estación de bombeo de petróleo"
+  },
+  {
+   "code": "3134.5",
+   "label": "Refinery shift manager",
+   "es": "Gerente de refinería"
+  },
+  {
+   "code": "3135.1",
+   "label": "Metal furnace operator",
+   "es": "Operador/a de hornos de fusión de metales"
+  },
+  {
+   "code": "3139.1",
+   "label": "Automated assembly line operator",
+   "es": "Operador/a de cadena de montaje automatizada"
+  },
+  {
+   "code": "3139.1.1",
+   "label": "Clothing process control technician",
+   "es": "Técnico/a en control de calidad de procesos de confección"
+  },
+  {
+   "code": "3139.2",
+   "label": "Industrial robot controller",
+   "es": "Controlador/a de robots industriales"
+  },
+  {
+   "code": "3139.3",
+   "label": "Pulp control operator",
+   "es": "Operador/a de control de pastas celulósicas"
+  },
+  {
+   "code": "3151.1",
+   "label": "Fisheries refrigeration engineer",
+   "es": "Ingeniero/a industrial especializado/a en maquinaria de refrigeración del pescado"
+  },
+  {
+   "code": "3151.2",
+   "label": "Marine chief engineer",
+   "es": "Ingeniero/a jefe naval"
+  },
+  {
+   "code": "3151.3",
+   "label": "Ship assistant engineer",
+   "es": "Ingeniero/a técnico/a naval"
+  },
+  {
+   "code": "3151.4",
+   "label": "Ship duty engineer",
+   "es": "Ingeniero/a naval especializado/a en maquinaria y sistemas eléctricos"
+  },
+  {
+   "code": "3152.1",
+   "label": "Deck officer",
+   "es": "Oficial de puente"
+  },
+  {
+   "code": "3152.2",
+   "label": "Helmsman",
+   "es": "Timonel"
+  },
+  {
+   "code": "3152.3",
+   "label": "Maritime pilot",
+   "es": "Piloto de la marina mercante"
+  },
+  {
+   "code": "3152.4",
+   "label": "Ship captain",
+   "es": "Capitán de buque"
+  },
+  {
+   "code": "3152.5",
+   "label": "Skipper",
+   "es": "Capitán de barco en el transporte fluvial"
+  },
+  {
+   "code": "3153.1",
+   "label": "Aircraft maintenance engineer",
+   "es": "Ingeniero/a de mantenimiento de aeronaves"
+  },
+  {
+   "code": "3153.2",
+   "label": "Aircraft pilot",
+   "es": "Piloto de aviación"
+  },
+  {
+   "code": "3153.2.1",
+   "label": "Co-pilot",
+   "es": "Copiloto"
+  },
+  {
+   "code": "3153.2.2",
+   "label": "Commercial pilot",
+   "es": "Piloto de línea comercial"
+  },
+  {
+   "code": "3153.2.2.1",
+   "label": "Airline transport pilot",
+   "es": "Piloto de aerolínea"
+  },
+  {
+   "code": "3153.2.3",
+   "label": "Flight instructor",
+   "es": "Instructor/a de vuelo"
+  },
+  {
+   "code": "3153.2.4",
+   "label": "Helicopter pilot",
+   "es": "Piloto de helicóptero"
+  },
+  {
+   "code": "3153.2.5",
+   "label": "Private pilot",
+   "es": "Piloto privado"
+  },
+  {
+   "code": "3153.2.6",
+   "label": "Second officer",
+   "es": "Segundo/a oficial"
+  },
+  {
+   "code": "3153.3",
+   "label": "Astronaut",
+   "es": "Astronauta"
+  },
+  {
+   "code": "3154.1",
+   "label": "Air traffic controller",
+   "es": "Controlador/a de tráfico aéreo"
+  },
+  {
+   "code": "3154.1.1",
+   "label": "Aeronautical information service officer",
+   "es": "Técnico/a de servicios de información aeronáutica"
+  },
+  {
+   "code": "3154.1.2",
+   "label": "Aeronautical information specialist",
+   "es": "Especialista en información aeronáutica"
+  },
+  {
+   "code": "3154.1.3",
+   "label": "Airport operations officer",
+   "es": "Director/a de operaciones aeroportuarias"
+  },
+  {
+   "code": "3154.2",
+   "label": "Aviation inspector",
+   "es": "Inspector/a de aviación"
+  },
+  {
+   "code": "3154.3",
+   "label": "Flight operations officer",
+   "es": "Técnico/a superior en operaciones aeroportuarias"
+  },
+  {
+   "code": "3155.1",
+   "label": "Air traffic safety technician",
+   "es": "Técnico/a de seguridad aérea"
+  },
+  {
+   "code": "2511.1",
+   "label": "Computer scientist",
+   "es": "Informático/a teórico/a"
+  },
+  {
+   "code": "2511.2",
+   "label": "Data analyst",
+   "es": "Analista de datos"
+  },
+  {
+   "code": "2511.3",
+   "label": "Data scientist",
+   "es": "Científico/a de datos"
+  },
+  {
+   "code": "2511.4",
+   "label": "Embedded system designer",
+   "es": "Diseñador/a de sistemas empotrados"
+  },
+  {
+   "code": "2511.5",
+   "label": "Enterprise architect",
+   "es": "Ingeniero/a en arquitectura empresarial"
+  },
+  {
+   "code": "2511.6",
+   "label": "Green ICT consultant",
+   "es": "Consultor/a de TIC verdes"
+  },
+  {
+   "code": "2511.7",
+   "label": "ICT business analysis manager",
+   "es": "Gestor/a de análisis empresariales de las TIC"
+  },
+  {
+   "code": "2511.8",
+   "label": "ICT business analyst",
+   "es": "Analista de negocios de TIC"
+  },
+  {
+   "code": "2511.9",
+   "label": "ICT consultant",
+   "es": "Consultor/a de TIC"
+  },
+  {
+   "code": "2511.10",
+   "label": "ICT intelligent systems designer",
+   "es": "Diseñador/a de sistemas inteligentes de TIC"
+  },
+  {
+   "code": "2511.11",
+   "label": "ICT research consultant",
+   "es": "Consultor/a de investigación en TIC"
+  },
+  {
+   "code": "2511.12",
+   "label": "ICT system analyst",
+   "es": "Analista de sistemas de TIC"
+  },
+  {
+   "code": "2511.13",
+   "label": "ICT system architect",
+   "es": "Arquitecto/a de sistemas de TIC"
+  },
+  {
+   "code": "2511.14",
+   "label": "ICT system developer",
+   "es": "Desarrollador/a de sistemas de TIC"
+  },
+  {
+   "code": "2511.15",
+   "label": "ICT system integration consultant",
+   "es": "Consultor/a de integración de sistemas de TIC"
+  },
+  {
+   "code": "2511.16",
+   "label": "Integration engineer",
+   "es": "Ingeniero/a de integración"
+  },
+  {
+   "code": "2511.17",
+   "label": "IT auditor",
+   "es": "Auditor/a informático/a"
+  },
+  {
+   "code": "2511.18",
+   "label": "User experience analyst",
+   "es": "Analista de experiencia del usuario"
+  },
+  {
+   "code": "2512.1",
+   "label": "Software analyst",
+   "es": "Analista de software"
+  },
+  {
+   "code": "2512.2",
+   "label": "Software architect",
+   "es": "Arquitecto/a de software"
+  },
+  {
+   "code": "2512.3",
+   "label": "Software developer",
+   "es": "Desarrollador/a de software"
+  },
+  {
+   "code": "2512.4",
+   "label": "User interface developer",
+   "es": "Desarrollador/a de interfaces de usuario"
+  },
+  {
+   "code": "2513.1",
+   "label": "Digital games developer",
+   "es": "Desarrollador/a de videojuegos"
+  },
+  {
+   "code": "2513.2",
+   "label": "Search engine optimisation expert",
+   "es": "Especialista en optimización de motores de búsqueda"
+  },
+  {
+   "code": "2513.3",
+   "label": "User interface designer",
+   "es": "Diseñador/a de interfaces de usuario"
+  },
+  {
+   "code": "2513.4",
+   "label": "Web content manager",
+   "es": "Responsable de contenidos web"
+  },
+  {
+   "code": "2513.5",
+   "label": "Web developer",
+   "es": "Desarrollador/a web"
+  },
+  {
+   "code": "2514.1",
+   "label": "ICT application configurator",
+   "es": "Configurador/a de aplicaciones de TIC"
+  },
+  {
+   "code": "2514.2",
+   "label": "ICT application developer",
+   "es": "Desarrollador/a de aplicaciones de TIC"
+  },
+  {
+   "code": "2514.2.1",
+   "label": "Embedded systems software developer",
+   "es": "Desarrollador/a de software para sistemas empotrados"
+  },
+  {
+   "code": "2514.2.2",
+   "label": "Mobile application developer",
+   "es": "Desarrollador/a de aplicaciones móviles"
+  },
+  {
+   "code": "2514.3",
+   "label": "Industrial mobile devices software developer",
+   "es": "Desarrollador/a de software para dispositivos móviles industriales"
+  },
+  {
+   "code": "2514.4",
+   "label": "Numerical tool and process control programmer",
+   "es": "Programador/a de control numérico de máquinas herramientas y procesos"
+  },
+  {
+   "code": "2519.1",
+   "label": "Data quality specialist",
+   "es": "Especialista en calidad de datos"
+  },
+  {
+   "code": "2519.2",
+   "label": "ICT auditor manager",
+   "es": "Gestor/a auditor/a de TIC"
+  },
+  {
+   "code": "2519.3",
+   "label": "ICT disaster recovery analyst",
+   "es": "Analista de recuperación ante desastres de TIC"
+  },
+  {
+   "code": "2519.4",
+   "label": "ICT quality assurance manager",
+   "es": "Gestor/a de control de calidad de TIC"
+  },
+  {
+   "code": "2519.5",
+   "label": "ICT test analyst",
+   "es": "Analista de pruebas"
+  },
+  {
+   "code": "2519.6",
+   "label": "Software tester",
+   "es": "Probador/a de software"
+  },
+  {
+   "code": "2519.6.1",
+   "label": "Digital games tester",
+   "es": "Probador/a de videojuegos"
+  },
+  {
+   "code": "2519.6.2",
+   "label": "ICT accessibility tester",
+   "es": "Evaluador/a de accesibilidad de las TIC"
+  },
+  {
+   "code": "2519.6.3",
+   "label": "ICT integration tester",
+   "es": "Probador/a de integración de las TIC"
+  },
+  {
+   "code": "2519.6.4",
+   "label": "ICT system tester",
+   "es": "Probador/a de sistemas de TIC"
+  },
+  {
+   "code": "2519.6.5",
+   "label": "ICT usability tester",
+   "es": "Probador/a de usabilidad de las TIC"
+  },
+  {
+   "code": "2521.1",
+   "label": "Database administrator",
+   "es": "Administrador/a de bases de datos"
+  },
+  {
+   "code": "2521.2",
+   "label": "Database designer",
+   "es": "Diseñador/a de bases de datos"
+  },
+  {
+   "code": "2521.3",
+   "label": "Database developer",
+   "es": "Desarrollador/a de bases de datos"
+  },
+  {
+   "code": "2521.4",
+   "label": "Database integrator",
+   "es": "Integrador/a de bases de datos"
+  },
+  {
+   "code": "2521.5",
+   "label": "Data warehouse designer",
+   "es": "Diseñador/a de almacenes de datos"
+  },
+  {
+   "code": "2522.1",
+   "label": "ICT system administrator",
+   "es": "Administrador/a de sistemas de TIC"
+  },
+  {
+   "code": "2522.1.1",
+   "label": "ICT network administrator",
+   "es": "Administrador/a de redes de TIC"
+  },
+  {
+   "code": "2522.1.2",
+   "label": "System configurator",
+   "es": "Configurador/a de sistemas"
+  },
+  {
+   "code": "2523.1",
+   "label": "ICT capacity planner",
+   "es": "Planificador/a de carga de las TIC"
+  },
+  {
+   "code": "2523.2",
+   "label": "ICT network architect",
+   "es": "Arquitecto/a de redes de TIC"
+  },
+  {
+   "code": "2523.3",
+   "label": "ICT network engineer",
+   "es": "Ingeniero/a de redes de TIC"
+  },
+  {
+   "code": "2529.1",
+   "label": "Chief ICT security officer",
+   "es": "Director/a de seguridad de las TIC"
+  },
+  {
+   "code": "2529.2",
+   "label": "Digital forensics expert",
+   "es": "Especialista en informática forense"
+  },
+  {
+   "code": "2529.3",
+   "label": "Ethical hacker",
+   "es": "Hacker ético/a"
+  },
+  {
+   "code": "2529.4",
+   "label": "ICT resilience manager",
+   "es": "Gestor/a de resistencia de las TIC"
+  },
+  {
+   "code": "2529.5",
+   "label": "ICT security administrator",
+   "es": "Administrador/a de seguridad de TIC"
+  },
+  {
+   "code": "2529.6",
+   "label": "ICT security consultant",
+   "es": "Consultor/a de seguridad de TIC"
+  },
+  {
+   "code": "2529.7",
+   "label": "ICT security manager",
+   "es": "Gestor/a de seguridad de TIC"
+  },
+  {
+   "code": "2529.8",
+   "label": "Knowledge engineer",
+   "es": "Ingeniero/a del conocimiento"
+  },
+  {
+   "code": "3511.1",
+   "label": "Data centre operator",
+   "es": "Operador/a de centro de datos"
+  },
+  {
+   "code": "3512.1",
+   "label": "ICT help desk agent",
+   "es": "Agente del servicio de asistencia de TIC"
+  },
+  {
+   "code": "3512.2",
+   "label": "ICT help desk manager",
+   "es": "Gestor/a de servicio de asistencia de TIC"
+  },
+  {
+   "code": "3512.3",
+   "label": "ICT security technician",
+   "es": "Técnico/a de seguridad de TIC"
+  },
+  {
+   "code": "3512.4",
+   "label": "ICT technician",
+   "es": "Técnico/a de TIC"
+  },
+  {
+   "code": "3513.1",
+   "label": "Aviation data communications manager",
+   "es": "Responsable de comunicaciones de datos aeronáuticos"
+  },
+  {
+   "code": "3513.2",
+   "label": "ICT network technician",
+   "es": "Técnico/a de redes de TIC"
+  },
+  {
+   "code": "3514.1",
+   "label": "Webmaster",
+   "es": "Administrador/a de webs"
+  },
+  {
+   "code": "3521.1",
+   "label": "Audio-visual technician",
+   "es": "Técnico/a audiovisual"
+  },
+  {
+   "code": "3521.1.1",
+   "label": "Audio production technician",
+   "es": "Técnico/a de sonido"
+  },
+  {
+   "code": "3521.1.2",
+   "label": "Boom operator",
+   "es": "Perchista"
+  },
+  {
+   "code": "3521.1.3",
+   "label": "Camera operator",
+   "es": "Operador/a de cámara"
+  },
+  {
+   "code": "3521.1.4",
+   "label": "Mastering engineer",
+   "es": "Técnico/a de masterización"
+  },
+  {
+   "code": "3521.1.5",
+   "label": "Performance rental technician",
+   "es": "Técnico/a de equipos de alquiler para espectáculos"
+  },
+  {
+   "code": "3521.1.6",
+   "label": "Projectionist",
+   "es": "Proyeccionista"
+  },
+  {
+   "code": "3521.1.7",
+   "label": "Recording studio technician",
+   "es": "Técnico/a de estudio de grabación"
+  },
+  {
+   "code": "3521.1.8",
+   "label": "Sound artist",
+   "es": "Artista sonoro/a"
+  },
+  {
+   "code": "3521.1.9",
+   "label": "Sound designer",
+   "es": "Diseñador/a de sonido"
+  },
+  {
+   "code": "3521.1.10",
+   "label": "Sound editor",
+   "es": "Editor/a de sonido"
+  },
+  {
+   "code": "3521.1.11",
+   "label": "Sound operator",
+   "es": "Operador/a de sonido"
+  },
+  {
+   "code": "3521.1.12",
+   "label": "Video operator",
+   "es": "Operador/a de vídeo"
+  },
+  {
+   "code": "3521.1.13",
+   "label": "Video technician",
+   "es": "Técnico/a de vídeo"
+  },
+  {
+   "code": "3521.2",
+   "label": "Broadcast technician",
+   "es": "Técnico/a de televisión o radiodifusión"
+  },
+  {
+   "code": "3522.1",
+   "label": "Telecommunications engineering technician",
+   "es": "Técnico/a en ingeniería de las telecomunicaciones"
+  }
+ ]
+}
