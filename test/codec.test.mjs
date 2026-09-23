@@ -4,7 +4,7 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { harness } from 'argus/server-bot/test-harness.mjs';
-import { encodeProfile, decodeProfile, normaliseProfile, isEmptyProfile, catalogueIds, crc16, toBase64url, fromBase64url, VERSION, MODES } from '../app/lib/codec.js';
+import { encodeProfile, decodeProfile, normaliseProfile, isEmptyProfile, catalogueIds, crc16, toBase64url, fromBase64url, VERSION, MODES, countryProfile } from '../app/lib/codec.js';
 
 const { ok, eq, done } = harness('codec');
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -102,6 +102,14 @@ const typical = { families: ['2144', '3151'], specialties: ['2144.1.14', '2144.1
   eq([p.maxYears, p.level, p.posted], [null, 'any', 0], 'values outside the steps fall back to none, any and any time');
   eq(decodeProfile(encodeProfile({ posted: 30 }, cats), cats).posted, 30, 'the posted window rides in the flags byte');
   ok(isEmptyProfile({}) && isEmptyProfile({ level: 'any', posted: 0, remote: false }) && !isEmptyProfile({ posted: 7 }) && !isEmptyProfile({ remote: true }), 'an empty profile is one with nothing set, whatever the defaults are spelled like');
+}
+{
+  // ➤ A country of the front page's table opens that country alone; the row with no fixed country
+  // ➤ opens remote work anywhere. Every country of the catalogue makes a code that reads back.
+  const back = cats.countries.map(cc => decodeProfile(encodeProfile(countryProfile(cc), cats), cats));
+  eq(back.filter(p => p.countries.length !== 1 || p.countries[0] !== cats.countries[back.indexOf(p)] || p.families.length || p.modes.length).length, 0, `each of the ${cats.countries.length} countries opens itself alone`);
+  eq(decodeProfile(encodeProfile(countryProfile('xx'), cats), cats).modes, ['remote'], 'the row with no fixed country opens remote work');
+  ok(!isEmptyProfile(countryProfile('fo')), 'the Faroe Islands open a list, not the front page');
 }
 {
   // ➤ Unknown ids in a profile (a future catalogue) simply drop out of the code.

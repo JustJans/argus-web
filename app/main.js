@@ -6,7 +6,7 @@
 // ➤ the device ticks the occupations, degrees and languages it names. Everything downloads
 // ➤ only the parts of the pile it needs, judges them here, hides adverts past their deadline
 // ➤ and draws the list. Nothing about the visitor leaves the browser.
-import { encodeProfile, decodeProfile, normaliseProfile, isEmptyProfile, catalogueIds, familyOfSpecialty } from './lib/codec.js';
+import { encodeProfile, decodeProfile, normaliseProfile, isEmptyProfile, catalogueIds, familyOfSpecialty, countryProfile } from './lib/codec.js';
 import { makeJudge, sortOffers } from './lib/gates.js';
 import { shardFiles, loadShards } from './lib/shards.js';
 import { renderList, renderEmpty, renderDebug } from './lib/render.js';
@@ -244,13 +244,24 @@ function drawPile() {
   if (readHours > STALE_HOURS) { text('#stale-text', t('The sources were last read {n} days ago; some offers may have closed since.', { n: Math.round(readHours / 24) })); $('#stale').hidden = false; }
   const tbody = $('#countries tbody');
   tbody.replaceChildren();
+  // ➤ Each country opens its offers: its name is the link, and its count leads there too for a
+  // ➤ pointer (hidden from the keyboard and screen readers, which meet the name). They look as
+  // ➤ plain text, as the table always did.
+  const link = (cc, content, quiet) => {
+    if (cc !== 'xx' && !ids.countries.includes(cc)) return document.createTextNode(content);
+    const a = document.createElement('a');
+    a.href = `#p=${encodeProfile(countryProfile(cc), ids)}`;
+    a.textContent = content;
+    if (quiet) { a.tabIndex = -1; a.setAttribute('aria-hidden', 'true'); }
+    return a;
+  };
   // ➤ Two countries a row, read across (1 2 / 3 4), so the table is half as tall.
   for (let i = 0; i < rows.length; i += 2) {
     const tr = document.createElement('tr');
     for (const pair of [rows[i], rows[i + 1]]) {
       const name = document.createElement('td');
       const num = document.createElement('td'); num.className = 'num';
-      if (pair) { name.textContent = countryName(pair[0]); num.textContent = n(pair[1]); }
+      if (pair) { name.append(link(pair[0], countryName(pair[0]), false)); num.append(link(pair[0], n(pair[1]), true)); }
       tr.append(name, num);
     }
     tbody.append(tr);
