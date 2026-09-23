@@ -1,10 +1,10 @@
-// ➤ The places adverts are located against: GeoNames' towns of more than 5,000 people in the
+// ➤ The places adverts are located against: GeoNames' towns of more than 1,000 people in the
 // ➤ site's countries, each with its coordinates, its region and the other names it goes by
 // ➤ ("München" and "Múnich" are Munich), written to catalogues/codes/places.json. Job sites
 // ➤ locate an advert the same way — its place to coordinates against a gazetteer, then a radius
 // ➤ around the town the visitor names — and GeoNames is the open gazetteer (CC BY 4.0).
 // ➤ The files come from https://download.geonames.org/export/dump/ into builder/state/geonames:
-// ➤   curl -O https://download.geonames.org/export/dump/cities5000.zip && unzip cities5000.zip
+// ➤   curl -O https://download.geonames.org/export/dump/cities1000.zip && unzip cities1000.zip
 // ➤   curl -O https://download.geonames.org/export/dump/admin1CodesASCII.txt
 // ➤   node builder/tools/places.mjs
 import { readFileSync, writeFileSync } from 'fs';
@@ -44,8 +44,8 @@ export function buildPlaces(citiesTsv, admin1Tsv, countries) {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const countries = JSON.parse(readFileSync(join(ROOT, 'catalogues', 'countries.json'), 'utf8')).countries.map(c => c.iso);
-  const places = buildPlaces(readFileSync(join(DIR, 'cities5000.txt'), 'utf8'), readFileSync(join(DIR, 'admin1CodesASCII.txt'), 'utf8'), countries);
-  const about = "GeoNames' populated places of more than 5,000 people (cities5000) in the site's countries, from https://download.geonames.org/export/dump/ under CC BY 4.0 (https://www.geonames.org). One array per place: GeoNames id, name, country, region (admin1), latitude, longitude, population, other names (Latin, Greek and Cyrillic, codes left out). Built by builder/tools/places.mjs.";
+  const places = buildPlaces(readFileSync(join(DIR, 'cities1000.txt'), 'utf8'), readFileSync(join(DIR, 'admin1CodesASCII.txt'), 'utf8'), countries);
+  const about = "GeoNames' populated places of more than 1,000 people (cities1000) in the site's countries, from https://download.geonames.org/export/dump/ under CC BY 4.0 (https://www.geonames.org). One array per place: GeoNames id, name, country, region (admin1), latitude, longitude, population, other names (Latin, Greek and Cyrillic, codes left out). Built by builder/tools/places.mjs.";
   writeFileSync(OUT, `${JSON.stringify({ _about: about, built_at: new Date().toISOString().slice(0, 10), places })}\n`);
   console.log(`${places.length} places → ${OUT}`);
 }
