@@ -28,11 +28,13 @@ const pieces = text => String(text || '').split(/[,;/|()]|\s[-–]\s/)
 const withTown = piece => (piece.includes('-') ? [piece, piece.split('-')[0]] : [piece]);
 
 // ➤ rec: a record (cc, ci, l). Answers { town, said } — the town and the words that named it —
-// ➤ or null when its place names no town we know.
+// ➤ or null when its place names no town we know. The place's pieces are tried from the most
+// ➤ precise, as addresses are written ("Terrassa, BARCELONA, ES" is Terrassa, in the province
+// ➤ of Barcelona); the city read off it before comes last.
 export function townOf(rec, towns) {
   const byName = towns.get(rec.cc);
   if (!byName) return null;
-  const texts = [rec.ci, ...pieces(rec.l)].filter(Boolean).flatMap(withTown);
+  const texts = [...pieces(rec.l), rec.ci].filter(Boolean).flatMap(withTown);
   const all = fold(texts.join(' '));
   for (const said of texts) {
     const found = byName.get(fold(said));

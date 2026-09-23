@@ -99,10 +99,13 @@ eq(occupationCounts([{ f: ['2144'], e: ['2144.1.14'] }, { f: ['2144', '3151'], e
     [3, 'Frankfurt (Oder)', 'de', 'Brandenburg', 52.3471, 14.5506, 57107, ['Frankfurt']],
     [4, 'Cornellà de Llobregat', 'es', 'Catalonia', 41.35, 2.0833, 87173, []],
     [5, 'Ulm', 'de', 'Baden-Wurttemberg', 48.3984, 9.9916, 126329, []],
+    [6, 'Terrassa', 'es', 'Catalonia', 41.5667, 2.0167, 215121, []],
+    [7, 'Barcelona', 'es', 'Catalonia', 41.3888, 2.159, 1686208, []],
   ] });
   const name = rec => townOf(rec, towns)?.town.name || null;
   eq([name({ cc: 'de', ci: 'München', l: 'München, Bayern' }), name({ cc: 'es', ci: '', l: '08940 Cornellà de Llobregat, Barcelona provincia' })], ['Munich', 'Cornellà de Llobregat'], 'a town by any of its names, and without its postcode');
   eq([name({ cc: 'de', ci: 'Frankfurt', l: 'Frankfurt (Oder), Brandenburg' }), name({ cc: 'de', ci: 'Frankfurt', l: 'Frankfurt, Hessen' })], ['Frankfurt (Oder)', 'Frankfurt am Main'], 'two towns of one name: the one in the region named, else the bigger');
+  eq(name({ cc: 'es', ci: 'Barcelona', l: 'Terrassa, BARCELONA, ES' }), 'Terrassa', 'the most precise piece first: a town in the province of Barcelona is that town');
   eq([name({ cc: 'de', ci: 'Ulm-Jungingen', l: 'Ulm-Jungingen, BW' }), name({ cc: 'es', ci: 'München', l: 'München' }), name({ cc: 'de', ci: '', l: 'bundesweit, DE' })], ['Ulm', null, null], "a district finds its town; a town is looked for in its own country only; no town, no place");
   const recs = [{ cc: 'de', ci: 'München', l: 'München' }, { cc: 'de', ci: 'Munich', l: 'Munich' }, { cc: 'de', ci: 'München', l: 'München, DE' }, { cc: 'xx', ci: '', l: 'Remote' }];
   const { placed, list } = locate(recs, towns);
