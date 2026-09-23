@@ -69,6 +69,9 @@ The structure is built for the changes already known. Each item names the seam.
   `builder/isco-esco.mjs` so `catalogues/codes/isco.json` carries its ESCO titles; job titles
   ESCO lacks (Catalan) go in the entry's `extra_terms`. Never reorder: the position is the bit
   in the profile code.
+- **Any change to the gate**: `node builder/tools/compare-gates.mjs <other checkout>` runs every
+  advert in the store through both gates and says what comes in, what goes out, and how long
+  each takes.
 - **Languages, degrees, vetoes, levels**: append to their catalogue; never reorder.
 - **Deploy**: today `builder/publish.mjs` pushes `site/` to `gh-pages`; the workflows in
   `ops/workflows/` move to `.github/workflows/` once the token can create them, and Pages
