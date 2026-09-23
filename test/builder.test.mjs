@@ -9,7 +9,8 @@ import { harness } from 'argus/server-bot/test-harness.mjs';
 import { compileFamilies, familiesOf, occupationsOf, classifier, hygieneReason, matchableTitle } from '../builder/gate.mjs';
 import { compileCountries, placeOf, placeOfAdvert, normUrl, idFor, toRecord } from '../builder/normalise.mjs';
 import { dedupe, roleKey } from '../builder/dedupe.mjs';
-import { buildShards, latestOf, occupationCounts, cityCounts } from '../builder/shard.mjs';
+import { buildShards, latestOf, occupationCounts } from '../builder/shard.mjs';
+import { compileTowns, townOf, locate } from '../builder/towns.mjs';
 import { shardFiles } from '../app/lib/shards.js';
 import { parseLanbide, isoDay } from '../builder/adapters/lanbide.mjs';
 import { parseFeinaActiva } from '../builder/adapters/feinaactiva.mjs';
@@ -90,7 +91,24 @@ eq(occ('Engineer'), [], 'a bare engineer names no occupation');
   eq([classify({ title: 'Naval Architect', codes: {} }), classify({ title: 'Bauingenieur', codes: {}, hintLangs: ['de'] }).families], [{ families: ['2144'], occupations: ['2144.1.14'] }, ['2142']], "the build-wide gate answers as the gate does, a title worked out once, and no advert can change another's answer");
 }
 eq(occupationCounts([{ f: ['2144'], e: ['2144.1.14'] }, { f: ['2144', '3151'], e: ['2144.1.14', '2144.1.10'] }, { f: ['2142'], e: ['2144.1.14'] }]), { 2144: { '2144.1.14': 2, '2144.1.10': 1 } }, 'the index counts the occupations per family, each under its own');
-eq(cityCounts([...Array(3)].map(() => ({ cc: 'se', ci: 'Malmö' })).concat([{ cc: 'se', ci: 'Malmo' }, { cc: 'se', ci: 'Lund' }, { cc: 'xx', ci: 'Anywhere' }, { cc: 'es', ci: '' }])), { se: [['Malmö', 4]] }, 'the cities a country names, one spelling each, the rare ones and remote left out');
+// Towns: an advert's place found in GeoNames by any of its names, within its country.
+{
+  const towns = compileTowns({ places: [
+    [1, 'Munich', 'de', 'Bavaria', 48.1374, 11.5755, 1505005, ['München', 'Muenchen']],
+    [2, 'Frankfurt am Main', 'de', 'Hesse', 50.1155, 8.6842, 650000, ['Frankfurt']],
+    [3, 'Frankfurt (Oder)', 'de', 'Brandenburg', 52.3471, 14.5506, 57107, ['Frankfurt']],
+    [4, 'Cornellà de Llobregat', 'es', 'Catalonia', 41.35, 2.0833, 87173, []],
+    [5, 'Ulm', 'de', 'Baden-Wurttemberg', 48.3984, 9.9916, 126329, []],
+  ] });
+  const name = rec => townOf(rec, towns)?.town.name || null;
+  eq([name({ cc: 'de', ci: 'München', l: 'München, Bayern' }), name({ cc: 'es', ci: '', l: '08940 Cornellà de Llobregat, Barcelona provincia' })], ['Munich', 'Cornellà de Llobregat'], 'a town by any of its names, and without its postcode');
+  eq([name({ cc: 'de', ci: 'Frankfurt', l: 'Frankfurt (Oder), Brandenburg' }), name({ cc: 'de', ci: 'Frankfurt', l: 'Frankfurt, Hessen' })], ['Frankfurt (Oder)', 'Frankfurt am Main'], 'two towns of one name: the one in the region named, else the bigger');
+  eq([name({ cc: 'de', ci: 'Ulm-Jungingen', l: 'Ulm-Jungingen, BW' }), name({ cc: 'es', ci: 'München', l: 'München' }), name({ cc: 'de', ci: '', l: 'bundesweit, DE' })], ['Ulm', null, null], "a district finds its town; a town is looked for in its own country only; no town, no place");
+  const recs = [{ cc: 'de', ci: 'München', l: 'München' }, { cc: 'de', ci: 'Munich', l: 'Munich' }, { cc: 'de', ci: 'München', l: 'München, DE' }, { cc: 'xx', ci: '', l: 'Remote' }];
+  const { placed, list } = locate(recs, towns);
+  eq([placed, recs[0].g, recs[3].g], [3, [48.14, 11.58], undefined], 'each advert gets its coordinates, rounded to a kilometre or so');
+  eq(list, [['München', 'Munich', 'Bavaria', 'de', 48.14, 11.58, 3]], 'the towns with offers, under the name their adverts use most');
+}
 
 // The catalogue of specialties: ESCO's Spanish in both genders, and a file that only grows.
 eq([bothGenders(['ingeniero mecánico', 'ingeniera mecánica']), bothGenders(['desarrollador de software', 'desarrolladora de software']), bothGenders(['técnico', 'técnica']), bothGenders(['piloto', 'piloto'])], ['ingeniero/a mecánico/a', 'desarrollador/a de software', 'técnico/a', 'piloto'], 'the two genders in one, word by word');

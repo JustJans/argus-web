@@ -15,7 +15,13 @@ function byPrefix(list, prefixOf) {
   for (const x of list || []) { const k = prefixOf(x); if (!out.has(k)) out.set(k, []); out.get(k).push(x); }
   return out;
 }
-const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// ➤ Kilometres between two points on the globe, by the haversine formula (a sphere of 6,371 km:
+// ➤ within half a percent of the real distance, plenty for "25 km around a town").
+const rad = d => (d * Math.PI) / 180;
+export function distanceKm([lat1, lon1], [lat2, lon2]) {
+  const a = Math.sin(rad(lat2 - lat1) / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(rad(lon2 - lon1) / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(a));
+}
 
 // ➤ engine: { buildTitleFilter, norm } from lib/engine.js; catalogues: the loaded JSON files.
 export function makeJudge(profile, catalogues, engine) {
@@ -27,12 +33,13 @@ export function makeJudge(profile, catalogues, engine) {
   const title = engine.buildTitleFilter({ positive: profile.roles, negative });
   const families = new Set(profile.families);
   const countries = new Set(profile.countries);
-  // ➤ A family with specialties chosen keeps only the adverts that name one of them; a country
-  // ➤ with cities chosen, the adverts in one of them (the city read off the place, or named in it).
+  // ➤ A family with specialties chosen keeps only the adverts that name one of them. A town and a
+  // ➤ distance keep, in the town's country, the adverts that close to it; as on the big sites, an
+  // ➤ advert whose place could not be put on the map is not found by a search by town.
   const specialties = byPrefix(profile.specialties, code => code.slice(0, 4));
   const inFamily = o => (o.f || []).some(f => families.has(f) && (!specialties.has(f) || (o.e || []).some(e => specialties.get(f).includes(e))));
-  const cities = new Map([...byPrefix(profile.cities, c => c.slice(0, 2))].map(([cc, list]) => [cc, list.map(c => { const name = engine.norm(c.slice(3)); return { name, re: new RegExp(`(?:^|[^a-z0-9])${escapeRe(name)}(?![a-z0-9])`) }; })]));
-  const inCity = o => !cities.has(o.cc) || cities.get(o.cc).some(c => engine.norm(o.ci || '') === c.name || c.re.test(engine.norm(o.l || '')));
+  const place = profile.place;
+  const near = o => !place || o.cc !== place.cc || (o.g && distanceKm(o.g, [place.lat, place.lon]) <= place.km);
   const languages = new Set(profile.languages);
   const degrees = new Set(profile.degrees);
   const holdsEngineering = [...degrees].some(d => ENGINEERING_DEGREES.has(d));
@@ -46,8 +53,8 @@ export function makeJudge(profile, catalogues, engine) {
     if (countries.size) {
       if (o.cc === 'xx') { if (!profile.remote) return { ok: false, stage: 'COUNTRY', reason: t('remote work, and you did not allow it') }; }
       else if (o.cc && !countries.has(o.cc)) return { ok: false, stage: 'COUNTRY', reason: t('in a country you did not choose ({cc})', { cc: o.cc.toUpperCase() }) };
-      else if (!inCity(o)) return { ok: false, stage: 'COUNTRY', reason: t('in {city}, not one of the cities you chose', { city: o.ci || '?' }) };
     }
+    if (!near(o)) return { ok: false, stage: 'PLACE', reason: o.g ? t('more than {km} km from {place}', { km: place.km, place: place.name }) : t('its place is not on the map') };
     if (profile.maxYears && o.y && o.y > profile.maxYears) return { ok: false, stage: 'YEARS', reason: t('asks for {n} years of experience (your cap is {max})', { n: o.y, max: profile.maxYears }) };
     // ➤ Degrees and languages screen only when the visitor listed some: left empty, the
     // ➤ question was not asked, and "none" would hide every advert that names one.

@@ -1,12 +1,12 @@
 // ➤ The one page. The filters on the left are the visitor's whole profile: country (in the
-// ➤ order ticked) and its cities, occupations by group and their specialties, posted date, level and years, languages, degrees,
+// ➤ order ticked) or a town and a distance, occupations by group and their specialties, posted date, level and years, languages, degrees,
 // ➤ title words, deal-breakers; each a fold-out. The profile is packed into a short code that
 // ➤ appears as the filters change and can be copied or pasted; the code and the search words
 // ➤ live in the address after the #, so a list can be bookmarked and shared. A CV read on
 // ➤ the device ticks the occupations, degrees and languages it names. Everything downloads
 // ➤ only the parts of the pile it needs, judges them here, hides adverts past their deadline
 // ➤ and draws the list. Nothing about the visitor leaves the browser.
-import { encodeProfile, decodeProfile, normaliseProfile, isEmptyProfile, catalogueIds, familyOfSpecialty, countryOfCity } from './lib/codec.js';
+import { encodeProfile, decodeProfile, normaliseProfile, isEmptyProfile, catalogueIds, familyOfSpecialty } from './lib/codec.js';
 import { makeJudge, sortOffers } from './lib/gates.js';
 import { shardFiles, loadShards } from './lib/shards.js';
 import { renderList, renderEmpty, renderDebug } from './lib/render.js';
@@ -29,6 +29,8 @@ let loaded = null;              // ➤ the last set downloaded and judged, so wo
 const foldState = new Map();    // ➤ fold-outs the visitor opened or closed, kept across redraws
 const countryOrder = [];        // ➤ the order countries were ticked in: the first comes first in the list
 let familyTerms = null;         // ➤ ESCO's job titles, fetched the first time a CV is read
+let places = null;              // ➤ the towns with offers, by the words the list shows, fetched the first time the town field is used
+let chosenPlace = null;         // ➤ the town picked from that list: { cc, name, lat, lon }
 
 // ➤ The state in the address: p = the code (every filter), q = the search words, all = the
 // ➤ whole pile was asked for with nothing set.
@@ -70,12 +72,12 @@ function profileFromForm() {
   const words = sel => $(sel).value.split(',').map(s => s.trim()).filter(Boolean).slice(0, 8);
   const ticked = new Set(checked('c'));
   const countries = [...countryOrder.filter(c => ticked.has(c)), ...[...ticked].filter(c => !countryOrder.includes(c))];
-  // ➤ A specialty or a city left ticked under a family or a country just unticked goes with it.
+  // ➤ A specialty left ticked under a family just unticked goes with it.
   const families = checked('f');
   const specialties = checked('e').filter(c => families.includes(familyOfSpecialty(c)));
-  const cities = checked('ci').filter(c => ticked.has(countryOfCity(c)));
+  const place = chosenPlace && { ...chosenPlace, km: Number($('#radius').value) };
   return normaliseProfile({
-    families, specialties, countries, cities, remote: $('#remote').checked, posted: Number($('#filters-form input[name="d"]:checked')?.value) || 0,
+    families, specialties, countries, place, remote: $('#remote').checked, posted: Number($('#filters-form input[name="d"]:checked')?.value) || 0,
     level: checked('level')[0] || 'any', maxYears: Number($('#max-years').value) || null, highest: $('#highest').value,
     languages: checked('lg'), degrees: checked('dg'), vetoes: checked('v'), roles: words('#roles'), noWords: words('#no-words'),
   });
@@ -103,7 +105,7 @@ function chevron() {
   return svg;
 }
 const remember = (fold, key) => fold.addEventListener('toggle', () => foldState.set(key, fold.open));
-// ➤ The choices inside a ticked country or family (its cities, its specialties), under it.
+// ➤ The choices inside a ticked family (its specialties), under it.
 function subRows(container, name, items) {
   if (!items.length) return;
   const box = document.createElement('div'); box.className = 'checks sub';
@@ -121,12 +123,27 @@ function drawCountries(profile) {
   for (const cc of profile.countries) if (!counts[cc]) rows.push([cc, 0]);
   const pick = $('#countries-pick');
   pick.replaceChildren();
-  for (const [cc] of rows) {
-    row(pick, { name: 'c', value: cc, label: countryName(cc) });
-    if (!profile.countries.includes(cc)) continue;
-    const listed = Object.fromEntries((index.cities?.[cc] || []).map(([name, count]) => [`${cc}:${name}`, count]));
-    subRows(pick, 'ci', withChosen(listed, profile.cities.filter(c => countryOfCity(c) === cc)).map(c => [c, c.slice(3)]));
+  for (const [cc] of rows) row(pick, { name: 'c', value: cc, label: countryName(cc) });
+}
+
+// ➤ The town field's suggestions: the towns with offers, "München, Bavaria, Germany", the fullest
+// ➤ first, with GeoNames' own name as the hint where the adverts spell it otherwise ("Munich").
+// ➤ The browser draws and filters them (a datalist); only a town from the list is taken.
+async function loadPlaces() {
+  if (places) return;
+  places = new Map();
+  const options = document.createDocumentFragment();
+  for (const [shown, other, region, cc, lat, lon] of (await getJson('data/places.json')).places) {
+    const name = region && engine.fold(region) !== engine.fold(shown) ? `${shown}, ${region}` : shown;
+    const value = `${name}, ${countryName(cc)}`;
+    if (places.has(value)) continue;
+    places.set(value, { cc, name, lat, lon });
+    const option = document.createElement('option');
+    option.value = value;
+    if (other) option.label = other;
+    options.append(option);
   }
+  $('#places-list').append(options);
 }
 
 // ➤ Inside "Occupations", one fold-out per group (Engineers, Technicians, crews…) with the families
@@ -172,7 +189,9 @@ function fillFilters(p) {
   drawCountries(p);
   drawFamilyCounts(p);
   for (const i of $$('#countries-pick input[name="c"]')) i.checked = p.countries.includes(i.value);
-  for (const i of $$('#countries-pick input[name="ci"]')) i.checked = p.cities.includes(i.value);
+  chosenPlace = p.place && { cc: p.place.cc, name: p.place.name, lat: p.place.lat, lon: p.place.lon };
+  $('#place').value = p.place ? `${p.place.name}, ${countryName(p.place.cc)}` : '';
+  $('#radius').value = String(p.place?.km || 25);
   $('#remote').checked = p.remote;
   for (const i of $$('#families-pick input[name="f"]')) i.checked = p.families.includes(i.value);
   for (const i of $$('#families-pick input[name="e"]')) i.checked = p.specialties.includes(i.value);
@@ -197,7 +216,7 @@ function fillFilters(p) {
   text('#filters-toggle-label', head);
 }
 function activeGroups(p) {
-  const on = { country: p.countries.length || p.remote, occupations: p.families.length, posted: p.posted, level: p.level !== 'any' || p.maxYears, languages: p.languages.length, degrees: p.degrees.length || p.highest !== 'none', roles: p.roles.length, vetoes: p.vetoes.length || p.noWords.length };
+  const on = { country: p.countries.length || p.remote || p.place, occupations: p.families.length, posted: p.posted, level: p.level !== 'any' || p.maxYears, languages: p.languages.length, degrees: p.degrees.length || p.highest !== 'none', roles: p.roles.length, vetoes: p.vetoes.length || p.noWords.length };
   return new Set(Object.keys(on).filter(k => on[k]));
 }
 
@@ -346,6 +365,15 @@ function wireControls() {
   toggle.addEventListener('click', () => open(!panel.classList.contains('is-open')));
   $('#filters-close').addEventListener('click', () => open(false));
   // ➤ Any change in the panel is the new profile; ticking a country puts it last in the order.
+  // ➤ The town: taken when the text is one of the suggestions (picked, or typed whole); an empty
+  // ➤ field drops it; anything else is put back as it was when the field is left.
+  const placeField = $('#place');
+  placeField.addEventListener('focus', () => loadPlaces().catch(() => {}));
+  placeField.addEventListener('input', () => { const hit = places?.get(placeField.value.trim()); if (hit) { chosenPlace = hit; writeHash(stateFromForm()); } });
+  placeField.addEventListener('change', () => {
+    if (!placeField.value.trim()) { chosenPlace = null; writeHash(stateFromForm()); } else if (!places?.has(placeField.value.trim())) run().catch(showError);
+  });
+  $('#radius').addEventListener('change', () => { if (chosenPlace) writeHash(stateFromForm()); });
   $('#filters-form').addEventListener('change', e => {
     if (e.target.name === 'c') { const k = countryOrder.indexOf(e.target.value); if (e.target.checked && k < 0) countryOrder.push(e.target.value); else if (!e.target.checked && k >= 0) countryOrder.splice(k, 1); }
     writeHash(stateFromForm());

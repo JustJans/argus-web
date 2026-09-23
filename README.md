@@ -15,7 +15,7 @@ and language rules, run client-side.
 
 **Working across Europe**, strongest in Germany, the United Kingdom, Sweden and France. Live
 at <https://justjans.github.io/argus-web/>: search the pile by words and filters — country and
-city, occupations by ISCO group and their ESCO specialties, date, level, languages, degrees,
+town and distance, occupations by ISCO group and their ESCO specialties, date, level, languages, degrees,
 title words, deal-breakers — let your CV tick them, and carry them as a short code. Every
 advert past its deadline is hidden; the page says when the pile was last rebuilt. A home
 server rebuilds and publishes the pile every three hours with `ops/server-refresh.sh`, from what the crawler
@@ -98,7 +98,8 @@ per dropped advert with the reason to `builder/out/explain.txt`.
 
 ```
 catalogues/   families (ISCO-08 unit groups by minor group) and their ESCO occupations, countries,
-              languages, degrees, vetoes, each with its Spanish; codes/ holds ESCO's job titles per group and JobTech's SSYK→ISCO table (built by
+              languages, degrees, vetoes, each with its Spanish; codes/ holds GeoNames' towns
+              (builder/tools/places.mjs), ESCO's job titles per group and JobTech's SSYK→ISCO table (built by
               builder/isco-esco.mjs)
 builder/      adapters (one per source) → normalise → gate → dedupe → shards and an index
 app/          the static site GitHub Pages serves

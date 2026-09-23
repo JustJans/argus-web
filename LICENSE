@@ -31,8 +31,11 @@ Not covered by this licence
     header credits them.
   builder/config/careers-found.yml — hosts read from Web Data Commons'
     extraction of Common Crawl, under those projects' terms.
-  catalogues/codes/isco.json and catalogues/families.json — occupation titles
-    from ESCO, © European Union, reused with attribution.
+  catalogues/codes/isco.json, catalogues/families.json and
+    catalogues/occupations.json — occupation titles from ESCO, © European Union,
+    reused with attribution.
+  catalogues/codes/places.json — towns from GeoNames (www.geonames.org), under
+    the Creative Commons Attribution 4.0 licence.
   The job adverts this software collects — they belong to the sources that
     published them; app/legal/sources.html names each source and its terms.
   The packages named in package.json — each under its own licence.

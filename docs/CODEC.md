@@ -17,13 +17,13 @@ The code is base64url (`A-Z a-z 0-9 - _`, no padding) of these bytes:
 | varint n, then n varints | deal-breaker chips as positions in `catalogues/vetoes.json` |
 | varint n, then n strings | deal-breaker words, as the role words |
 | varint n, then n varints | specialties: ESCO occupations as positions in `catalogues/occupations.json` (each brings its family, the first four digits of its code) |
-| varint n, then n × (varint, string) | cities: the country's position in `catalogues/countries.json` and the city's name (UTF-8, at most 40 bytes; each brings its country) |
+| varint, then the place | a town and a distance: its country's position in `catalogues/countries.json` plus one (0 = no town, and nothing follows), its name (UTF-8, at most 60 bytes), latitude and longitude in hundredths of a degree (two signed 16-bit numbers, big-endian), and the distance's step (one byte: 5, 10, 25, 50 or 100 km). The town's country joins the countries. |
 | 2 | CRC-16/CCITT-FALSE of everything before, big-endian |
 
 Bitfields: position p of the catalogue is bit (p mod 8) of byte (p div 8); a position past the
 field is left out of the code.
 
-Sizes: an empty profile is 34 characters; a typical one 55 to 130; everything at once stays
+Sizes: an empty profile is 34 characters; a typical one 55 to 150; everything at once stays
 under 450.
 
 Rules that keep old codes meaningful: catalogues are append-only and never reordered; an
@@ -33,10 +33,11 @@ does not have yet is ignored. A change of layout is a new version byte.
 ## History
 
 - **Version 3 (2026-09-22).** Specialties inside the families (ESCO's occupations, so a visitor
-  can keep only naval architects among the mechanical engineers), cities inside the countries,
+  can keep only naval architects among the mechanical engineers), a town and a distance around
+  it (the town travels with its coordinates, so a bookmark does not depend on the day's pile),
   and posted windows of a day, three days and ninety days (the field grew to three bits). A
   version-2 code is read as before: its posted field is two bits of 0, 7 and 30 days, and it
-  has no specialties or cities.
+  has no specialties and no town.
 - **Version 2 (2026-09-05).** Families became the ISCO-08 unit groups of the vertical (37 of
   them, grouped as engineers, architects/planners/surveyors, technicians, supervisors, plant
   operators, ship and aircraft crews), so the family field grew from 4 to 8 bytes. A

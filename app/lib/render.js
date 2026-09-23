@@ -66,7 +66,7 @@ export function renderList(container, offers, ctx, pageSize = 40) {
 }
 
 // ➤ Zero results: how many adverts fell at each stage, and how to loosen the filters.
-const STAGES = { FAMILY: 'left out by occupation', TITLE: 'left out by title words', COUNTRY: 'left out by country or city', YEARS: 'left out by years asked', DEGREE: 'left out by degree', LANGUAGE: 'left out by language', 'posted date': 'left out by posted date', 'search words': 'left out by search words' };
+const STAGES = { FAMILY: 'left out by occupation', TITLE: 'left out by title words', COUNTRY: 'left out by country', PLACE: 'left out by distance', YEARS: 'left out by years asked', DEGREE: 'left out by degree', LANGUAGE: 'left out by language', 'posted date': 'left out by posted date', 'search words': 'left out by search words' };
 export function renderEmpty(container, stages, total) {
   container.replaceChildren();
   const box = el('div', 'empty');

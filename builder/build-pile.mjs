@@ -11,7 +11,8 @@ import { compileFamilies, classifier, hygieneReason, languagesOfCountry } from '
 import { compileCountries, placeOfAdvert, toRecord } from './normalise.mjs';
 import { compileScreens } from './screens.mjs';
 import { dedupe } from './dedupe.mjs';
-import { buildShards, writePile, cityCounts } from './shard.mjs';
+import { buildShards, writePile } from './shard.mjs';
+import { compileTowns, locate } from './towns.mjs';
 import { loadCache, saveCache, translateTitles } from './translate.mjs';
 import { eachSource } from './store.mjs';
 import { licenceFor } from './sources.mjs';
@@ -94,6 +95,10 @@ if (!sourceFiles) { log('the store is empty: run builder/crawl.mjs first'); proc
 
 const { kept, sameUrl, sameRole } = dedupe(items);
 
+// ➤ Each advert on the map, for the search by town and distance: its town found in GeoNames.
+const towns = compileTowns(JSON.parse(readFileSync(join(ROOT, 'catalogues', 'codes', 'places.json'), 'utf-8')));
+const onMap = locate(kept, towns);
+
 // ➤ Titles in English, as the bot shows them, and in Spanish for the Spanish site; a cache on
 // ➤ disk per language (keyed by the title alone) means only new titles are asked.
 if (!args.includes('--no-translate')) {
@@ -126,12 +131,13 @@ if (!FORCE && wasKept && kept.length < wasKept * KEEP_AT_LEAST) {
 const index = {
   v: 1, generated_at: generatedAt, crawled_at: crawledAt || generatedAt,
   expires_at: new Date(Date.parse(crawledAt || generatedAt) + 48 * 3600 * 1000).toISOString(), catalogue_v: 2,
-  families: familiesIndex, latest, sources, cities: cityCounts(kept),
-  counts: { offers: kept.length, found: counts.found, by_country: perCountry, via: viaCount, sources: sourceFiles, companies: boardSources },
+  families: familiesIndex, latest, sources,
+  counts: { offers: kept.length, found: counts.found, by_country: perCountry, via: viaCount, sources: sourceFiles, companies: boardSources, on_map: onMap.placed },
   status: { ok: kept.length > 0, seconds: Math.round((Date.now() - startedAt) / 1000) },
 };
 mkdirSync(OUT, { recursive: true });
-const extras = {};
+// ➤ The towns with offers, for the place search; loaded only when a visitor types a town.
+const extras = { 'places.json': JSON.stringify({ v: 1, places: onMap.list }) };
 if (EXPLAIN) extras['explain.txt'] = dropped.map(([why, raw]) => `[${why}] ${raw.title} | ${raw.company} | ${raw.location} (${raw.source})`).join('\n') + '\n';
 writePile(OUT, files, index, extras);
 writeFileSync(join(OUT, 'status.json'), JSON.stringify({ generated_at: generatedAt, crawled_at: crawledAt, offers: kept.length, found: counts.found, sources: sourceFiles, dropped: counts, duplicates: { sameUrl, sameRole }, by_country: perCountry }, null, 2));
@@ -139,4 +145,5 @@ writeFileSync(join(OUT, 'status.json'), JSON.stringify({ generated_at: generated
 log(`store: ${sourceFiles} sources, newest pass ${crawledAt || 'never'}`);
 log(`found ${counts.found} · outside vertical ${counts.outsideVertical} · outside Europe ${counts.outsideEurope} · hygiene ${counts.hygiene} · no link ${counts.noLink} · stale ${counts.stale} · duplicates ${sameUrl + sameRole}`);
 log(`kept ${kept.length} offers in ${Object.keys(files).length} shards → ${OUT}`);
+log(`on the map: ${onMap.placed} offers in ${onMap.list.length} towns`);
 if (kept.length === 0) { log('nothing usable in the store: not publishing'); process.exit(1); }

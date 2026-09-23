@@ -21,12 +21,12 @@ function visible(html) {
   for (const m of body.matchAll(/\b(?:placeholder|aria-label|content|title)="([^"]+)"/g)) if (/[A-Za-z]{3}/.test(m[1]) && !/width=|no-referrer/.test(m[1])) out.add(m[1]);
   return out;
 }
-const NAMES = new Set(['Argus Web', 'Argus', '#p=AgAI…', 'ES', 'EN', 'English', 'Español']);
+const NAMES = new Set(['Argus Web', 'Argus', 'GeoNames', 'ESCO', '#p=AgAI…', 'ES', 'EN', 'English', 'Español']);
 
 for (const page of PAGES) {
   const english = read(`app/${page}`);
   const spanish = toSpanish(english, page);
-  const left = [...visible(spanish)].filter(s => visible(english).has(s) && !NAMES.has(s));
+  const left = [...visible(spanish)].filter(s => visible(english).has(s) && !NAMES.has(s) && !/^\d+ km$/.test(s));
   eq(left, [], `${page}: nothing a reader sees is left in English`);
   ok(spanish.includes('<html lang="es"'), `${page}: the twin says it is Spanish`);
 }

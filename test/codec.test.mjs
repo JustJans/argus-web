@@ -18,26 +18,26 @@ eq([...fromBase64url(toBase64url(Uint8Array.from([1, 2])))], [1, 2], 'two bytes,
 eq(crc16(new TextEncoder().encode('123456789')), 0x29b1, 'CRC-16/CCITT-FALSE check value');
 
 // ➤ Families are ISCO-08 unit groups: 2144 mechanical engineers, 3151 ships' engineers.
-const typical = { families: ['2144', '3151'], specialties: ['2144.1.14', '2144.1.10'], countries: ['es', 'nl', 'no'], cities: ['es:Bilbao', 'nl:Gorinchem'], languages: ['en', 'es'], degrees: ['naval', 'mechanical'], level: 'junior', maxYears: 3, highest: 'master', remote: true, posted: 7, roles: ['mooring engineer', 'naval architect'], vetoes: ['sales', 'internships'], noWords: ['dredging'] };
+const typical = { families: ['2144', '3151'], specialties: ['2144.1.14', '2144.1.10'], countries: ['es', 'nl', 'no'], place: { cc: 'es', name: 'Bilbao, Basque Country', lat: 43.26271, lon: -2.92528, km: 50 }, languages: ['en', 'es'], degrees: ['naval', 'mechanical'], level: 'junior', maxYears: 3, highest: 'master', remote: true, posted: 7, roles: ['mooring engineer', 'naval architect'], vetoes: ['sales', 'internships'], noWords: ['dredging'] };
 {
   const code = encodeProfile(typical, cats);
   ok(/^[A-Za-z0-9_-]+$/.test(code), 'the code is URL-safe');
-  ok(code.length <= 130, `a typical profile, specialties and cities included, stays short (${code.length} chars)`);
+  ok(code.length <= 150, `a typical profile, specialties and a place included, stays short (${code.length} chars)`);
   const back = decodeProfile(code, cats);
   eq(back, normaliseProfile(typical), 'a typical profile round-trips exactly');
   eq(back.countries, ['es', 'nl', 'no'], 'countries keep their order (it is the priority)');
-  eq([back.specialties, back.cities], [['2144.1.10', '2144.1.14'], ['es:Bilbao', 'nl:Gorinchem']], 'specialties and cities ride along');
+  eq([back.specialties, back.place], [['2144.1.10', '2144.1.14'], { cc: 'es', name: 'Bilbao, Basque Country', lat: 43.26, lon: -2.93, km: 50 }], 'specialties and a place ride along, the place to about a kilometre');
 }
 {
   // ➤ A specialty brings its family, a city its country: a code never names one without the other.
-  const p = normaliseProfile({ specialties: ['2149.7.6'], cities: ['de:München'] });
-  eq([p.families, p.countries], [['2149'], ['de']], 'a specialty names its family and a city its country');
-  eq(decodeProfile(encodeProfile({ cities: ['de:Frankfurt am Main'] }, cats), cats).cities, ['de:Frankfurt am Main'], 'a city name with spaces and more than 24 bytes of room round-trips');
-  eq(normaliseProfile({ cities: ['Barcelona', 'es:'] }).cities, [], 'a city without its country, or a country without a city, is no city');
+  const p = normaliseProfile({ specialties: ['2149.7.6'], place: { cc: 'de', name: 'München', lat: 48.14, lon: 11.58 } });
+  eq([p.families, p.countries, p.place.km], [['2149'], ['de'], 25], 'a specialty names its family, a place its country, and a distance not given is 25 km');
+  eq(decodeProfile(encodeProfile({ place: { cc: 'pt', name: 'Viana do Castelo, Viana do Castelo', lat: 41.69, lon: -8.83, km: 10 } }, cats), cats).place, { cc: 'pt', name: 'Viana do Castelo, Viana do Castelo', lat: 41.69, lon: -8.83, km: 10 }, 'a long name, a place west of Greenwich and a short distance round-trip');
+  eq([normaliseProfile({ place: { cc: 'es', name: '', lat: 1, lon: 1 } }).place, normaliseProfile({ place: { cc: 'es', name: 'X', lat: 95, lon: 1 } }).place], [null, null], 'a place without a name, or off the globe, is no place');
 }
 {
   // ➤ Codes made before version 3 are in bookmarks: they read as they did.
-  eq(decodeProfile('AgMIAAAAAQAAAFoDAIEAAAADAAMKAhBtb29yaW5nIGVuZ2luZWVyD25hdmFsIGFyY2hpdGVjdAIBAAEIZHJlZGdpbmfxPQ', cats), normaliseProfile({ ...typical, specialties: [], cities: [] }), 'a version-2 code decodes to the same profile');
+  eq(decodeProfile('AgMIAAAAAQAAAFoDAIEAAAADAAMKAhBtb29yaW5nIGVuZ2luZWVyD25hdmFsIGFyY2hpdGVjdAIBAAEIZHJlZGdpbmfxPQ', cats), normaliseProfile({ ...typical, specialties: [], place: null }), 'a version-2 code decodes to the same profile');
   eq(decodeProfile('AgQAAAAAAAAAAAAAAAAAAAAAAAAAWtg', cats).posted, 30, 'with its posted window, two bits then');
   eq([1, 3, 90].map(d => decodeProfile(encodeProfile({ posted: d }, cats), cats).posted), [1, 3, 90], 'version 3 has the day, three days and three months');
 }

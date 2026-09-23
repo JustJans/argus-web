@@ -120,7 +120,7 @@ details[open] > summary > .chev { transform: rotate(90deg); }
 #families-pick .filter-group > summary { font-size: 13px; font-weight: 500; padding: 3px 0; color: var(--n800); }
 #families-pick .chev { width: 12px; height: 12px; }
 #families-pick .checks { padding: 4px 0 6px 20px; }
-/* A ticked country's cities and a ticked family's specialties, under it */
+/* A ticked family's specialties, under it */
 .checks.sub, #families-pick .checks.sub { padding: 0 0 6px 23px; }
 .checks.sub .check-row { font-size: 13px; color: var(--n800); }
 .filters-toggle { display: none; }
@@ -129,6 +129,8 @@ details[open] > summary > .chev { transform: rotate(90deg); }
 .plate { padding: 24px; display: flex; flex-direction: column; gap: 16px; margin: 8px 0 0; }
 .search__row { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
 .search__row .input { flex: 1 1 200px; min-width: 0; min-height: 44px; font-size: 16px; background: transparent; }
+/* What, then where and how far, as job sites lay it out */
+.search__row #radius { flex: 0 0 auto; width: auto; }
 .search__submit { min-height: 44px; padding: 0 28px; font-size: 15px; }
 .cv-line { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .cv-line .btn { min-height: 36px; }
