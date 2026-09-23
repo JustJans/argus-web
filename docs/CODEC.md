@@ -25,7 +25,7 @@ Bitfields: position p of the catalogue is bit (p mod 8) of byte (p div 8); a pos
 field is left out of the code. The base64url is strict (RFC 4648, 3.5): the bits left over after
 the last byte must be zero, so a changed last character is refused like any other.
 
-Sizes: an empty profile is 34 characters; a typical one 55 to 150; everything at once stays
+Sizes: an empty profile is 35 characters; a typical one 55 to 150; everything at once stays
 under 450.
 
 Rules that keep old codes meaningful: catalogues are append-only and never reordered; an
