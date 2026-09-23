@@ -41,7 +41,11 @@ The paid geocoders (Google, Bing, Mapbox, HERE) need an API and a key per reques
 - Eurostat's LAU with NUTS codes (and EDJNet's population-weighted centres): EU only.
 
 GeoNames `cities5000` (towns of more than 5,000 people, 19,953 in the site's countries) was
-chosen, with `admin1CodesASCII` for the regions' names.
+chosen, with `admin1CodesASCII` for the regions' names. Since 23 September 2026 the site uses
+`cities1000` (more than 1,000 people, 71,699 places). On that day's pile it put 1,745 more
+offers on the map, from 85% to 87% of those with a country, in 4,515 towns instead of 3,576.
+The cost per build was 0.2 seconds and 58 MB of memory, and the catalogue grew from 2.9 to
+7.9 MB.
 
 ## What was built
 
@@ -52,12 +56,11 @@ chosen, with `admin1CodesASCII` for the regions' names.
 - The search bar: "what", "where" (a town from the towns with offers, a native datalist) and
   "how far" (5, 10, 25, 50, 100 km), by great-circle distance in the browser. An advert with no
   town is not found by a search by town, as on the big sites.
-- On the pile of 22 September, 85% of the adverts with a country were placed.
+- On the pile of 23 September, 87% of the adverts with a country were placed.
 
 ## Known limits
 
-Towns of fewer than 5,000 people (GeoNames `cities1000` has them) and regions ("Hampshire",
-"Yvelines") are not placed yet.
+Places of fewer than 1,000 people, and regions ("Hampshire", "Yvelines"), are not placed yet.
 
 ## Sources
 
