@@ -52,9 +52,14 @@ const europe = new Set(countries.map(c => c.iso));
 
 const startedAt = new Date();
 const log = line => console.log(`[${new Date().toISOString().slice(11, 19)}] ${line}`);
+// ➤ How long each stage took, written at the end: every change to the build is measured.
+const stages = [];
+let stageStarted = Date.now();
+const stage = name => { const now = Date.now(); stages.push(`${name} ${Math.round((now - stageStarted) / 1000)} s`); stageStarted = now; };
 // ➤ The ECB's euro rates, for pay in other currencies (one small file; the last one kept when
 // ➤ the ECB cannot be reached).
 const rates = await exchangeRates(join(ROOT, 'builder', 'state', 'ecb-rates.xml'));
+stage('exchange rates');
 
 const items = [];
 const dropped = [];
@@ -96,12 +101,15 @@ for (const data of eachSource()) {
   }
 }
 if (!sourceFiles) { log('the store is empty: run builder/crawl.mjs first'); process.exit(1); }
+stage('store and gate');
 
 const { kept, sameUrl, sameRole } = dedupe(items);
+stage('duplicates');
 
 // ➤ Each advert on the map, for the search by town and distance: its town found in GeoNames.
 const towns = compileTowns(JSON.parse(readFileSync(join(ROOT, 'catalogues', 'codes', 'places.json'), 'utf-8')));
 const onMap = locate(kept, towns);
+stage('towns');
 
 // ➤ Titles in English, as the bot shows them, and in Spanish for the Spanish site; a cache on
 // ➤ disk per language (keyed by the title alone) means only new titles are asked.
@@ -114,8 +122,10 @@ if (!args.includes('--no-translate')) {
     log(`titles: ${t.translated} in ${name} (${t.asked} new titles asked in ${t.requests} requests${t.spare ? `, ${t.spare} through the spare translator` : ''}${t.limited ? ', the first translator is shut to this machine' : ''})`);
   }
 }
+stage('translation');
 const generatedAt = new Date().toISOString();
 const { files, families: familiesIndex, latest } = buildShards(kept, families);
+stage('shards');
 
 const sources = {};
 for (const id of sourcesSeen) { const lic = licenceFor(id); if (lic) sources[id] = { ...lic, enabled: true, extracted_at: crawledAt || generatedAt }; }
@@ -146,10 +156,12 @@ const extras = { 'places.json': JSON.stringify({ v: 1, places: onMap.list }) };
 if (EXPLAIN) extras['explain.txt'] = dropped.map(([why, raw]) => `[${why}] ${raw.title} | ${raw.company} | ${raw.location} (${raw.source})`).join('\n') + '\n';
 writePile(OUT, files, index, extras);
 writeFileSync(join(OUT, 'status.json'), JSON.stringify({ generated_at: generatedAt, crawled_at: crawledAt, offers: kept.length, found: counts.found, sources: sourceFiles, dropped: counts, duplicates: { sameUrl, sameRole }, by_country: perCountry }, null, 2));
+stage('writing');
 
 log(`store: ${sourceFiles} sources, newest pass ${crawledAt || 'never'}`);
 log(`found ${counts.found} · outside vertical ${counts.outsideVertical} · outside Europe ${counts.outsideEurope} · hygiene ${counts.hygiene} · no link ${counts.noLink} · stale ${counts.stale} · duplicates ${sameUrl + sameRole}`);
 log(`kept ${kept.length} offers in ${Object.keys(files).length} shards → ${OUT}`);
 log(`on the map: ${onMap.placed} offers in ${onMap.list.length} towns`);
 log(`pay stated on ${withPay} offers (ECB rates of ${rates.day || 'no day: only pay in euros read'}); work mode stated on ${withMode}`);
+log(`stages: ${stages.join(' · ')}`);
 if (kept.length === 0) { log('nothing usable in the store: not publishing'); process.exit(1); }

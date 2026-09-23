@@ -13,12 +13,16 @@ set -e
 cd "$(dirname "$0")/.."
 [ -e builder/state/STOP ] && { echo "[$(date -u +%FT%TZ)] STOP is in place"; exit 0; }
 echo "[$(date -u +%FT%TZ)] discover at $(git rev-parse --short HEAD)"
+# Each step says when it starts, and the round how long it took: every change is measured.
+started=$(date +%s)
+step() { echo "[$(date -u +%FT%TZ)] $*"; }
 
 A_WEEK=${1:-2000}                                # domains hunted in one run, at most
 LANES=${2:-6}                                    # domains looked at at a time
 queue=builder/state/found/hunt-queue.txt
 touch builder/state/hunted-done.txt
 
+step "domains from Wikidata"
 node builder/tools/domains-wikidata.mjs
 
 # The hosts where Web Data Commons already saw an employer publishing vacancies are worth more
@@ -28,14 +32,18 @@ if [ -s builder/config/hunt-wdc.txt ]; then
   cat builder/config/hunt-wdc.txt "$queue" > "$queue.new" && mv "$queue.new" "$queue"
 fi
 
+step "hunting at most $A_WEEK domains, $LANES at a time"
 node builder/tools/hunt.mjs --file "$queue" --take "$A_WEEK" --lanes "$LANES" --write
 
 # The Workday boards the hunter found are named after their address ("Gepowerconversion"): one
 # vacancy page each gives the employer's legal name, which spells the brand out.
+step "names of the Workday boards found"
 node builder/tools/vendor-names.mjs --found
 
 # Then the ones already on the list that are giving nothing, or failing: each goes down the
 # same ladder of questions until one answers, and the answer is kept with its date. A source the
 # ladder finds alive has its failures wiped, so no useful site is ever lost to a run of silly
 # failures — only a host that answers nothing, or a wall, keeps its strikes.
+step "triage of every site"
 node builder/tools/triage.mjs --all --out builder/state/triage.tsv
+step "done in $(( $(date +%s) - started )) s"
