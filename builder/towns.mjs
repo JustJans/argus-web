@@ -60,6 +60,9 @@ export function locate(records, towns) {
     placed++;
     const { town, said } = hit;
     rec.g = [round(town.lat), round(town.lon)];
+    // ➤ The card names the town the map found, as the advert wrote it ("Terrassa", not the
+    // ➤ province of Barcelona that the place also names).
+    rec.ci = said;
     const t = tally.get(town.id) || tally.set(town.id, { town, n: 0, names: new Map() }).get(town.id);
     t.n++;
     t.names.set(said, (t.names.get(said) || 0) + 1);

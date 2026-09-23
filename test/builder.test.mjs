@@ -110,6 +110,9 @@ eq(occupationCounts([{ f: ['2144'], e: ['2144.1.14'] }, { f: ['2144', '3151'], e
   const recs = [{ cc: 'de', ci: 'München', l: 'München' }, { cc: 'de', ci: 'Munich', l: 'Munich' }, { cc: 'de', ci: 'München', l: 'München, DE' }, { cc: 'xx', ci: '', l: 'Remote' }];
   const { placed, list } = locate(recs, towns);
   eq([placed, recs[0].g, recs[3].g], [3, [48.14, 11.58], undefined], 'each advert gets its coordinates, rounded to a kilometre or so');
+  const terrassa = { cc: 'es', ci: 'Barcelona', l: 'Terrassa, BARCELONA, ES' };
+  locate([terrassa], towns);
+  eq(terrassa.ci, 'Terrassa', 'and its card names the town the map found, not the province');
   eq(list, [['München', 'Munich', 'Bavaria', 'de', 48.14, 11.58, 3]], 'the towns with offers, under the name their adverts use most');
 }
 
