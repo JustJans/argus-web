@@ -97,7 +97,8 @@ const ENGLISH = {
 // ➤ running of one or more sites), and ISCO-08's construction supervisors (3123) take "site
 // ➤ manager (construction)" among their examples. docs/research/french-site-managers.md.
 const FRENCH = {
-  3123: ['conducteur de travaux', 'conductrice de travaux', 'conducteur de chantier', 'conductrice de chantier'],
+  3123: ['conducteur de travaux', 'conductrice de travaux', 'conducteur des travaux', 'conductrice des travaux', 'conducteur travaux', 'conductrice travaux',
+    'conducteur de chantier', 'conductrice de chantier', 'conducteur de chantiers', 'conductrice de chantiers'],
 };
 const SPANISH = {
   3123: ['jefe de obra', 'jefa de obra'],

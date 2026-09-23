@@ -37,12 +37,24 @@ const run = ({ g, gate }, label) => {
   return out;
 };
 const before = run(other, `the other gate (${OTHER})`), after = run(here, 'this gate');
+// ➤ Every change counted by its families before and after ("3131,3133 → 3123"), each with a few
+// ➤ of its titles; --show N prints that many titles a change (default 3).
+const show = Number(process.argv[process.argv.indexOf('--show') + 1]) || 3;
+const families = s => s.split('|')[0] || '-';
+const changes = new Map();
 let differ = 0, into = 0, out = 0;
 for (let i = 0; i < inputs.length; i++) {
   if (before[i] === after[i]) continue;
   differ++;
   if (!before[i].startsWith('|') && after[i].startsWith('|')) out++;
   if (before[i].startsWith('|') && !after[i].startsWith('|')) into++;
-  if (differ <= 20) console.log(`  ${JSON.stringify(inputs[i].title)} (${inputs[i].lang || inputs[i].hintLangs}): ${before[i] || '-'} → ${after[i] || '-'}`);
+  const key = `${families(before[i])} → ${families(after[i])}`;
+  const c = changes.get(key) || changes.set(key, { n: 0, titles: new Set() }).get(key);
+  c.n++;
+  if (c.titles.size < show) c.titles.add(inputs[i].title);
+}
+for (const [key, c] of [...changes].sort((a, b) => b[1].n - a[1].n)) {
+  console.log(`  ${key}: ${c.n}`);
+  for (const title of c.titles) console.log(`      ${JSON.stringify(title)}`);
 }
 console.log(`${differ} adverts differ: ${into} come in, ${out} go out, ${differ - into - out} change families or occupations`);
