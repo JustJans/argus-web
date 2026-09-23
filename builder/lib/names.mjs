@@ -8,7 +8,7 @@ import { fold } from 'argus/server-bot/text.mjs';
 
 const letters = s => fold(String(s || '')).replace(/[^a-z0-9]/g, '');
 // ➤ What a careers site calls itself rather than the employer.
-const SITE_WORDS = /\s*\b(?:students?|graduates?|and|professionals?|careers?|external|ext|experienced|staff|jobs|hiring|portal|site|campus|internal)\b\s*/gi;
+const SITE_WORDS = /\s*\b(?:students?|graduates?|professionals?|careers?|external|ext|experienced|staff|jobs|hiring|portal|site|campus|internal)\b\s*/gi;
 const GENERIC = /^(?:corporate|global|international|experienced|external|careers?|jobs|students?|graduates?|professionals?|campus|internal|hiring|talent|us|uk|eu|emea|europe)$/i;
 const COUNTRIES = new Set(['germany', 'deutschland', 'poland', 'spain', 'france', 'italy', 'netherlands', 'belgium', 'sweden', 'norway', 'denmark', 'finland', 'austria', 'switzerland', 'portugal', 'ireland', 'united kingdom', 'uk', 'czechia', 'czech republic', 'hungary', 'romania', 'greece', 'europe', 'emea', 'usa', 'united states', 'canada', 'india', 'mexico', 'brazil', 'china', 'japan']);
 // ➤ Legal forms and what they leave dangling, taken off the end.
@@ -24,11 +24,14 @@ function legalWords(legal) {
 // ➤ Shouted words longer than an acronym come down: "LEIDOS" → Leidos, "KLA" stays.
 const calm = s => s.replace(/[A-ZÀ-Ý]{5,}/g, w => w[0] + w.slice(1).toLowerCase());
 
+// ➤ Words back into a name, without the punctuation the legal name left on its ends ("Dynata,").
+const tidy = words => words.join(' ').replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}.)]+$/gu, '');
+
 // ➤ The address's brand spelt out by the legal name: consecutive words that spell it, or
 // ➤ consecutive capitalised words whose initials make it ("bah" → Booz Allen Hamilton).
 function spelt(key, words) {
   if (key.length >= 3) for (let i = 0; i < words.length; i++) for (let j = i; j < Math.min(words.length, i + 4); j++) {
-    if (letters(words.slice(i, j + 1).join('')) === key) return words.slice(i, j + 1).join(' ');
+    if (letters(words.slice(i, j + 1).join('')) === key) return tidy(words.slice(i, j + 1));
   }
   if (key.length >= 2 && key.length <= 5) {
     // ➤ The capitalised words carry the initials; the small words between them stay in the
@@ -36,7 +39,7 @@ function spelt(key, words) {
     const caps = words.map((w, i) => [w, i]).filter(([w]) => /^[A-Z]/.test(w));
     for (let i = 0; i + key.length <= caps.length; i++) {
       const run = caps.slice(i, i + key.length);
-      if (run.map(([w]) => letters(w)[0]).join('') === key) return words.slice(run[0][1], run.at(-1)[1] + 1).join(' ');
+      if (run.map(([w]) => letters(w)[0]).join('') === key) return tidy(words.slice(run[0][1], run.at(-1)[1] + 1));
     }
   }
   return '';
@@ -48,13 +51,18 @@ export function brandName(current, legal, slug) {
   const key = raw.replace(/(?:corporation|corp|group|hr|careers|career|jobs|inc|external|ext)$/, '') || raw;
   const words = legalWords(legal);
   // ➤ The name the site gave, without the words sites add ("TRUMPF Students" → TRUMPF).
-  const mended = now.replace(SITE_WORDS, ' ').replace(/\s+\d+$/, '').replace(/\s+/g, ' ').trim();
+  // ➤ An "and" the site's words leave hanging goes with them ("Students and Graduates"); one
+  // ➤ inside a name stays ("Washington and Lee University").
+  const mended = tidy(now.replace(SITE_WORDS, ' ').replace(/\s+\d+$/, '').split(/\s+/)).replace(/^(?:and|&)(?:\s+|$)|\s+(?:and|&)$/gi, '');
   const broken = !mended || GENERIC.test(mended) || COUNTRIES.has(mended.toLowerCase());
-  // ➤ A name that is not the address itself was chosen by someone ("CommBank", "Damen",
-  // ➤ "Emerson College"): it stays, only cleared of the site's words.
-  const fromAddress = [raw, key].includes(letters(mended));
-  if (!broken && !fromAddress) return mended;
-  const found = spelt(key, words);
+  // ➤ The hunter names a board after the employer's domain, one glued word ("Jnj",
+  // ➤ "Lloydsbankinggroup"): that is an address too.
+  const glued = /^[A-Z][a-z0-9]{2,}$/.test(mended) ? letters(mended) : '';
+  const keys = [...new Set([raw, key, glued].filter(Boolean))];
+  // ➤ A name that is not an address was chosen by someone ("CommBank", "Emerson College"): it
+  // ➤ stays, only cleared of the site's words.
+  if (!broken && !keys.includes(letters(mended))) return mended;
+  const found = keys.map(k => spelt(k, words)).find(Boolean);
   if (found) {
     const name = calm(found);
     // ➤ The same letters again only for a better spelling: words apart ("Baker Hughes"),

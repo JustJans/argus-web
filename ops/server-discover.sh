@@ -30,6 +30,10 @@ fi
 
 node builder/tools/hunt.mjs --file "$queue" --take "$A_WEEK" --lanes "$LANES" --write
 
+# The Workday boards the hunter found are named after their address ("Gepowerconversion"): one
+# vacancy page each gives the employer's legal name, which spells the brand out.
+node builder/tools/vendor-names.mjs --found
+
 # Then the ones already on the list that are giving nothing, or failing: each goes down the
 # same ladder of questions until one answers, and the answer is kept with its date. A source the
 # ladder finds alive has its failures wiped, so no useful site is ever lost to a run of silly
