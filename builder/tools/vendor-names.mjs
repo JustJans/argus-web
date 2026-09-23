@@ -67,11 +67,13 @@ for (const f of FILES) {
     if (!m) continue;
     const at = lines.slice(0, i).map((l, k) => [l, k]).reverse().find(([l]) => /^\s+- name:/.test(l))?.[1];
     if (at === undefined) continue;
-    const old = lines[at].replace(/^\s+- name:\s*/, '').replace(/^'(.*)'$/, '$1');
+    // ➤ The name as YAML wrote it: bare, in single quotes, or in double quotes (JSON's).
+    const written = lines[at].replace(/^\s+- name:\s*/, '');
+    const old = written.startsWith('"') ? JSON.parse(written) : written.replace(/^'(.*)'$/, '$1');
     const name = brandName(old, state[m[2]] || '', m[2]);
     if (!name || name === old) continue;
     console.log(`${m[2].padEnd(48)} ${old}  →  ${name}`);
-    lines[at] = lines[at].replace(/- name:.*$/, `- name: ${/^[\w&.' -]+$/.test(name) && !/^[\d-]/.test(name) ? name : JSON.stringify(name)}`);
+    lines[at] = lines[at].replace(/- name:.*$/, `- name: ${/^[\p{L}\p{N}&.' -]+$/u.test(name) && !/^[\d-]/.test(name) ? name : JSON.stringify(name)}`);
     changed++;
   }
   if (!DRY) writeFileSync(f, lines.join('\n'));
