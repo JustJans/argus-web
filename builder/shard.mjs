@@ -26,8 +26,9 @@ export function latestOf(records, { max = LATEST, days = LATEST_DAYS, now = Date
 }
 
 // ➤ records → { files: {name: content}, families: index block }. The same offers give the same
-// ➤ bytes (no date inside a shard, a fixed order), so a publish moves only what changed.
-export function buildShards(records, families) {
+// ➤ bytes (no date inside a shard, a fixed order), so a publish moves only what changed. `now`
+// ➤ is the day the newest part counts back from.
+export function buildShards(records, families, now = Date.now()) {
   const groups = new Map();
   for (const rec of records) {
     for (const f of rec.f) {
@@ -55,7 +56,7 @@ export function buildShards(records, families) {
     index[g.family].countries[g.cc] = { files: names, n: g.offers.length, bytes: names.reduce((s, n) => s + files[n].length, 0) };
   }
   // ➤ The newest of the lot, in parts of their own.
-  const { offers: newest, since } = latestOf(records);
+  const { offers: newest, since } = latestOf(records, { now: new Date(now).getTime() });
   const latestFiles = [];
   let part = [], size = 0;
   const flush = () => { if (!part.length) return; const name = `offers/latest${latestFiles.length ? `-${latestFiles.length + 1}` : ''}.json`; files[name] = JSON.stringify({ v: 1, shard: 'latest', offers: part }); latestFiles.push(name); part = []; size = 0; };
