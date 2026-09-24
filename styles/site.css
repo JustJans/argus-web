@@ -1,0 +1,160 @@
+/* Argus Web's stylesheet, as written: Tailwind 4 compiles it into app/style.css (npm run css),
+   and the site serves that file, so nothing is fetched from a third party. The pages carry the
+   utilities of the design handoff; this file holds its tokens, the dark theme, and the classes
+   the scripts create (docs/DESIGN-HANDOFF.md). No font is fetched: Barlow is used only where
+   it is installed, system fonts otherwise. */
+@import "tailwindcss" source(none);
+@source "../app";
+@source "../builder/language-menu.mjs";
+
+@theme {
+  --color-ground: #f2f2f3;
+  --color-surface: #e9e9ea;
+  --color-ink: #1d1f20;
+  --color-accent: #5980a6;
+  --color-accent-100: #eef6ff;
+  --color-accent-600: #597ea3;
+  --color-accent-700: #416180;
+  --color-accent-800: #2c455d;
+  --color-accent-900: #1d2d3d;
+  --color-n-100: #f5f5f8;
+  --color-n-200: #e7e7ea;
+  --color-n-500: #98989b;
+  --color-n-600: #7a7a7d;
+  --color-n-700: #5d5d60;
+  --color-n-800: #424244;
+  --color-line: color-mix(in srgb, #1d1f20 16%, transparent);
+  --color-hair: color-mix(in srgb, #1d1f20 8%, transparent);
+  --font-head: "Barlow Condensed", "Roboto Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Phones up to 760px, the desk layout from 761px. */
+  --breakpoint-md: 47.5625rem;
+}
+
+/* The dark theme: the same tokens, redefined; the pages follow the system (lib/theme.js). */
+.dark {
+  color-scheme: dark;
+  --color-ground: #15171a;
+  --color-surface: #1e2124;
+  --color-ink: #e6e7e9;
+  --color-accent: #7c9fc4;
+  --color-accent-100: #1c2a38;
+  --color-accent-600: #8fb0d2;
+  --color-accent-700: #9dbbdb;
+  --color-accent-800: #b8cfe7;
+  --color-accent-900: #d9e6f3;
+  --color-n-100: #23262b;
+  --color-n-200: #2c3035;
+  --color-n-500: #6b6f75;
+  --color-n-600: #83878d;
+  --color-n-700: #9a9ea4;
+  --color-n-800: #bfc2c6;
+  --color-line: color-mix(in srgb, #e6e7e9 18%, transparent);
+  --color-hair: color-mix(in srgb, #e6e7e9 9%, transparent);
+}
+
+@layer base {
+  body { @apply m-0 bg-ground font-body text-[15px] leading-[1.55] text-ink; text-wrap: pretty; }
+  a { color: var(--color-accent-700); text-underline-offset: 3px; }
+  a:hover { color: var(--color-accent-900); }
+  :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+  ::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
+  summary::-webkit-details-marker { display: none; }
+  details[open] > summary > .chev { transform: rotate(90deg); }
+  details[open] > summary > .chev-down { transform: rotate(180deg); }
+  svg { display: block; }
+}
+
+/* The states the scripts set on the page. Outside Tailwind's layers, so they win over the
+   utilities the markup carries. */
+.hero-results { display: none; }
+body.has-results .hero-front, body.has-results .how, body.has-results .today { display: none; }
+body.has-results .hero-results { display: flex; }
+body.has-results .content { @apply gap-10; }
+/* On a phone the filters are a full-screen panel with a sticky head. */
+@media (width < 47.5625rem) {
+  .filters:not(.is-open) { display: none; }
+  .filters.is-open { @apply fixed inset-0 z-10 flex flex-col overflow-auto bg-ground px-5; }
+  .filters.is-open .filters__head { @apply sticky top-0 z-[1] m-0 items-center bg-ground pt-[18px] pb-3; }
+  body.filters-open { overflow: hidden; }
+}
+#filters-close { display: none; }
+.filters.is-open #filters-close { display: inline-flex; align-items: center; }
+
+@layer components {
+  /* Fold-outs: the chevron turns when one opens; a group with something set carries a mark. */
+  .chev { @apply size-3.5 flex-none text-n-600 transition-transform; }
+  .filter-group { @apply border-b border-hair py-3 md:py-2; }
+  #filters-form > .filter-group:last-child { @apply border-b-0; }
+  .filter-group > summary { @apply flex min-h-8 cursor-pointer list-none items-center gap-2.5 text-[15px] font-semibold md:min-h-0 md:gap-2 md:py-0.5 md:text-sm; }
+  .filter-group.is-active > summary::after { content: ""; @apply ml-auto size-1.5 flex-none bg-accent; }
+  .checks { @apply flex flex-col gap-0.5 pt-2 pb-1 pl-[22px]; }
+  .checks .checks { @apply p-0; }
+  .check-row { @apply flex min-h-11 cursor-pointer items-center gap-3 text-[15px] md:min-h-0 md:gap-2 md:py-[3px] md:text-sm; }
+  .check-row input { @apply m-0 size-[18px] flex-none accent-accent md:size-[15px]; }
+  .check-row .count { @apply ml-auto tabular-nums text-n-700; }
+  .field { @apply mt-2 mb-1 ml-[22px] flex flex-col gap-1.5 text-xs text-ink/70; }
+  .field--inline { @apply flex-row items-center gap-2.5; }
+  .field .input { @apply min-h-9 w-full border border-line bg-surface px-2.5 text-sm text-ink hover:border-ink/45 focus:border-accent focus:outline-none; }
+  .field--inline .input { @apply w-auto; }
+  /* The occupation groups inside Occupations, and a ticked family's specialties under it. */
+  #families-pick { @apply flex flex-col gap-1 pt-1.5 pl-[22px]; }
+  #families-pick .filter-group { @apply border-0 p-0; }
+  #families-pick .filter-group > summary { @apply min-h-10 gap-2 py-[3px] text-sm font-medium text-n-800 md:min-h-0 md:text-[13px]; }
+  #families-pick .chev { @apply size-3; }
+  #families-pick .checks { @apply pt-1 pb-1.5 pl-5; }
+  .checks.sub, #families-pick .checks.sub { @apply pt-0 pb-1.5 pl-[23px]; }
+  .checks.sub .check-row { @apply text-[13px] text-n-800; }
+
+  /* Buttons the scripts make or change. */
+  .btn { @apply inline-flex cursor-pointer items-center justify-center gap-1.5 border border-line bg-transparent text-sm font-medium text-ink; }
+  .btn-secondary { @apply hover:bg-ink/[.07] active:bg-ink/[.14]; }
+  .btn.is-done { @apply border-accent text-accent-700; }
+  .more { @apply mt-6 min-h-10 px-6; }
+
+  /* The reader's lines under the search: the CV and the code. */
+  #cv-status { @apply inline-flex items-center gap-2 text-[13px] leading-5 text-n-700; }
+  #cv-status[data-state="ticked"] { @apply text-accent-800; }
+  #cv-status[data-state="none"], #cv-status[data-state="error"] { @apply text-n-800; }
+  #cv-status[data-state="reading"]::before { content: ""; @apply block size-2.5 animate-spin rounded-full border-[1.5px] border-accent border-r-transparent; }
+
+  /* Tables: the Today table on the front, the sources on their page. */
+  .table { @apply w-full border-collapse text-sm; }
+  .table th { @apply border-b border-line p-[7px] text-left text-[11px] font-semibold uppercase tracking-[.08em] text-ink/60; }
+  .table td { @apply border-b border-hair p-[7px]; }
+  .table .num { @apply text-right tabular-nums; }
+  #countries th:nth-child(3), #countries td:nth-child(3) { @apply pl-8; }
+  #countries a { @apply text-accent-700 no-underline hover:text-accent-900; }
+  #countries .num a { @apply text-inherit; }
+  #source-rows td:last-child { @apply text-n-800; }
+
+  /* Results: the download, the cards, the empty state. */
+  .progress { @apply h-0.5 bg-n-200; }
+  .progress > i { @apply block h-0.5 w-0 bg-accent transition-[width] duration-200; }
+  .skeleton { @apply flex flex-col gap-2.5 py-5; }
+  .skeleton i { @apply block h-2.5 bg-n-200; }
+  .skeleton i:first-child { @apply h-3.5; }
+  .offers { @apply m-0 list-none p-0; }
+  .offers__divider { @apply border-b border-hair pt-7 pb-1.5 text-[11px] uppercase tracking-[.08em] text-n-800; }
+  .offer { @apply flex flex-col gap-1 border-b border-hair py-5; }
+  .offer__title { @apply m-0 font-head text-xl leading-6 font-bold; }
+  /* Title case is English: the Spanish site keeps each title as it is written. */
+  :lang(en) .offer__title { @apply capitalize; }
+  .offer__title a { @apply text-ink no-underline hover:underline; }
+  .offer__meta { @apply m-0 text-sm text-n-800; }
+  .offer__tags { @apply m-0 mt-2 flex flex-wrap gap-1.5; }
+  .tag { @apply inline-flex items-center px-2.5 py-[3px] text-[11px] tracking-[.02em]; }
+  .tag-outline { @apply border border-accent text-accent; }
+  .tag-outline a { @apply text-inherit no-underline hover:underline; }
+  .tag-accent { @apply bg-accent-100 text-accent-800; }
+  .tag-neutral { @apply bg-n-100 text-n-800; }
+  .empty { @apply pt-2; }
+  .empty h3 { @apply m-0 font-head text-[28px] leading-8 font-bold tracking-[.01em] uppercase; }
+  .empty ul { @apply m-0 mt-4 flex list-none flex-col gap-1.5 p-0 text-sm tabular-nums; }
+  .empty li { @apply flex gap-4; }
+  .empty__n { @apply w-14 text-right font-head text-base font-bold; }
+  .empty p { @apply m-0 mt-4 text-sm text-n-700; }
+  #debug h3 { @apply mt-6 font-head text-lg font-bold; }
+  .debug { @apply mt-3 list-disc pl-[18px] text-[13px] text-n-700; }
+  .debug li { @apply my-1; }
+}

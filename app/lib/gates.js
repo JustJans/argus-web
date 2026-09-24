@@ -30,8 +30,9 @@ export function distanceKm([lat1, lon1], [lat2, lon2]) {
 // ➤ engine: { buildTitleFilter, norm } from lib/engine.js; catalogues: the loaded JSON files.
 export function makeJudge(profile, catalogues, engine) {
   const levelNeg = (catalogues.seniority.levels.find(l => l.id === profile.level)?.negatives) || [];
-  const vetoNeg = profile.vetoes.flatMap(id => catalogues.vetoes.vetoes.find(v => v.id === id)?.terms || []);
-  const negative = [...new Set([...levelNeg, ...vetoNeg, ...profile.noWords])];
+  // ➤ The words to avoid are the visitor's own. The ready-made exclusions an older code may still
+  // ➤ carry (sales, internships…) are read but no longer applied: one word cut good offers.
+  const negative = [...new Set([...levelNeg, ...profile.noWords])];
   // ➤ With no roles named the positive list is empty and the engine lets every title
   // ➤ through that test; the negatives and the explanations still apply.
   const title = engine.buildTitleFilter({ positive: profile.roles, negative });

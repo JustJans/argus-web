@@ -7,34 +7,38 @@
   <meta name="description" content="Engineering, IT and technical jobs across Europe, filtered on your own device. No account. No middlemen. No nonsense.">
   <title>Argus Web</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%235980a6'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='sans-serif' font-size='18' font-weight='700' fill='%23f2f2f3'%3EA%3C/text%3E%3C/svg%3E">
+  <script>if (matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');</script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="page">
-  <nav class="nav" aria-label="Site">
-    <a class="nav-brand" href="./">Argus Web</a>
-    <a href="legal/privacy.html">Privacy</a>
-    <a class="nav__keep" href="legal/sources.html">Sources</a>
-    <a class="nav__lang" href="es/" hreflang="es" lang="es" aria-label="Español">ES</a>
+<div class="mx-auto max-w-[1200px] px-5 pb-10 md:px-12 md:pb-16">
+  <nav class="flex items-center gap-3 pt-3.5 md:gap-3.5 md:pt-[18px]" aria-label="Site">
+    <a class="mr-auto font-head text-lg font-semibold uppercase tracking-[.04em] text-ink no-underline hover:text-ink md:text-xl" href="./">Argus Web</a>
+    <label class="relative inline-flex h-6 w-11 flex-none cursor-pointer items-center" title="Light or dark"><input id="dark-mode" type="checkbox" role="switch" aria-label="Dark mode" class="peer sr-only"><span class="absolute inset-0 rounded-full border border-line bg-surface transition-colors duration-200 peer-hover:border-ink/40 peer-checked:bg-n-200 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent"></span><span class="absolute left-1 size-4 rounded-full border-[1.5px] border-ink bg-transparent transition-all duration-200 ease-out peer-checked:translate-x-5 peer-checked:bg-ink"></span></label>
+    <a class="hidden text-sm text-ink no-underline hover:text-accent md:inline" href="legal/privacy.html">Privacy</a>
+    <a class="text-sm text-ink no-underline hover:text-accent" href="legal/sources.html">Sources</a>
+    <!-- language menu -->
   </nav>
 
-  <header class="hero">
-    <div class="hero__brand">Argus Web</div>
-    <h1 class="hero__slogan">No account. No middlemen. No nonsense.</h1>
-    <p class="hero__count"><b id="hero-count">…</b> offers listed today.</p>
-    <p class="hero__stats" id="hero-stats"></p>
+  <header class="hero-front flex flex-col items-center gap-3 pt-10 pb-7 text-center md:gap-4 md:pt-16 md:pb-12">
+    <h1 class="m-0 flex flex-col items-center gap-1.5 font-body md:gap-2"><span id="hero-count" class="text-[48px] font-semibold leading-none tracking-[-.02em] tabular-nums text-ink md:text-[64px]">…</span><span class="whitespace-nowrap text-[17px] font-medium text-n-800 md:text-xl">Offers Listed Today</span></h1>
+    <p class="m-0 mt-1 font-head text-sm font-medium uppercase tracking-[.08em] text-accent-700 md:mt-2 md:text-base">No account. No middlemen. No nonsense.</p>
+  </header>
+  <header class="hero-results flex-col gap-2 pt-8 pb-6 md:flex-row md:flex-wrap md:items-end md:justify-between md:gap-6 md:pt-10 md:pb-8">
+    <p class="m-0 flex items-baseline gap-2.5 md:gap-3"><span id="hero-match" class="text-[40px] font-semibold leading-none tracking-[-.02em] tabular-nums text-ink md:text-[48px]"></span><span id="hero-match-text" class="text-[17px] font-medium text-n-800 md:text-xl"></span></p>
+    <p id="hero-stats" class="m-0 text-[13px] tabular-nums text-n-700"></p>
   </header>
 
-  <main class="layout">
-    <aside id="filters" class="filters" aria-label="Filters">
-      <div class="filters__head">
-        <span id="filters-count" class="kicker">Filters</span>
-        <div class="filters__actions">
-          <button id="filters-clear" class="btn btn-ghost" type="button">Clear</button>
-          <button id="filters-close" class="btn btn-primary" type="button">Done</button>
+  <main class="md:grid md:grid-cols-[240px_minmax(0,1fr)] md:items-start md:gap-12">
+    <aside id="filters" class="filters md:sticky md:top-4" aria-label="Filters">
+      <div class="filters__head mb-3 flex items-baseline justify-between gap-2">
+        <span id="filters-count" class="text-[13px] font-semibold uppercase tracking-[.08em] text-accent-700">Filters</span>
+        <div class="flex items-center gap-2">
+          <button id="filters-clear" class="min-h-11 cursor-pointer border-0 bg-transparent px-2 text-sm font-medium text-accent hover:bg-accent/10 md:min-h-0 md:px-1 md:py-0.5" type="button">Clear</button>
+          <button id="filters-close" class="min-h-11 cursor-pointer border border-accent bg-accent px-5 font-head text-sm font-semibold uppercase tracking-[.06em] text-ground" type="button">Done</button>
         </div>
       </div>
-      <hr class="rule">
+      <div class="h-px bg-line md:mb-3"></div>
       <form id="filters-form" autocomplete="off">
         <details class="filter-group" data-group="country">
           <summary><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>Country</summary>
@@ -95,45 +99,43 @@
           <summary><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>Title words</summary>
           <label class="field"><span>Words the title must contain, comma-separated, up to eight</span><input id="roles" class="input" type="text" placeholder="e.g. mooring, naval architect, PLC"></label>
         </details>
-        <details class="filter-group" data-group="vetoes">
-          <summary><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>Deal-breakers</summary>
-          <div id="vetoes-pick" class="checks"></div>
-          <label class="field"><span>Title words to avoid</span><input id="no-words" class="input" type="text" placeholder="e.g. dredging, cruise"></label>
+        <details class="filter-group" data-group="exclude">
+          <summary><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>Exclude</summary>
+          <label class="field"><span>Title words to avoid, comma-separated, up to eight</span><input id="no-words" class="input" type="text" placeholder="e.g. internship, night shift, sales"></label>
         </details>
       </form>
     </aside>
 
-    <section class="content">
-      <form id="search" class="plate blueprint" autocomplete="off">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="search__row">
-          <button id="filters-toggle" class="btn btn-secondary filters-toggle" type="button" aria-expanded="false" aria-controls="filters"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg><span id="filters-toggle-label">Filters</span></button>
-          <input id="q" class="input" name="q" type="search" placeholder="Title or company" aria-label="Search words">
-          <input id="place" class="input" type="text" list="places-list" placeholder="Town or city" aria-label="Town or city" autocomplete="off" spellcheck="false">
-          <select id="radius" class="input" aria-label="Distance"><option value="5">5 km</option><option value="10">10 km</option><option value="25" selected>25 km</option><option value="50">50 km</option><option value="100">100 km</option></select>
+    <section class="content flex min-w-0 flex-col gap-12 md:gap-16">
+      <form id="search" class="mt-2 flex flex-col gap-3 border border-line p-4 md:gap-4 md:p-6" autocomplete="off">
+        <div class="flex flex-wrap items-stretch gap-2.5">
+          <button id="filters-toggle" class="btn btn-secondary min-h-11 min-w-11 px-3 md:hidden" type="button" aria-expanded="false" aria-controls="filters"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg><span id="filters-toggle-label">Filters</span></button>
+          <input id="q" class="min-h-11 min-w-0 flex-1 border border-line bg-transparent px-2.5 text-base text-ink placeholder:text-n-600 hover:border-ink/45 focus:border-accent focus:outline-none basis-[55%] md:flex-[1_1_200px]" name="q" type="search" placeholder="Title or company" aria-label="Search words">
+          <input id="place" class="min-h-11 min-w-0 flex-1 border border-line bg-transparent px-2.5 text-base text-ink placeholder:text-n-600 hover:border-ink/45 focus:border-accent focus:outline-none basis-[55%] md:flex-[1_1_200px]" type="text" list="places-list" placeholder="Town or city" aria-label="Town or city" autocomplete="off" spellcheck="false">
+          <select id="radius" class="min-h-11 border border-line bg-transparent px-2.5 text-base text-ink hover:border-ink/45 focus:border-accent focus:outline-none" aria-label="Distance"><option value="5">5 km</option><option value="10">10 km</option><option value="25" selected>25 km</option><option value="50">50 km</option><option value="100">100 km</option></select>
           <datalist id="places-list"></datalist>
-          <button class="btn btn-primary search__submit" type="submit">Search</button>
+          <button class="min-h-11 basis-full cursor-pointer border border-accent bg-accent px-7 font-head text-[15px] font-semibold uppercase tracking-[.06em] text-ground hover:bg-accent-600 active:bg-accent-700 md:basis-auto" type="submit">Search</button>
         </div>
-        <div class="cv-line">
-          <label class="btn btn-secondary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>Read my CV<input id="cv-file" type="file" accept=".pdf,.txt,.md,text/plain,application/pdf" hidden></label>
+        <div class="flex flex-wrap items-center gap-3">
+          <label class="btn btn-secondary min-h-11 px-3 md:min-h-9"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>Read my CV<input id="cv-file" type="file" accept=".pdf,.txt,.md,text/plain,application/pdf" hidden></label>
           <span id="cv-status" data-state="idle" aria-live="polite">A PDF or text file, read on this device: it ticks your occupations, degrees and languages.</span>
         </div>
-        <div class="code-line">
-          <label for="code-input" class="kicker">Your code</label>
-          <input id="code-input" class="input" name="code" type="text" spellcheck="false" placeholder="appears as you filter" aria-label="Your code">
-          <button id="copy-code" class="btn btn-secondary" type="button"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span id="copy-label">Copy</span></button>
-          <span class="hint">The code is your filters, packed. It never leaves the address bar.</span>
+        <div class="flex flex-wrap items-center gap-3 border-t border-hair pt-4">
+          <label for="code-input" class="basis-full text-xs font-semibold uppercase tracking-[.08em] text-accent-700 md:basis-auto md:text-[13px]">Your code</label>
+          <input id="code-input" class="min-h-11 min-w-0 flex-1 border border-line bg-transparent px-2.5 font-mono text-sm text-ink placeholder:text-n-600 hover:border-ink/45 focus:border-accent focus:outline-none md:min-h-9 md:max-w-[380px] md:flex-[1_1_200px]" name="code" type="text" spellcheck="false" placeholder="appears as you filter" aria-label="Your code">
+          <button id="copy-code" class="btn btn-secondary min-h-11 px-3 md:min-h-9" type="button"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span id="copy-label">Copy</span></button>
+          <span class="basis-full text-[13px] leading-5 text-n-700">The code is your filters, packed. It never leaves the address bar.</span>
         </div>
       </form>
 
-      <p id="stale" class="notice blueprint" hidden><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span id="stale-text"></span></p>
+      <p id="stale" class="m-0 flex items-start gap-2.5 border border-accent bg-accent-100 px-4 py-3 text-sm leading-[22px] text-accent-900" hidden><svg class="mt-[3px] flex-none text-accent-700" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span id="stale-text"></span></p>
 
       <section id="results" hidden>
-        <div class="results__head">
-          <span class="kicker">Results</span>
-          <p id="results-status" aria-live="polite"></p>
+        <div class="mb-3 flex flex-wrap items-baseline justify-between gap-4">
+          <span class="text-[13px] font-semibold uppercase tracking-[.08em] text-accent-700">Results</span>
+          <p id="results-status" class="m-0 text-[13px] tabular-nums text-n-700" aria-live="polite"></p>
         </div>
-        <hr class="rule">
+        <div class="h-px bg-line"></div>
         <div id="progress" class="progress" hidden><i></i></div>
         <div id="skeleton" class="skeleton" aria-hidden="true" hidden><i style="width:55%"></i><i style="width:35%"></i><i style="width:80%"></i></div>
         <div id="list"></div>
@@ -141,38 +143,35 @@
       </section>
 
       <section class="how">
-        <span class="kicker">How it works</span>
-        <hr class="rule">
-        <div class="steps">
-          <div class="step blueprint">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <span class="step__kicker">01 · Your device</span>
-            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="3"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/><path d="M7 8h6"/><path d="M7 11h10"/></svg>
-            <p>Filters and CV are read here. Nothing is uploaded.</p>
+        <span class="text-[13px] font-semibold uppercase tracking-[.08em] text-accent-700">How it works</span>
+        <div class="mt-3 mb-7 h-px bg-line md:mb-8"></div>
+        <div class="flex flex-col items-stretch gap-2 md:grid md:grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)_40px_minmax(0,1fr)] md:gap-x-2 md:gap-y-0">
+          <div class="flex flex-col items-center gap-3 border border-line p-5 text-center md:min-h-[200px] md:gap-4 md:py-6">
+            <span class="text-[11px] font-semibold uppercase tracking-[.08em] text-accent-700">01 · Your device</span>
+            <svg class="hidden text-accent md:block" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="3"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/><path d="M7 8h6"/><path d="M7 11h10"/></svg>
+            <p class="m-0 text-sm md:mt-auto md:leading-[21px]">Filters and CV are read here. Nothing is uploaded.</p>
           </div>
-          <div class="steps__arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
-          <div class="step blueprint">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <span class="step__kicker">02 · Your code</span>
-            <span class="step__code">#p=AgAI…</span>
-            <p>Your profile, packed. No account, no name.</p>
+          <div class="flex min-h-8 rotate-90 items-center justify-center text-n-500 md:min-h-0 md:rotate-0"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
+          <div class="flex flex-col items-center gap-3 border border-line p-5 text-center md:min-h-[200px] md:gap-4 md:py-6">
+            <span class="text-[11px] font-semibold uppercase tracking-[.08em] text-accent-700">02 · Your code</span>
+            <span class="hidden font-mono text-[22px] leading-[44px] text-accent md:block">#p=AgAI…</span>
+            <p class="m-0 text-sm md:mt-auto md:leading-[21px]">Your profile, packed. No account, no name.</p>
           </div>
-          <div class="steps__arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
-          <div class="step blueprint">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <span class="step__kicker">03 · The source</span>
-            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
-            <p>Every offer links out. You apply there.</p>
+          <div class="flex min-h-8 rotate-90 items-center justify-center text-n-500 md:min-h-0 md:rotate-0"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
+          <div class="flex flex-col items-center gap-3 border border-line p-5 text-center md:min-h-[200px] md:gap-4 md:py-6">
+            <span class="text-[11px] font-semibold uppercase tracking-[.08em] text-accent-700">03 · The source</span>
+            <svg class="hidden text-accent md:block" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+            <p class="m-0 text-sm md:mt-auto md:leading-[21px]">Every offer links out. You apply there.</p>
           </div>
         </div>
-        <p class="fine">Not an employer, not an agency, not a business: no accounts, no fees, no advertising.</p>
+        <p class="m-0 mt-6 text-center text-[13px] leading-5 text-n-700">Not an employer, not an agency, not a business: no accounts, no fees, no advertising.</p>
       </section>
 
       <section id="status" class="today">
-        <span class="kicker">Today</span>
-        <hr class="rule">
-        <table id="countries" class="table" hidden><thead><tr><th>Country</th><th class="num">Offers</th><th>Country</th><th class="num">Offers</th></tr></thead><tbody></tbody></table>
-        <p class="today__note"><span id="generated">Loading the pile…</span> Every offer links to its source. <a href="legal/sources.html">Sources and credits</a></p>
+        <span class="text-[13px] font-semibold uppercase tracking-[.08em] text-accent-700">Today</span>
+        <div class="mt-3 mb-3 h-px bg-line"></div>
+        <table id="countries" class="table max-w-[720px]" hidden><thead><tr><th>Country</th><th class="num">Offers</th><th>Country</th><th class="num">Offers</th></tr></thead><tbody></tbody></table>
+        <p class="m-0 mt-3 text-[13px] leading-5 text-n-700"><span id="generated">Loading the pile…</span> Every offer links to its source. <a href="legal/sources.html">Sources and credits</a></p>
       </section>
     </section>
   </main>

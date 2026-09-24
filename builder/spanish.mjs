@@ -5,6 +5,7 @@
 // ➤ Each version names the other for search engines (hreflang).
 import { posix } from 'path';
 import ES from '../app/lib/es.js';
+import { languageMenu, MARK } from './language-menu.mjs';
 
 export const PAGES = ['index.html', 'legal/privacy.html', 'legal/sources.html'];
 export const SITE_URL = 'https://justjans.github.io/argus-web/';
@@ -38,6 +39,13 @@ export const alternates = page => {
   return `<link rel="alternate" hreflang="en" href="${SITE_URL}${path}">\n  <link rel="alternate" hreflang="es" href="${SITE_URL}es/${path}">\n  <link rel="alternate" hreflang="x-default" href="${SITE_URL}${path}">\n</head>`;
 };
 
+// ➤ From an English page to its Spanish twin: into es/, as deep again as the page is. The 404
+// ➤ page is served at any depth, so it names the Spanish site from the root.
+export const spanishHref = page => (page === '404.html' ? '/argus-web/es/' : '../'.repeat(page.split('/').length - 1) + 'es/' + (page === 'index.html' ? '' : page));
+
+// ➤ An English page as it is published: its language menu written in, pointing to the twin.
+export const toEnglish = (html, page) => html.replace(MARK, languageMenu('en', spanishHref(page)));
+
 // ➤ An English page (its path inside the site) as its Spanish twin under es/.
 export function toSpanish(html, page) {
   const dir = posix.dirname(page);
@@ -48,6 +56,7 @@ export function toSpanish(html, page) {
       if (!url || /^(?:[a-z]+:|\/|#)/i.test(url) || PAGES.includes(pageOf(dir, url))) return m;
       return `${attr}="${posix.relative(posix.join('es', dir), posix.join(dir, url))}"`;
     })
-    .replace(/<a class="nav__lang"[^>]*>[^<]*<\/a>/, `<a class="nav__lang" href="${english}" hreflang="en" lang="en" aria-label="English">EN</a>`)
+    // ➤ The menu goes in after the links are moved: its link back to English leaves es/.
+    .replace(MARK, languageMenu('es', english))
     .replace(/<html lang="en"(?: data-root="([^"]*)")?>/, (m, root = '') => `<html lang="es" data-root="../${root}">`);
 }

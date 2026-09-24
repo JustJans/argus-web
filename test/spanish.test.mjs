@@ -37,7 +37,7 @@ for (const page of PAGES) {
   ok(es.includes('<html lang="es" data-root="../">'), 'and reads the data one folder up');
   const src = toSpanish(read('app/legal/sources.html'), 'legal/sources.html');
   ok(src.includes('src="../../legal/sources.js"') && src.includes('href="../"') && src.includes('data-root="../../"'), 'a Spanish page in a folder climbs two, and its home is the Spanish first page');
-  ok(src.includes('class="nav__lang" href="../../legal/sources.html"'), 'its language link leads back to the English page');
+  ok(src.includes('href="../../legal/sources.html" hreflang="en"') && src.includes('aria-current="true"'), 'its language menu leads back to the English page and marks Spanish as the current one');
 }
 eq(translate('<th>Title words</th><label>Title words to avoid</label>', { 'Title words': 'Palabras', 'Title words to avoid': 'Evitar' }), '<th>Palabras</th><label>Evitar</label>', 'a whole line is replaced, the longer first');
 eq(translate('<p>My Title words here</p>', { 'Title words': 'Palabras' }), '<p>My Title words here</p>', 'a line inside another is left alone');
