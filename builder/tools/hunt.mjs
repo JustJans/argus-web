@@ -18,6 +18,7 @@ import { ATS, readBoard, loadVendors, loadCompanies } from '../adapters/boards.m
 import { resolve, listed, loadSites } from '../adapters/careers.mjs';
 import { careerLinks, detectPlatform, jobPostings, feedName, BOARD_HOSTS } from '../lib/crawl.mjs';
 import { compileFamilies, familiesOf, hygieneReason } from '../gate.mjs';
+import { readCodes } from '../codes.mjs';
 import { compileCountries, placeOf } from '../normalise.mjs';
 import { parseSuccessFactors } from 'argus/server-bot/scan.mjs';
 
@@ -30,7 +31,7 @@ const LOOKED = 12;        // ➤ candidate pages looked at per company
 const opts = { tries: 1, timeoutMs: 12000, gapMs: 300 };
 
 const read = p => JSON.parse(readFileSync(join(ROOT, ...p.split('/')), 'utf-8'));
-const gate = compileFamilies(read('catalogues/families.json'), { isco: read('catalogues/codes/isco.json'), ssyk: read('catalogues/codes/ssyk-isco.json') });
+const gate = compileFamilies(read('catalogues/families.json'), readCodes(ROOT));
 const countryList = read('catalogues/countries.json').countries;
 const countries = compileCountries(countryList);
 const europe = new Set(countryList.map(c => c.iso));

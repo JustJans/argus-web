@@ -141,6 +141,11 @@
         "2144"
       ],
       "extra_terms": {
+        "en": [
+          "mooring engineer",
+          "mooring analyst",
+          "mooring designer"
+        ],
         "ca": [
           "enginyer mecànic",
           "enginyera mecànica"
@@ -189,6 +194,9 @@
         "2149"
       ],
       "extra_terms": {
+        "en": [
+          "release train engineer"
+        ],
         "ca": [
           "enginyer de qualitat",
           "enginyera de qualitat",
@@ -334,6 +342,9 @@
         "3112"
       ],
       "extra_terms": {
+        "nl": [
+          "werkvoorbereider"
+        ],
         "ca": [
           "tècnic d'obra",
           "tècnica d'obra",
@@ -433,7 +444,19 @@
           "draftsman",
           "cad technician",
           "cad drafter",
-          "cad draughtsman"
+          "cad draughtsman",
+          "bim coordinator",
+          "bim modeller",
+          "bim modeler",
+          "bim engineer",
+          "bim manager"
+        ],
+        "nl": [
+          "bim modelleur",
+          "bim coördinator",
+          "bim coordinator",
+          "bim engineer",
+          "bim tekenaar"
         ],
         "ca": [
           "delineant",
@@ -510,6 +533,9 @@
           "conductrice de chantier",
           "conducteur de chantiers",
           "conductrice de chantiers"
+        ],
+        "nl": [
+          "uitvoerder"
         ],
         "ca": [
           "cap d'obra",
@@ -604,6 +630,9 @@
         "3152"
       ],
       "extra_terms": {
+        "en": [
+          "mooring master"
+        ],
         "ca": [
           "oficial de pont",
           "capità de vaixell",

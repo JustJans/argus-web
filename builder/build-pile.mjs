@@ -8,6 +8,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { compileFamilies, classifier, hygieneReason, languagesOfCountry } from './gate.mjs';
+import { readCodes } from './codes.mjs';
 import { compileCountries, placeOfAdvert, toRecord } from './normalise.mjs';
 import { compileScreens } from './screens.mjs';
 import { dedupe } from './dedupe.mjs';
@@ -34,12 +35,9 @@ const KEEP_AT_LEAST = 0.7;    // ➤ a pile a third smaller than the last one is
 
 const catalogue = JSON.parse(readFileSync(join(ROOT, 'catalogues', 'families.json'), 'utf-8'));
 const families = catalogue.families;
-// ➤ The classifications the gate reads: ESCO's occupations per ISCO unit group and JobTech's
-// ➤ SSYK→ISCO correspondence (both built by builder/isco-esco.mjs).
-const codes = {
-  isco: JSON.parse(readFileSync(join(ROOT, 'catalogues', 'codes', 'isco.json'), 'utf-8')),
-  ssyk: JSON.parse(readFileSync(join(ROOT, 'catalogues', 'codes', 'ssyk-isco.json'), 'utf-8')),
-};
+// ➤ The classifications the gate reads: ESCO's occupations per ISCO unit group, JobTech's
+// ➤ SSYK→ISCO correspondence and the official coding indexes' titles (builder/codes.mjs).
+const codes = readCodes(ROOT);
 const countries = JSON.parse(readFileSync(join(ROOT, 'catalogues', 'countries.json'), 'utf-8')).countries;
 const gate = compileFamilies(catalogue, codes);
 const classify = classifier(gate);

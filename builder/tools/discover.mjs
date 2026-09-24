@@ -10,11 +10,12 @@ import { dirname, join } from 'path';
 import { ATS } from '../adapters/boards.mjs';
 import { getJson, getText } from '../http.mjs';
 import { compileFamilies, familiesOf, hygieneReason } from '../gate.mjs';
+import { readCodes } from '../codes.mjs';
 import { compileCountries, placeOf } from '../normalise.mjs';
 
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 const read = p => JSON.parse(readFileSync(join(ROOT, ...p.split('/')), 'utf-8'));
-const gate = compileFamilies(read('catalogues/families.json'), { isco: read('catalogues/codes/isco.json'), ssyk: read('catalogues/codes/ssyk-isco.json') });
+const gate = compileFamilies(read('catalogues/families.json'), readCodes(ROOT));
 const countries = compileCountries(read('catalogues/countries.json').countries);
 const europe = new Set(read('catalogues/countries.json').countries.map(c => c.iso));
 

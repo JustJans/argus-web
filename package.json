@@ -5,7 +5,9 @@
   "description": "Public job portal for engineers and technicians in Europe: the CV is read in the browser, the profile becomes a code, the offers are filtered on the visitor's device.",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "pretest": "node builder/engine-bundle.mjs app/lib",
     "test": "node --test test/*.test.mjs",
@@ -15,5 +17,8 @@
   "dependencies": {
     "argus": "github:JustJans/argus#v1.11.0",
     "js-yaml": "^4.1.1"
+  },
+  "devDependencies": {
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   }
 }
