@@ -19,6 +19,11 @@ years it asks for (and in which field), a degree the user lacks, a language it r
 the description proper, never the whole page: menus in the country's language once made it think
 every offer required that language. The description never lets an offer in.
 
+Argus also tried a live judge that read the description with a language model and decided
+whether each offer went through (July 2026). An audit found it left out good offers that the
+rules had rescued, and it was retired. What stayed is the deterministic screens after the title,
+and a second judge that only looks again in the shadow and decides nothing.
+
 ## What is known
 
 - **Text zoning.** Gnehm and Clematide (2020, Swiss Job Market Monitor, University of Zurich)
@@ -86,7 +91,8 @@ the categories are wrong in both directions:
 
 ## Conclusion
 
-- **The description does not let an advert in.** Read naively it is mostly noise. Reading it well
+- **The description does not let an advert in.** The owner's decision (24 September 2026),
+  after Argus's own experience: not worth it. Read naively it is mostly noise. Reading it well
   takes text zoning and a trained model, and even then the best published systems are right three
   times in four. It stays where Argus's bot keeps it: after the title, for the screens.
 - **The sources' categories do not decide either**, neither to leave out nor to let in.
