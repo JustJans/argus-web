@@ -101,11 +101,18 @@ const VEHICLES = ['truck', 'hgv', 'lgv', 'vehicle', 'car', 'automotive', 'motor'
 // ➤ ...and a service technician on heating, plumbing or air conditioning is a plumber and pipe
 // ➤ fitter (7126; the ONS: "hvac technician", "heating engineer").
 const INSTALLATIONS = ['hvac', 'heating', 'plumbing', 'boiler'];
-const EXTRA_CONTEXTS = { ...LABORATORY_CONTEXTS, 'workshop technician': VEHICLES, 'service technician': [...VEHICLES, ...INSTALLATIONS] };
+// ➤ ESCO's French "paysagiste" is a landscape designer (2162), but France Travail's ROME names the
+// ➤ gardeners with it: "jardinier", "ouvrier", "apprenti", "entrepreneur" and "chef d'équipe
+// ➤ paysagiste", "paysagiste en création" and "en entretien" (fiches A1208 and A1211; its ISCO
+// ➤ correspondence files green spaces under 6113). The designer is a "concepteur paysagiste"
+// ➤ (A1206). A bare "paysagiste" can be either, so it stays.
+const GARDENING = ['jardinier', 'jardiniere', 'ouvrier', 'ouvriere', 'apprenti', 'apprentie', 'entrepreneur', 'entrepreneuse', 'equipe', 'creation', 'entretien'];
+const EXTRA_CONTEXTS = { ...LABORATORY_CONTEXTS, 'workshop technician': VEHICLES, 'service technician': [...VEHICLES, ...INSTALLATIONS], paysagiste: GARDENING };
 // ➤ ESCO's alternative titles that a national index files outside the vertical: the national
 // ➤ statistics office decides. The gate leaves them out of ESCO's titles.
 const NOT_OURS = {
-  en: ['facility manager'],                 // ESCO 2146.6 "mine development engineer"; ONS: "facilities manager", 1219
+  en: ['facility manager', 'landscaper'],   // ESCO 2146.6 "mine development engineer"; ONS: "facilities manager", 1219
+                                            // ESCO 2162.1.1 "landscape designer"; ONS: "landscaper", a gardener, 6113
   nl: ['cnc-operator', 'operator cnc'],     // ESCO 2514.4 "numerical tool and process control programmer"; CBS: "cnc-machinebediener", 7223
 };
 const NOT_INDUSTRY = new Set(['and', 'the', 'of', 'services', 'service', 'trade', 'management', 'establishments', 'site', 'centre', 'test', 'professional', 'mfr', 'design']);
@@ -179,6 +186,8 @@ for (const [id, read] of [['ons', onsTitles], ['cbs', cbsTitles]]) {
   console.log(`${id}: ${found.length} titles in our groups, ${kept} kept`);
 }
 for (const u of Object.values(units)) for (const l of Object.values(u)) l.sort();
+// ➤ The contexts written here hold for ESCO's titles too, where no index lists the title.
+for (const [title, words] of Object.entries(EXTRA_CONTEXTS)) contexts[title] ||= [...words].sort();
 const out = {
   _about: 'Job titles that official statistics offices file under the vertical\'s ISCO-08 unit groups, from their coding indexes, per unit group and language, minus a reviewed list of exclusions. Added to ESCO\'s titles by the gate. contexts: words that, in an advert\'s title, put a kept title in another occupation (the industries the index files its twins under). not_ours: ESCO\'s alternative titles a national index files outside the vertical, left out of ESCO\'s titles. Built by builder/tools/title-indexes.mjs; docs/research/occupation-coding.md.',
   built_at: new Date().toISOString().slice(0, 10),

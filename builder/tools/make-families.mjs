@@ -108,6 +108,9 @@ const ENGLISH = {
 const FRENCH = {
   3123: ['conducteur de travaux', 'conductrice de travaux', 'conducteur des travaux', 'conductrice des travaux', 'conducteur travaux', 'conductrice travaux',
     'conducteur de chantier', 'conductrice de chantier', 'conducteur de chantiers', 'conductrice de chantiers'],
+  // ➤ The landscape designer as France Travail's ROME names it (fiche A1206, with "architecte
+  // ➤ paysagiste"), so a designer's title never rests on the bare "paysagiste" of gardeners.
+  2162: ['concepteur paysagiste', 'conceptrice paysagiste', 'paysagiste concepteur', 'paysagiste conceptrice'],
 };
 // ➤ The Dutch the CBS index lacks as a title of its own: a "werkvoorbereider" prepares the works
 // ➤ (CBS: "bouwkundig projectvoorbereider", 3112), an "uitvoerder" runs the site (CBS: "uitvoerder

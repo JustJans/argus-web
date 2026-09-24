@@ -55,6 +55,10 @@ eq([families('Programmeur·se Senior C++', 'fr'), families('Développeur(se) Fro
 eq([families('Développeur(se) de Projet Real Estate – Bruxelles', 'fr'), families('Développeur foncier', 'fr')], [[], []], 'a French project or land developer builds property, not software');
 ok(hygieneReason({ title: 'Berufsausbildung Fachinformatiker für Systemintegration (m/w/d)' }), 'a vocational training place is hygiene, as an Ausbildung is');
 
+// ESCO's French "paysagiste" is a landscape designer; France Travail's ROME names gardeners with it.
+eq([families('JARDINIER / PAYSAGISTE', 'fr'), families('Ouvrier paysagiste', 'fr'), families('Chef d’équipe Paysagiste', 'fr'), families('Paysagiste entretien', 'fr'), families('Landscaper/Paver')], [[], [], [], [], []], 'gardeners and landscapers are not landscape architects');
+eq([families('Paysagiste', 'fr'), families('Architecte paysagiste', 'fr'), families('Paysagiste concepteur - création de jardins', 'fr')], [['2162'], ['2162'], ['2162']], 'a bare "paysagiste" can be either and stays; the designer stays whatever else the title says');
+
 // Where ESCO and a national index disagree, the national statistics office decides.
 eq([families('Junior CNC Operator', 'nl'), families('Facility Manager')], [[], []], 'ESCO\'s "CNC-operator" and "facility manager" are a machine operator and a facilities manager (CBS 7223, ONS 1219)');
 

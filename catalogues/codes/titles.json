@@ -2669,11 +2669,25 @@
    "truck",
    "tyre",
    "vehicle"
+  ],
+  "paysagiste": [
+   "apprenti",
+   "apprentie",
+   "creation",
+   "entrepreneur",
+   "entrepreneuse",
+   "entretien",
+   "equipe",
+   "jardinier",
+   "jardiniere",
+   "ouvrier",
+   "ouvriere"
   ]
  },
  "not_ours": {
   "en": [
-   "facility manager"
+   "facility manager",
+   "landscaper"
   ],
   "nl": [
    "cnc-operator",
