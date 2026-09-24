@@ -122,7 +122,7 @@ shards in eleven minutes.
 
 ## The pipeline, stage by stage
 
-1. **Discovery** (`ops/server-discover.sh`, every day at 03:41; the scouts by hand):
+1. **Discovery** (`ops/server-discover.sh`, on Sundays at 03:00; the scouts by hand):
    - `scout.mjs --collect --probe`: Common Crawl index → ATS slugs → every board read through
      its API → kept when the gate keeps an advert in Europe → `config/companies-found.yml`.
    - `scout-wdc.mjs`: Web Data Commons' JobPosting quads → per host: vacancy pages, hiring
