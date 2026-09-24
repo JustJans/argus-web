@@ -1,6 +1,7 @@
 // ➤ The sources page's table: the sources in today's pile with their licence and credit, read
 // ➤ from the pile's index, in the page's language.
 import { t, number } from '../lib/i18n.js';
+import '../lib/theme.js';
 
 const root = document.documentElement.dataset.root || '';
 const generated = document.getElementById('generated');

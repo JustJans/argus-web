@@ -11,7 +11,7 @@ import { writeEngine } from './engine-bundle.mjs';
 import { filesUnder, hashTree, rewriteAssetLinks, recordVersion } from './fingerprint.mjs';
 import { familyTerms } from './gate.mjs';
 import { readCodes } from './codes.mjs';
-import { PAGES as TWINS, toSpanish, alternates } from './spanish.mjs';
+import { PAGES as TWINS, toSpanish, toEnglish, alternates } from './spanish.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const args = process.argv.slice(2);
@@ -53,7 +53,7 @@ for (const page of files.filter(isPage)) {
     html = html.replace('</head>', alternates(page));
     writePage(`es/${page}`, toSpanish(html, page));
   }
-  writePage(page, html);
+  writePage(page, toEnglish(html, page));
   rmSync(join(stage, page));
 }
 const vDir = join(SITE, 'v');

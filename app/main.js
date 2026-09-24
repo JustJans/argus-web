@@ -1,6 +1,6 @@
 // ➤ The one page. The filters on the left are the visitor's whole profile: country (in the
 // ➤ order ticked) or a town and a distance, occupations by group and their specialties, posted date, level and years, languages, degrees,
-// ➤ title words, deal-breakers; each a fold-out. The profile is packed into a short code that
+// ➤ title words, words to avoid; each a fold-out. The profile is packed into a short code that
 // ➤ appears as the filters change and can be copied or pasted; the code and the search words
 // ➤ live in the address after the #, so a list can be bookmarked and shared. A CV read on
 // ➤ the device ticks the occupations, degrees and languages it names. Everything downloads
@@ -14,6 +14,7 @@ import { wordsOf, matchesWords, isExpired, newestFirst } from './lib/search.js';
 import { readCv } from './lib/cv.js';
 import * as engine from './lib/engine.js';
 import { t, label, countryLabel, languageLabel, number } from './lib/i18n.js';
+import './lib/theme.js';
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -22,7 +23,8 @@ const text = (sel, s) => { const e = $(sel); if (e) e.textContent = s; };
 const ROOT = document.documentElement.dataset.root || '';
 const getJson = async url => { const r = await fetch(ROOT + url, { cache: 'no-cache' }); if (!r.ok) throw new Error(`${r.status} for ${url}`); return r.json(); };
 const STALE_HOURS = 48;
-const OPEN_BY_DEFAULT = new Set(['country', 'posted']);
+// ➤ The fold-outs start closed, as the design has them; one opens by itself when it has something set.
+const OPEN_BY_DEFAULT = new Set();
 
 let index, cats, ids, ctx;
 let loaded = null;              // ➤ the last set downloaded and judged, so words and dates redraw without a download
@@ -80,19 +82,20 @@ function profileFromForm() {
     families, specialties, countries, place, remote: $('#remote').checked, posted: Number($('#filters-form input[name="d"]:checked')?.value) || 0,
     modes: checked('mode'), minPay: Number($('#min-pay').value) || 0, payStated: $('#pay-stated').checked,
     level: checked('level')[0] || 'any', maxYears: Number($('#max-years').value) || null, highest: $('#highest').value,
-    languages: checked('lg'), degrees: checked('dg'), vetoes: checked('v'), roles: words('#roles'), noWords: words('#no-words'),
+    languages: checked('lg'), degrees: checked('dg'), roles: words('#roles'), noWords: words('#no-words'),
   });
 }
 function stateFromForm(profile = profileFromForm()) {
   return { p: isEmptyProfile(profile) ? '' : encodeProfile(profile, ids), q: $('#q').value.trim(), dbg: readHash().debug ? '1' : '' };
 }
 
-// ➤ One row per choice: the tick on the left, the label, today's count on the right.
-function row(container, { name, value, label, radio = false }) {
+// ➤ One row per choice: the tick on the left, the label, today's count on the right when given.
+function row(container, { name, value, label, radio = false, count }) {
   const l = document.createElement('label'); l.className = 'check-row';
   const i = document.createElement('input'); i.type = radio ? 'radio' : 'checkbox'; i.name = name; i.value = value;
   const s = document.createElement('span'); s.textContent = label;
   l.append(i, s);
+  if (count !== undefined) { const c = document.createElement('span'); c.className = 'count'; c.textContent = n(count); l.append(c); }
   container.append(l);
   return i;
 }
@@ -124,7 +127,7 @@ function drawCountries(profile) {
   for (const cc of profile.countries) if (!counts[cc]) rows.push([cc, 0]);
   const pick = $('#countries-pick');
   pick.replaceChildren();
-  for (const [cc] of rows) row(pick, { name: 'c', value: cc, label: countryName(cc) });
+  for (const [cc, count] of rows) row(pick, { name: 'c', value: cc, label: countryName(cc), count });
 }
 
 // ➤ The town field's suggestions: the towns with offers, "München, Bavaria, Germany", the fullest
@@ -172,12 +175,11 @@ function drawFamilyCounts(profile) {
     pick.append(fold);
   }
 }
-// ➤ The lists that never change: levels, languages, degrees, deal-breakers.
+// ➤ The lists that never change: levels, languages, degrees.
 function drawStaticLists() {
   for (const l of cats.seniority.levels) row($('#levels-pick'), { name: 'level', value: l.id, label: label(l), radio: true });
   for (const l of cats.languages.languages) row($('#languages-pick'), { name: 'lg', value: l.code, label: languageName(l.code) });
   for (const d of cats.degrees.degrees) row($('#degrees-pick'), { name: 'dg', value: d.id, label: label(d) });
-  for (const v of cats.vetoes.vetoes) row($('#vetoes-pick'), { name: 'v', value: v.id, label: label(v) });
   for (const fold of $$('#filters-form > details')) remember(fold, fold.dataset.group);
 }
 
@@ -205,7 +207,6 @@ function fillFilters(p) {
   for (const i of $$('#languages-pick input')) i.checked = p.languages.includes(i.value);
   for (const i of $$('#degrees-pick input')) i.checked = p.degrees.includes(i.value);
   $('#highest').value = p.highest;
-  for (const i of $$('#vetoes-pick input')) i.checked = p.vetoes.includes(i.value);
   $('#roles').value = p.roles.join(', ');
   $('#no-words').value = p.noWords.join(', ');
   const active = activeGroups(p);
@@ -220,7 +221,7 @@ function fillFilters(p) {
   text('#filters-toggle-label', head);
 }
 function activeGroups(p) {
-  const on = { country: p.countries.length || p.remote || p.place, occupations: p.families.length, posted: p.posted, mode: p.modes.length, pay: p.minPay || p.payStated, level: p.level !== 'any' || p.maxYears, languages: p.languages.length, degrees: p.degrees.length || p.highest !== 'none', roles: p.roles.length, vetoes: p.vetoes.length || p.noWords.length };
+  const on = { country: p.countries.length || p.remote || p.place, occupations: p.families.length, posted: p.posted, mode: p.modes.length, pay: p.minPay || p.payStated, level: p.level !== 'any' || p.maxYears, languages: p.languages.length, degrees: p.degrees.length || p.highest !== 'none', roles: p.roles.length, exclude: p.noWords.length };
   return new Set(Object.keys(on).filter(k => on[k]));
 }
 
@@ -236,10 +237,8 @@ function drawPile() {
   const failed = index.status?.ok ? '' : t(' (some sources failed this time)');
   const rows = Object.entries(index.counts?.by_country || {}).filter(([cc]) => cc !== 'zz').sort((a, b) => b[1] - a[1]);
   text('#hero-count', n(index.counts.offers));
-  const stats = $('#hero-stats');
-  stats.replaceChildren();
-  const b = document.createElement('b'); b.textContent = n(index.counts.offers);
-  stats.append(b, document.createTextNode(` ${t('offers')} · ${rebuilt}${failed}`));
+  // ➤ Once there are results, the pile's size goes beside the count of those that match.
+  text('#hero-stats', t('out of {n} listed today', { n: n(index.counts.offers) }));
   text('#generated', t('{n} offers, {rebuilt}{failed}.', { n: n(index.counts.offers), rebuilt, failed }));
   if (readHours > STALE_HOURS) { text('#stale-text', t('The sources were last read {n} days ago; some offers may have closed since.', { n: Math.round(readHours / 24) })); $('#stale').hidden = false; }
   const tbody = $('#countries tbody');
@@ -284,9 +283,18 @@ function draw() {
   // ➤ With no occupation and no country named, the site shows the newest of the pile rather
   // ➤ than downloading all of it: say so, and say what to do for the rest.
   const onlyNewest = !loaded.profile.families.length && !loaded.profile.countries.length && index.latest?.files?.length;
-  const rest = onlyNewest ? t(' of {n}; choose a country or an occupation for the rest', { n: n(index.counts.offers) }) : '';
-  const said = { shown: n(shown.length), total: n(loaded.total), rest, failed: partsFailed };
-  text('#results-status', narrowed ? t('{shown} of {total} offers match your filters{rest}{failed}.', said) : t('{shown} newest offers{rest}{failed}.', said));
+  // ➤ How many match, large above the list. The status line says out of how many (the whole
+  // ➤ pile, or the newest part of it that was searched) and where the ones that match are, the
+  // ➤ fullest countries first.
+  text('#hero-match', n(shown.length));
+  text('#hero-match-text', !narrowed ? t('newest offers') : shown.length === 1 ? t('offer matches your filters') : t('offers match your filters'));
+  const where = new Map();
+  for (const o of shown) where.set(o.cc, (where.get(o.cc) || 0) + 1);
+  const countries = [...where].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([cc, k]) => `${countryName(cc)} ${n(k)}`);
+  const said = { shown: n(shown.length), total: n(onlyNewest ? loaded.total : index.counts.offers), pile: n(index.counts.offers) };
+  const head = !narrowed ? t('{shown} newest offers', said) + (onlyNewest ? t(' of {pile}; choose a country or an occupation for the rest', said) : '')
+    : onlyNewest ? t('{shown} of the newest {total} offers; choose a country or an occupation for the rest', said) : t('{shown} of {total} offers', said);
+  text('#results-status', [head, ...countries].join(' · ') + partsFailed);
   // ➤ Zero results: every stage that dropped something, the date and the words included.
   const stages = { ...loaded.stages, 'posted date': loaded.offers.length - inDate.length, 'search words': inDate.length - shown.length };
   if (shown.length) renderList($('#list'), shown, ctx); else renderEmpty($('#list'), stages, loaded.total);

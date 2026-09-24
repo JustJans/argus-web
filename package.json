@@ -12,13 +12,16 @@
     "pretest": "node builder/engine-bundle.mjs app/lib",
     "test": "node --test test/*.test.mjs",
     "pile": "node builder/build-pile.mjs",
-    "site": "node builder/build-site.mjs"
+    "site": "node builder/build-site.mjs",
+    "css": "tailwindcss -i styles/site.css -o app/style.css --minify"
   },
   "dependencies": {
     "argus": "github:JustJans/argus#v1.11.0",
     "js-yaml": "^4.1.1"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   }
 }
