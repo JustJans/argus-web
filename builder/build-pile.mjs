@@ -14,6 +14,7 @@ import { compileScreens } from './screens.mjs';
 import { dedupe } from './dedupe.mjs';
 import { buildShards, writePile } from './shard.mjs';
 import { compileTowns, locate } from './towns.mjs';
+import { ambiguousNames } from './place-names.mjs';
 import { loadCache, saveCache, translateTitles } from './translate.mjs';
 import { eachSource } from './store.mjs';
 import { licenceFor } from './sources.mjs';
@@ -152,8 +153,11 @@ const index = {
   status: { ok: kept.length > 0, seconds: Math.round((Date.now() - startedAt) / 1000) },
 };
 mkdirSync(OUT, { recursive: true });
-// ➤ The towns with offers, for the place search; loaded only when a visitor types a town.
-const extras = { 'places.json': JSON.stringify({ v: 1, places: onMap.list }) };
+// ➤ The towns with offers, for the search bar, with the names it must not take for a town on
+// ➤ their own; loaded when a visitor starts to search.
+const ambiguous = ambiguousNames(onMap.list, kept);
+stage('place names');
+const extras = { 'places.json': JSON.stringify({ v: 2, places: onMap.list, ambiguous }) };
 if (EXPLAIN) extras['explain.txt'] = dropped.map(([why, raw]) => `[${why}] ${raw.title} | ${raw.company} | ${raw.location} (${raw.source})`).join('\n') + '\n';
 writePile(OUT, files, index, extras);
 writeFileSync(join(OUT, 'status.json'), JSON.stringify({ generated_at: generatedAt, crawled_at: crawledAt, offers: kept.length, found: counts.found, sources: sourceFiles, dropped: counts, duplicates: { sameUrl, sameRole }, by_country: perCountry }, null, 2));

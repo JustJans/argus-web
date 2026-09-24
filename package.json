@@ -9,7 +9,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "pretest": "node builder/engine-bundle.mjs app/lib",
+    "pretest": "node builder/engine-bundle.mjs app/lib && node builder/vendor.mjs app",
     "test": "node --test test/*.test.mjs",
     "pile": "node builder/build-pile.mjs",
     "site": "node builder/build-site.mjs",
@@ -17,7 +17,8 @@
   },
   "dependencies": {
     "argus": "github:JustJans/argus#v1.11.0",
-    "js-yaml": "^4.1.1"
+    "js-yaml": "^4.1.1",
+    "modern-ahocorasick": "^3.3.0"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.3",

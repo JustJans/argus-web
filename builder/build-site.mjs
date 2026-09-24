@@ -8,6 +8,7 @@ import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { writeEngine } from './engine-bundle.mjs';
+import { writeVendor } from './vendor.mjs';
 import { filesUnder, hashTree, rewriteAssetLinks, recordVersion } from './fingerprint.mjs';
 import { familyTerms } from './gate.mjs';
 import { readCodes } from './codes.mjs';
@@ -29,6 +30,7 @@ for (const name of readdirSync(SITE)) if (name !== 'v') rmSync(join(SITE, name),
 const stage = join(SITE, '.stage');
 cpSync(join(ROOT, 'app'), stage, { recursive: true });
 writeEngine(join(stage, 'lib'));
+writeVendor(stage);
 // ➤ The PDF reader the first page loads when a PDF is chosen: pdf.js, under a .js name so
 // ➤ every host sends it as a script.
 const require = createRequire(import.meta.url);

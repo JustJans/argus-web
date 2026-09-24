@@ -9,3 +9,4 @@ app/dist/
 app/lib/engine.js
 *.log
 .DS_Store
+app/vendor/
