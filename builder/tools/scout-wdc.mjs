@@ -15,6 +15,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import yaml from 'js-yaml';
 import { compileFamilies, familiesOf, hygieneReason } from '../gate.mjs';
+import { readCodes } from '../codes.mjs';
 import { compileCountries, placeOf } from '../normalise.mjs';
 
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
@@ -29,7 +30,7 @@ const MAX_URLS_A_HOST = 12;
 const BOARDS = /(?:^|\.)(?:freelance-informatique|rollingadz|php-resource|qreer|studentjob|jobteaser|indeed|linkedin|glassdoor|monster|stepstone|infojobs|infoempleo|tecnoempleo|jobrapido|jooble|adzuna|talent|neuvoo|trovit|mitula|careerjet|jobted|jobijoba|kimeta|jobware|stellenanzeigen|jobvector|hays|adecco|randstad|manpower|michaelpage|robertwalters|reed|totaljobs|cv-library|jobsite|welcometothejungle|jobteaser|hellowork|apec|francetravail|pole-emploi|arbeitsagentur|arbeitnow|jobs\.ch|jobscout24|karriere\.at|willhaben|pracuj|olx|jobs\.cz|profesia|nofluffjobs|justjoin|jobs\.bg|ejobs|bestjobs|cvbankas|cv\.lv|cvkeskus|duunitori|oikotie|finn|nav\.no|jobindex|jobnet|arbetsformedlingen|platsbanken|ledigajobb|blocket|jobsora|jobsinnetwork|jobs\.de|jobcenter|jobbnorge|thelocal|eurojobs|eures|ziprecruiter|simplyhired|careerbuilder|workable|jobvite|lever|greenhouse|smartrecruiters|recruitee|personio|teamtailor|successfactors|myworkdayjobs|taleo|icims|bamboohr|breezy|ashbyhq|jobs\.lever|boards\.greenhouse)\.[a-z.]+$/i;
 
 const read = p => JSON.parse(readFileSync(join(ROOT, ...p.split('/')), 'utf-8'));
-const gate = compileFamilies(read('catalogues/families.json'), { isco: read('catalogues/codes/isco.json'), ssyk: read('catalogues/codes/ssyk-isco.json') });
+const gate = compileFamilies(read('catalogues/families.json'), readCodes(ROOT));
 const countryList = read('catalogues/countries.json').countries;
 const countries = compileCountries(countryList);
 const europe = new Set(countryList.map(c => c.iso));

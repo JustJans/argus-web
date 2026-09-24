@@ -10,6 +10,7 @@ import { dirname, join } from 'path';
 import { writeEngine } from './engine-bundle.mjs';
 import { filesUnder, hashTree, rewriteAssetLinks, recordVersion } from './fingerprint.mjs';
 import { familyTerms } from './gate.mjs';
+import { readCodes } from './codes.mjs';
 import { PAGES as TWINS, toSpanish, alternates } from './spanish.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -68,8 +69,7 @@ for (const f of readdirSync(join(ROOT, 'catalogues'))) if (f.endsWith('.json')) 
 // ➤ codes/isco.json) plus the catalogue's extra terms, built by the gate's own rule. Fetched
 // ➤ only when a CV is read.
 const catalogue = JSON.parse(readFileSync(join(ROOT, 'catalogues', 'families.json'), 'utf8'));
-const iscoTable = JSON.parse(readFileSync(join(ROOT, 'catalogues', 'codes', 'isco.json'), 'utf8'));
-writeFileSync(join(SITE, 'catalogues', 'family-terms.json'), JSON.stringify(familyTerms(catalogue, { isco: iscoTable })));
+writeFileSync(join(SITE, 'catalogues', 'family-terms.json'), JSON.stringify(familyTerms(catalogue, readCodes(ROOT))));
 
 // ➤ The pile.
 if (existsSync(join(DATA, 'index.json'))) {

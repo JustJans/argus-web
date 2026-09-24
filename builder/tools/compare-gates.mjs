@@ -2,7 +2,7 @@
 // ➤ and occupations each gives, the adverts where they differ (with a sample), and the time each
 // ➤ takes. For any change to the gate: what it lets in, what it leaves out, what it costs.
 // ➤   node builder/tools/compare-gates.mjs <other checkout>        e.g. a git worktree of master
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname, join, resolve } from 'path';
 
@@ -13,7 +13,10 @@ if (!process.argv[2]) { console.log('usage: node builder/tools/compare-gates.mjs
 const load = async root => {
   const read = p => JSON.parse(readFileSync(join(root, p), 'utf8'));
   const g = await import(pathToFileURL(join(root, 'builder', 'gate.mjs')).href);
-  return { g, gate: g.compileFamilies(read('catalogues/families.json'), { isco: read('catalogues/codes/isco.json'), ssyk: read('catalogues/codes/ssyk-isco.json') }) };
+  // ➤ A checkout from before the official coding indexes has no titles.json.
+  const codes = { isco: read('catalogues/codes/isco.json'), ssyk: read('catalogues/codes/ssyk-isco.json') };
+  if (existsSync(join(root, 'catalogues', 'codes', 'titles.json'))) codes.titles = read('catalogues/codes/titles.json');
+  return { g, gate: g.compileFamilies(read('catalogues/families.json'), codes) };
 };
 const { eachSource } = await import(pathToFileURL(join(HERE, 'builder', 'store.mjs')).href);
 const { compileCountries, placeOfAdvert } = await import(pathToFileURL(join(HERE, 'builder', 'normalise.mjs')).href);

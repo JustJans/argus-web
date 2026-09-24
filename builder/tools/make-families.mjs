@@ -81,8 +81,17 @@ const CATALAN = {
   3513: ['tècnic de xarxes', 'tècnica de xarxes'],
 };
 // ➤ Titles ESCO does not list: British spellings, and the English of company boards.
+// ➤ Default rules, CASCOT's "score as" (docs/research/occupation-coding.md): titles no index lists,
+// ➤ filed with the index title that names the same work. BIM is the CAD of buildings (ONS files
+// ➤ "bim technician" and "cad coordinator" under 3118); a mooring engineer designs the moorings
+// ➤ of a floating structure, which is naval architecture (2144), and a mooring master is the
+// ➤ master mariner who brings ships alongside (3152).
 const ENGLISH = {
-  3118: ['draughtsman', 'draftsman', 'cad technician', 'cad drafter', 'cad draughtsman'],
+  3118: ['draughtsman', 'draftsman', 'cad technician', 'cad drafter', 'cad draughtsman', 'bim coordinator', 'bim modeller', 'bim modeler', 'bim engineer', 'bim manager'],
+  2144: ['mooring engineer', 'mooring analyst', 'mooring designer'],
+  3152: ['mooring master'],
+  // ➤ The agile "release train engineer" is no train engineer (2144): it stays where "engineer" alone goes.
+  2149: ['release train engineer'],
   2512: ['software engineer', 'backend developer', 'back-end developer', 'backend engineer', 'back-end engineer', 'frontend developer', 'front-end developer', 'frontend engineer', 'front-end engineer', 'full stack developer', 'full-stack developer', 'fullstack developer', 'full stack engineer', 'full-stack engineer', 'fullstack engineer', 'mobile developer', 'mobile engineer', 'ios developer', 'android developer', 'firmware engineer', 'devops engineer', 'site reliability engineer', 'platform engineer', 'cloud engineer', 'machine learning engineer', 'ml engineer', 'ai engineer', 'ai research engineer', 'compiler engineer', 'staff engineer', 'principal engineer'],
   2519: ['qa engineer', 'test automation engineer', 'software tester', 'data engineer', 'analytics engineer'],
   2521: ['database administrator', 'dba'],
@@ -99,6 +108,14 @@ const ENGLISH = {
 const FRENCH = {
   3123: ['conducteur de travaux', 'conductrice de travaux', 'conducteur des travaux', 'conductrice des travaux', 'conducteur travaux', 'conductrice travaux',
     'conducteur de chantier', 'conductrice de chantier', 'conducteur de chantiers', 'conductrice de chantiers'],
+};
+// ➤ The Dutch the CBS index lacks as a title of its own: a "werkvoorbereider" prepares the works
+// ➤ (CBS: "bouwkundig projectvoorbereider", 3112), an "uitvoerder" runs the site (CBS: "uitvoerder
+// ➤ bouw", 3123), and BIM is filed with CAD as in English.
+const DUTCH = {
+  3112: ['werkvoorbereider'],
+  3123: ['uitvoerder'],
+  3118: ['bim modelleur', 'bim coördinator', 'bim coordinator', 'bim engineer', 'bim tekenaar'],
 };
 const SPANISH = {
   3123: ['jefe de obra', 'jefa de obra'],
@@ -119,6 +136,7 @@ for (const g of GROUPS) {
       if (ENGLISH[code]) extra.en = ENGLISH[code];
       if (SPANISH[code]) extra.es = SPANISH[code];
       if (FRENCH[code]) extra.fr = FRENCH[code];
+      if (DUTCH[code]) extra.nl = DUTCH[code];
       if (CATALAN[code]) extra.ca = CATALAN[code];
       if (Object.keys(extra).length) f.extra_terms = extra;
       families.push(f);

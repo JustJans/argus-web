@@ -36,13 +36,14 @@ const ROLE_WORDS = ['technician', 'técnico', 'técnica', 'tècnic', 'tècnica',
   'specialist', 'especialista', 'spécialiste', 'specialista', 'specialistka', 'specialistas', 'specialistė', 'speciālists', 'speciāliste', 'vadovas', 'vadovė', 'vadītājs', 'vadītāja', 'vedoucí', 'mistr', 'meistras', 'meistars', 'consultant', 'consultor', 'consultora', 'analyst', 'analista', 'designer', 'diseñador', 'diseñadora', 'dissenyador', 'dissenyadora', 'planner', 'planificador', 'planificadora', 'assistant', 'asistente', 'auxiliar'];
 const GENERIC_WORDS = new Set([...ENGINEER_WORDS, ...ROLE_WORDS].map(T.clean));
 const usableTitle = label => !GENERIC_WORDS.has(T.clean(label));
-// ➤ Words that put a title outside the vertical whatever else it says: sales (ISCO 24) and
-// ➤ teaching (23), in the sources' languages. Read only when the title, not a code, decides.
-const OUTSIDE_WORDS = /(?:^|[^a-z0-9])(?:marketing (?:manager|lead|specialist|director|executive|coordinator|officer|assistant|analyst|consultant|associate|intern|manager)|head of marketing|growth marketing|product marketing|content marketing|performance marketing|brand manager|verkoopmedewerker|kundenberater|kundenberaterin|customer service|customer success manager|account executive|ingenieur commercial|ingenieure commerciale|ingenieur d affaires|business developer|business development|comercial|ventas|sales|profesor|profesora|professor|docente|teacher|lecturer|formador|formadora|pardavimu|pardosanas|tirdzniecibas|prekybos|obchodni|prodej|ucitel|ucitelka|mokytojas|skolotajs)(?![a-z0-9])/;
+// ➤ Words that put a title outside the vertical whatever else it says: sales (ISCO 24), teaching
+// ➤ (23) and facilities management (1219, as the ONS files it), in the sources' languages. Read
+// ➤ only when the title, not a code, decides.
+const OUTSIDE_WORDS = /(?:^|[^a-z0-9])(?:marketing (?:manager|lead|specialist|director|executive|coordinator|officer|assistant|analyst|consultant|associate|intern|manager)|head of marketing|growth marketing|product marketing|content marketing|performance marketing|brand manager|verkoopmedewerker|kundenberater|kundenberaterin|customer service|customer success manager|account executive|ingenieur commercial|ingenieure commerciale|ingenieur d affaires|technico[ -]commerciale?|facility manager|facilities manager|business developer|business development|comercial|ventas|sales|profesor|profesora|professor|docente|teacher|lecturer|formador|formadora|pardavimu|pardosanas|tirdzniecibas|prekybos|obchodni|prodej|ucitel|ucitelka|mokytojas|skolotajs)(?![a-z0-9])/;
 // ➤ The computing vocabulary of job titles, in the sources' languages and in the English of
 // ➤ company boards: a title that carries one and names no occupation ESCO knows is still a
 // ➤ software job, and lands in ICT_FAMILY rather than among the engineers.
-const ICT_WORDS = /(?:^|[^a-z0-9])(?:informatic[oa]s?|informatica|it|ict|tic|software|programador|programadora|developer|desarrollador|desarrolladora|datos|dades|data|ciberseguridad|cybersecurity|backend|back end|frontend|front end|fullstack|full stack|mobile|devops|sre|cloud|ml|machine learning|ai|analytics|compiler|web|api|firmware|app|apps|android|ios|javascript|typescript|python|java|kubernetes|saas|crm|erp|d365|sap|salesforce|solution|solutions|database|sql|programator|programatorka|programuotojas|programmetajs|duomenu|datu|programovani|programavimo|programmesanas|skaitlotaju|datoru|kompiuteriu|pocitacovy|pocitacova)(?![a-z0-9])/;
+const ICT_WORDS = /(?:^|[^a-z0-9])(?:informatic[oa]s?|informatica|it|ict|tic|software|programador|programadora|developer|desarrollador|desarrolladora|datos|dades|data|ciberseguridad|cybersecurity|backend|back end|frontend|front end|fullstack|full stack|mobile|devops|sre|cloud|ml|machine learning|ai|analytics|compiler|web|api|firmware|app|apps|android|ios|javascript|typescript|python|java|kubernetes|saas|crm|erp|d365|sap|salesforce|solution|solutions|database|sql|tecnico de soporte|tecnica de soporte|soporte informatico|windows administrator|windows server|windows engineer|linux|unix|vmware|citrix|azure|m365|office 365|active directory|sharepoint|teamcenter|windchill|plm|jira|atlassian|programator|programatorka|programuotojas|programmetajs|duomenu|datu|programovani|programavimo|programmesanas|skaitlotaju|datoru|kompiuteriu|pocitacovy|pocitacova)(?![a-z0-9])/;
 
 // ➤ Where a computing title goes when ESCO names nothing more precise, by the words it carries,
 // ➤ first match wins; only then the catch-all (2519, which ISCO keeps for data, AI and testing).
@@ -53,7 +54,7 @@ const ICT_ROUTES = [
   [/(?:^|[^a-z])(?:database|databases|dba|datenbank|base de datos|bases de datos|sql server|postgres|oracle dba)(?![a-z])/, '2521'],
   [/(?:^|[^a-z])(?:network engineer|network administrator|netzwerk|netzwerkadministrator|redes|reseau|reseaux|cisco|ccnp|ccna)(?![a-z])/, '2523', '2523.3'],
   [/(?:^|[^a-z])(?:it support|helpdesk|help desk|service desk|desktop support|support technician|1st level|2nd level|first line|second line|soporte)(?![a-z])/, '3512', '3512.1'],
-  [/(?:^|[^a-z])(?:devops|devsecops|sre|site reliability|cloud|platform engineer|kubernetes|sysadmin|system administrator|systemadministrator|systemadministratorin|linux administrator|sap basis|administrador de sistemas|administrateur systeme)(?![a-z])/, '2522'],
+  [/(?:^|[^a-z])(?:devops|devsecops|sre|site reliability|cloud|platform engineer|kubernetes|sysadmin|system administrator|systemadministrator|systemadministratorin|linux administrator|sap basis|administrador de sistemas|administrateur systeme|(?:windows|linux|unix|vmware|citrix|azure|m365|office 365|exchange|active directory|sharepoint|teamcenter|windchill|plm|cad|jira|atlassian) administrator)(?![a-z])/, '2522'],
   [/(?:^|[^a-z])(?:web developer|webentwickler|webentwicklerin|desarrollador web|developpeur web|frontend|front end|ui developer|wordpress|shopify)(?![a-z])/, '2513', '2513.5'],
   [/(?:^|[^a-z])(?:android|ios|mobile developer|mobile engineer|app developer|flutter|react native|swift|kotlin)(?![a-z])/, '2514', '2514.2.2'],
   [/(?:^|[^a-z])(?:data|daten|datos|dades|analytics|analytic|machine learning|ml|ai|artificial intelligence|business intelligence|bi|power bi|tableau|llm|nlp|computer vision|qa|test automation|tester)(?![a-z])/, '2519'],
@@ -69,6 +70,9 @@ const ENGINEER_ROUTES = [
   [/(?:^|[^a-z])(?:electrical|electric|electrico|electrica|electrique|elektrotechnik|elektrotechniek|elektrotechnisch|elektro|elettric[oa]|eletric[oa]|power systems|high voltage|substation)(?![a-z])/, '2151', '2151.1'],
   [/(?:^|[^a-z])(?:mechanical|mecanico|mecanica|mecanique|maschinenbau|werktuigbouwkunde|werktuigbouwkundig|werktuigbouwkundige|maskiningenjor|meccanic[oa]|mecanic[oa]|hvac|piping|thermal)(?![a-z])/, '2144', '2144.1'],
   [/(?:^|[^a-z])(?:civil|structural|structures|estructuras|estructural|bridges|bridge|puentes|brucken|tiefbau|hochbau|geotechnical|geotecnico|highway|highways|carreteras|railway|railways|ferroviario|hidraulic[oa]|hydraulic)(?![a-z])/, '2142', '2142.1'],
+  // ➤ Naval architecture and marine engineering (ESCO's marine engineer), after the civil route so
+  // ➤ an offshore structural engineer stays with the structures.
+  [/(?:^|[^a-z])(?:mooring|moorings|naval|marine|subsea|hydrodynamic|hydrodynamics|shipbuilding|scheepsbouw|schiffbau)(?![a-z])/, '2144', '2144.1.10'],
   [/(?:^|[^a-z])(?:chemical|quimico|quimica|chimique|chimiste|chemie|chemisch|kemi|chimic[oa])(?![a-z])/, '2145', '2145.1'],
   [/(?:^|[^a-z])(?:environmental|medioambiental|medioambiente|ambiental|environnement|umwelt|milieu|sustainability)(?![a-z])/, '2143', '2143.1'],
   [/(?:^|[^a-z])(?:mining|mineria|minas|metallurgy|metallurgical|metalurgia|metalurgico|bergbau)(?![a-z])/, '2146'],
@@ -96,19 +100,62 @@ export const languagesOfCountry = cc => COUNTRY_LANGS[cc] || [];
 // ➤ for display.
 export const matchableTitle = t => T.clean(fold(t || '')
   .replace(/\/(?:a|o|as|os|es|ra|ora|ores|e|in|f|d|ta|ca|fa|na|la|da|va|ia|ica|ico|era|ona|essa|iva|trice|rice|euse|ere|ne|ienne)(?![a-z])/g, '')
-  .replace(/(?<=[a-z])(?:\((?:e|es|ne|trice|rice|ice|euse|ere)\)|·(?:e|es|ne|trice|rice|euse|ere))(?![a-z])/g, '')
-  .replace(/\((?:m|w|d|f|h|x|\/|\s)+\)/g, ' '));
+  .replace(/(?<=[a-z])(?:\((?:e|es|se|ne|trice|rice|ice|euse|ere)\)|·(?:e|es|ne|trice|rice|euse|ere))(?![a-z])/g, '')
+  .replace(/\((?:m|w|d|f|h|x|\/|\s)+\)/g, ' ')
+  // ➤ The graduate schemes' way of naming a graduate engineer ("Electrical Engineering Graduate").
+  .replace(/(?<![a-z])engineering graduates?(?![a-z])/g, 'graduate engineer')
+  // ➤ The misspellings of "engineer" found in the adverts left out ("Mooring & Subsea Enigneer").
+  .replace(/(?<![a-z])(?:enigneer|enginner|enginer|engeneer)(s?)(?![a-z])/g, 'engineer$1'));
+
+// ➤ The second reading, for a title the first found nothing in, cleans the words the way
+// ➤ occupationcoder does, the title coder of the ONS Data Science Campus (Turrell et al., 2019):
+// ➤ a plural reads as its singular, a hyphen or a slash separates words, and a few abbreviations
+// ➤ and misspellings are spelt out, so "Senior Project Engineers" reads as "senior project
+// ➤ engineer" and "CAD-Designer" as "cad designer". The index's titles are read the same way.
+// ➤ occupationcoder also drops the words no title of the index uses, then compares what is left
+// ➤ whole; this gate finds titles inside the advert's title, where a dropped word made "Site
+// ➤ Selection Manager" a site manager, so every word stays. docs/research/occupation-coding.md.
+// ➤ Plurals that are words of their own stay (occupationcoder's list, and "facilities"), and so
+// ➤ do words ending in -ics, -ss, -us or -is (electronics, process, campus, analysis).
+const KEEP_AS_IS = new Set(['accounts', 'claims', 'communications', 'complaints', 'events', 'goods', 'grounds', 'lettings', 'loans', 'operations', 'relations', 'sales', 'services', 'systems', 'years', 'facilities']);
+export const lemma = w => {
+  if (w.length <= 3 || KEEP_AS_IS.has(w) || /(?:ss|us|is|ics)$/.test(w)) return w;
+  if (w.endsWith('men')) return `${w.slice(0, -3)}man`;
+  if (w.endsWith('ies') && w.length > 4) return `${w.slice(0, -3)}y`;
+  if (/(?:sh|ch|x|z)es$/.test(w) || w.endsWith('sses')) return w.slice(0, -2);
+  return w.endsWith('s') ? w.slice(0, -1) : w;
+};
+// ➤ Abbreviations, and the misspellings found in the adverts left out (September 2026).
+const SPELT_OUT = { snr: 'senior', sr: 'senior', jnr: 'junior', jr: 'junior', mgr: 'manager', engr: 'engineer', enigneer: 'engineer', enginner: 'engineer', enginer: 'engineer', engeneer: 'engineer' };
+// ➤ Words are letters and digits: a hyphen or a slash separates them ("CAD-Designer").
+const lemmaWords = text => T.clean(text).split(/[^a-z0-9]+/).filter(Boolean).map(w => lemma(SPELT_OUT[w] || w));
+// ➤ A title as the second reading takes it, in pieces split where the title lists or joins
+// ➤ ("Ingeniero técnico o industrial", "Calculator / Werkvoorbereider"): a title is never found
+// ➤ across two pieces.
+const PIECES = /[/,;|()[\]&+·–—]| - |(?<![a-z])(?:or|and|o|y|u|et|ou|und|oder|en|og|och|eller)(?![a-z])/;
+const secondReading = title => T.clean(title).split(PIECES).map(piece => lemmaWords(piece).join(' ')).filter(Boolean);
 
 // ➤ The job titles of every family, per language, and the names among them (ESCO's preferred
-// ➤ labels and the catalogue's own extra terms). The gate, the site (for the CV reader) and the
-// ➤ tests all build them here. catalogue: families.json; codes: { isco: codes/isco.json }.
+// ➤ labels and the catalogue's own extra terms). ESCO's titles come first; the official coding
+// ➤ indexes add theirs (codes/titles.json: the British and Dutch statistics offices'). The gate,
+// ➤ the site (for the CV reader) and the tests all build them here. catalogue: families.json;
+// ➤ codes: builder/codes.mjs.
+// ➤ ESCO's titles, but for the bare role words and those a national index files outside the
+// ➤ vertical (codes/titles.json, not_ours): the national statistics office decides.
+const escoTitles = codes => {
+  const notOurs = Object.fromEntries(Object.entries(codes.titles?.not_ours || {}).map(([lang, list]) => [lang, new Set(list.map(T.clean))]));
+  return lang => label => usableTitle(label) && !notOurs[lang]?.has(T.clean(label));
+};
+
 export function familyTerms(catalogue, codes = {}) {
   const out = {};
+  const escoKept = escoTitles(codes);
   for (const f of catalogue.families || catalogue) {
     const labels = {}, preferred = new Set();
     for (const c of f.isco || []) {
-      for (const [lang, list] of Object.entries(codes.isco?.units?.[c]?.labels || {})) (labels[lang] ||= []).push(...list.filter(usableTitle));
+      for (const [lang, list] of Object.entries(codes.isco?.units?.[c]?.labels || {})) (labels[lang] ||= []).push(...list.filter(escoKept(lang)));
       for (const list of Object.values(codes.isco?.units?.[c]?.preferred || {})) for (const l of list) preferred.add(T.clean(l));
+      for (const [lang, list] of Object.entries(codes.titles?.units?.[c] || {})) (labels[lang] ||= []).push(...list.filter(usableTitle));
     }
     for (const [lang, list] of Object.entries(f.extra_terms || {})) { (labels[lang] ||= []).push(...list); for (const l of list) preferred.add(T.clean(l)); }
     out[f.id] = { labels, preferred: [...preferred] };
@@ -116,7 +163,7 @@ export function familyTerms(catalogue, codes = {}) {
   return out;
 }
 
-// ➤ codes: { isco: codes/isco.json, ssyk: codes/ssyk-isco.json }.
+// ➤ codes: builder/codes.mjs (isco.json, ssyk-isco.json, titles.json).
 export function compileFamilies(catalogue, codes = {}) {
   const families = catalogue.families || catalogue;
   const byIsco = new Map();
@@ -139,31 +186,67 @@ export function compileFamilies(catalogue, codes = {}) {
     if (blockers[lang]?.length) lists[BLOCKERS] = blockers[lang];
     index[lang] = T.index(lists);
   }
+  // ➤ The same titles as the second reading takes them, per language, but for the pieces of a
+  // ➤ list ESCO split ("Klima-" of "Heizungs-/Klima-/Sanitärtechnik"): without their hyphen
+  // ➤ they would read as titles.
+  const reduced = {};
+  const piece = l => /^\s*-|-\s*$/.test(l);
+  for (const lang of Object.keys(index)) {
+    const lists = {};
+    for (const f of families) for (const l of terms[f.id].labels[lang] || []) if (!piece(l)) (lists[f.id] ||= []).push(lemmaWords(l).join(' '));
+    for (const l of blockers[lang] || []) if (!piece(l)) (lists[BLOCKERS] ||= []).push(lemmaWords(l).join(' '));
+    reduced[lang] = T.index(lists);
+  }
+  const reducedTitles = families.map(f => ({ id: f.id, preferred: new Set(terms[f.id].preferred.map(p => lemmaWords(p).join(' '))) }));
+  // ➤ Titles that stop being ours in an industry the advert's title names (codes/titles.json),
+  // ➤ under both readings' spelling of the title.
+  const contexts = new Map();
+  for (const [t, words] of Object.entries(codes.titles?.contexts || {})) { const w = new Set(words.map(lemma)); contexts.set(T.clean(t), w); contexts.set(lemmaWords(t).join(' '), w); }
   // ➤ Which ESCO occupation each title names, per family and language: a title's match says
   // ➤ which occupation it is, not only which family.
+  const escoKept = escoTitles(codes);
   const occupations = {};
   for (const f of families) for (const c of f.isco || []) for (const o of codes.isco?.units?.[c]?.occupations || []) {
     for (const [lang, list] of Object.entries(o.labels || {})) {
       const m = ((occupations[f.id] ||= {})[lang] ||= new Map());
-      for (const l of list.filter(usableTitle)) { const k = T.clean(l); m.set(k, [...new Set([...(m.get(k) || []), o.code])]); }
+      for (const l of list.filter(escoKept(lang))) { const k = T.clean(l); m.set(k, [...new Set([...(m.get(k) || []), o.code])]); }
     }
   }
-  return { families, byIsco, bySsyk, titles, index, occupations, generic: T.alternation(ENGINEER_WORDS), genericFamily: byIsco.get(GENERIC_FAMILY) || null, ictFamily: byIsco.get(ICT_FAMILY) || null };
+  return { families, byIsco, bySsyk, titles, index, reduced, reducedTitles, contexts, occupations, generic: T.alternation(ENGINEER_WORDS), genericFamily: byIsco.get(GENERIC_FAMILY) || null, ictFamily: byIsco.get(ICT_FAMILY) || null };
 }
 
-// ➤ What a cleaned title names, by ESCO's titles: the families that stand by the rule, and
-// ➤ whether an outside occupation matched with nothing of ours over it. The gate asks this
-// ➤ twice for each advert (its families, then its occupations): the last answer is kept.
+// ➤ What a cleaned title names, by the index's titles: the families that stand by the rule, and
+// ➤ whether an outside occupation matched with nothing of ours over it. A title the first
+// ➤ reading finds nothing in is read a second time (above). The gate asks this twice for each
+// ➤ advert (its families, then its occupations): the last answer is kept.
 function titleFamilies(title, langs, gate) {
   const key = `${title}\n${langs.join(',')}`;
   if (gate.last?.key === key) return gate.last.value;
-  const found = langs.map(lang => (gate.index[lang] ? T.find(gate.index[lang], title) : new Map()));
-  const hits = [];
-  for (const fam of gate.titles) langs.forEach((lang, i) => { for (const text of found[i].get(fam.id) || []) hits.push({ id: fam.id, text, named: fam.preferred.has(text), lang }); });
-  const blocks = found.flatMap(f => f.get(BLOCKERS) || []);
+  const read = (indexes, titles, text) => {
+    const found = langs.map(lang => (indexes[lang] ? T.find(indexes[lang], text) : new Map()));
+    const hits = [];
+    for (const fam of titles) langs.forEach((lang, i) => { for (const t of found[i].get(fam.id) || []) hits.push({ id: fam.id, text: t, named: fam.preferred.has(t), lang }); });
+    return { hits, blocks: found.flatMap(f => f.get(BLOCKERS) || []) };
+  };
+  let { hits, blocks } = read(gate.index, gate.titles, title);
+  // ➤ What may shut the title out of the routes that follow: only what the first reading found.
+  // ➤ A title outside the vertical that only the second reading finds still stands over our
+  // ➤ titles inside it, but ESCO's odd alternative titles ("help-desk technician" among sales
+  // ➤ jobs) never close the routes to a title the first reading found nothing in.
+  let blocking = blocks;
+  if (!hits.length && !blocks.length && gate.reduced) {
+    const found = secondReading(title).map(piece => read(gate.reduced, gate.reducedTitles, piece));
+    hits = found.flatMap(f => f.hits);
+    blocks = found.flatMap(f => f.blocks);
+    blocking = [];
+  }
+  if (hits.length && gate.contexts?.size) {
+    const words = new Set(lemmaWords(title));
+    hits = hits.filter(h => ![...(gate.contexts.get(h.text) || [])].some(w => words.has(w)));
+  }
   const kept = T.winners(hits, blocks);
   const all = [...hits.map(h => h.text), ...blocks];
-  const blocked = !kept.length && blocks.some(b => !all.some(o => T.inside(b, o)));
+  const blocked = !kept.length && blocking.some(b => !all.some(o => T.inside(b, o)));
   const value = { families: [...new Set(kept.map(h => h.id))], blocked, texts: [...new Set(kept.map(h => h.text))], hits };
   gate.last = { key, value };
   return value;
@@ -233,7 +316,7 @@ export function classifier(gate) {
 // ➤ Title terms that mean "not the job you think": a sales role that names a product, a
 // ➤ recruiter hiring engineers, an internship, a labourer. In the sources' languages, kept
 // ➤ short; the visitor has vetoes of their own in the profile code.
-const HYGIENE = /(?:^|[^a-z0-9])(?:sales|vendedora?|venedora?|comercial|saljare|forsaljare|verkoper|vendeur|vendeuse|verkaufer|verkauferin|account manager|recruiter|talent acquisition|internship|intern|praktikum|stagiaire|stage\b|becario|becaria|practicas|apprentice|apprenti|azubi|trainee|peon|peones|peona|prodejce|prodavac|prodavacka|pardavejas|pardaveja|pardevejs|pardeveja|praktikant|praktikantka|praktikantas|praktikante|stazista|stazuotojas|delnik|delnice|ai trainer|ai training|ai tutor|data collector|data labeling|data labelling|annotator|survey|study participant|task based|freelance rater|working student|werkstudent|werkstudentin|ausbildung|store ?#? ?[0-9]+|store manager|store associate|retail assistant|retail associate|shop assistant|barista|cashier|crew member|machine operator|production operator|quality control operator|qc operator|assembly operator|packing operator|forklift)(?![a-z0-9])/;
+const HYGIENE = /(?:^|[^a-z0-9])(?:sales|vendedora?|venedora?|comercial|saljare|forsaljare|verkoper|vendeur|vendeuse|verkaufer|verkauferin|account manager|recruiter|talent acquisition|internship|apprenticeship|intern|praktikum|stagiaire|stage\b|becario|becaria|practicas|apprentice|apprenti|azubi|trainee|thesis|masterarbeit|bachelorarbeit|abschlussarbeit|diplomarbeit|examensarbete|exjobb|afstudeeropdracht|afstudeerstage|tfm|tfg|peon|peones|peona|prodejce|prodavac|prodavacka|pardavejas|pardaveja|pardevejs|pardeveja|praktikant|praktikantka|praktikantas|praktikante|stazista|stazuotojas|delnik|delnice|ai trainer|ai training|ai tutor|data collector|data labeling|data labelling|annotator|survey|study participant|task based|freelance rater|working student|werkstudent|werkstudentin|ausbildung|store ?#? ?[0-9]+|store manager|store associate|retail assistant|retail associate|shop assistant|barista|cashier|crew member|machine operator|production operator|quality control operator|qc operator|assembly operator|packing operator|forklift)(?![a-z0-9])/;
 export function hygieneReason(raw) {
   return HYGIENE.test(fold(raw.title || '')) ? 'title names a sales, recruiting, trainee, labourer, retail, operative or gig role' : null;
 }

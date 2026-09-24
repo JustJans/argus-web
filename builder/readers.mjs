@@ -5,6 +5,7 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { compileFamilies } from './gate.mjs';
+import { readCodes } from './codes.mjs';
 import { deadline } from './http.mjs';
 import { readBoard, wrapBoardAdvert, loadCompanies } from './adapters/boards.mjs';
 import * as careers from './adapters/careers.mjs';
@@ -18,7 +19,7 @@ let shared = null;
 export function adapterCtx(log = () => {}, fail = () => {}) {
   if (!shared) {
     const read = p => JSON.parse(readFileSync(join(ROOT, ...p.split('/')), 'utf-8'));
-    const gate = compileFamilies(read('catalogues/families.json'), { isco: read('catalogues/codes/isco.json'), ssyk: read('catalogues/codes/ssyk-isco.json') });
+    const gate = compileFamilies(read('catalogues/families.json'), readCodes(ROOT));
     shared = { families: read('catalogues/families.json').families, iscoUnits: [...gate.byIsco.keys()], ssykGroups: [...gate.bySsyk.keys()], companies: loadCompanies() };
   }
   return { ...shared, log, fail };

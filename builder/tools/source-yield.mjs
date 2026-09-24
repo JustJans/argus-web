@@ -8,6 +8,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { compileFamilies, familiesOf, hygieneReason } from '../gate.mjs';
+import { readCodes } from '../codes.mjs';
 import { compileCountries, toRecord } from '../normalise.mjs';
 import { compileScreens } from '../screens.mjs';
 import { eachSource } from '../store.mjs';
@@ -20,7 +21,7 @@ const OUT = join(ROOT, 'builder', 'state', 'source-yield.json');
 
 const read = p => JSON.parse(readFileSync(join(ROOT, ...p.split('/')), 'utf-8'));
 const catalogue = read('catalogues/families.json');
-const gate = compileFamilies(catalogue, { isco: read('catalogues/codes/isco.json'), ssyk: read('catalogues/codes/ssyk-isco.json') });
+const gate = compileFamilies(catalogue, readCodes(ROOT));
 const countries = read('catalogues/countries.json').countries;
 const cc = compileCountries(countries);
 const screens = compileScreens({ degrees: read('catalogues/degrees.json'), languages: read('catalogues/languages.json') });

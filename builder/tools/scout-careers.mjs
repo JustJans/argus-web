@@ -13,6 +13,7 @@ import yaml from 'js-yaml';
 import { get, getText } from '../http.mjs';
 import { parseRobots, allowed, parseSitemap, looksLikeJob, jobPostings, jobLinks } from '../lib/crawl.mjs';
 import { compileFamilies, familiesOf, hygieneReason } from '../gate.mjs';
+import { readCodes } from '../codes.mjs';
 import { compileCountries, placeOf } from '../normalise.mjs';
 
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
@@ -31,7 +32,7 @@ const tlds = String(flag('--tlds', EUROPE_TLDS.join(','))).split(',');
 const limit = Number(flag('--limit', 0)) || 0;
 
 const read = p => JSON.parse(readFileSync(join(ROOT, ...p.split('/')), 'utf-8'));
-const gate = compileFamilies(read('catalogues/families.json'), { isco: read('catalogues/codes/isco.json'), ssyk: read('catalogues/codes/ssyk-isco.json') });
+const gate = compileFamilies(read('catalogues/families.json'), readCodes(ROOT));
 const countryList = read('catalogues/countries.json').countries;
 const countries = compileCountries(countryList);
 const europe = new Set(countryList.map(c => c.iso));

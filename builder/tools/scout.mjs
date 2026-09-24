@@ -15,6 +15,7 @@ import yaml from 'js-yaml';
 import { ATS, loadVendors } from '../adapters/boards.mjs';
 import { getJson, getText, deadline } from '../http.mjs';
 import { compileFamilies, familiesOf, hygieneReason } from '../gate.mjs';
+import { readCodes } from '../codes.mjs';
 import { compileCountries, placeOf } from '../normalise.mjs';
 
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
@@ -148,7 +149,7 @@ function writeFound(probed, collected_at, log = console.log) {
 
 async function probeAll(log = console.log) {
   const read = p => JSON.parse(readFileSync(join(ROOT, ...p.split('/')), 'utf-8'));
-  const gate = compileFamilies(read('catalogues/families.json'), { isco: read('catalogues/codes/isco.json'), ssyk: read('catalogues/codes/ssyk-isco.json') });
+  const gate = compileFamilies(read('catalogues/families.json'), readCodes(ROOT));
   const countryList = read('catalogues/countries.json').countries;
   const countries = compileCountries(countryList);
   const europe = new Set(countryList.map(c => c.iso));
