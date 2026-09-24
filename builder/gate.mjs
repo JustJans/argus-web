@@ -37,9 +37,10 @@ const ROLE_WORDS = ['technician', 'técnico', 'técnica', 'tècnic', 'tècnica',
 const GENERIC_WORDS = new Set([...ENGINEER_WORDS, ...ROLE_WORDS].map(T.clean));
 const usableTitle = label => !GENERIC_WORDS.has(T.clean(label));
 // ➤ Words that put a title outside the vertical whatever else it says: sales (ISCO 24), teaching
-// ➤ (23) and facilities management (1219, as the ONS files it), in the sources' languages. Read
-// ➤ only when the title, not a code, decides.
-const OUTSIDE_WORDS = /(?:^|[^a-z0-9])(?:marketing (?:manager|lead|specialist|director|executive|coordinator|officer|assistant|analyst|consultant|associate|intern|manager)|head of marketing|growth marketing|product marketing|content marketing|performance marketing|brand manager|verkoopmedewerker|kundenberater|kundenberaterin|customer service|customer success manager|account executive|ingenieur commercial|ingenieure commerciale|ingenieur d affaires|technico[ -]commerciale?|vertrieb[a-z]*|facility manager|facilities manager|business developer|business development|comercial|ventas|sales|profesor|profesora|professor|docente|teacher|lecturer|formador|formadora|pardavimu|pardosanas|tirdzniecibas|prekybos|obchodni|prodej|ucitel|ucitelka|mokytojas|skolotajs)(?![a-z0-9])/;
+// ➤ (23), facilities management (1219, as the ONS files it) and property or project development
+// ➤ (the French "développeur de projet"), in the sources' languages. Read only when the title, not
+// ➤ a code, decides.
+const OUTSIDE_WORDS = /(?:^|[^a-z0-9])(?:marketing (?:manager|lead|specialist|director|executive|coordinator|officer|assistant|analyst|consultant|associate|intern|manager)|head of marketing|growth marketing|product marketing|content marketing|performance marketing|brand manager|verkoopmedewerker|kundenberater|kundenberaterin|customer service|customer success manager|account executive|ingenieur commercial|ingenieure commerciale|ingenieur d affaires|technico[ -]commerciale?|vertrieb[a-z]*|developpeu(?:r|se) (?:de projets?|foncier|fonciere|commercial|commerciale|d affaires)|facility manager|facilities manager|business developer|business development|comercial|ventas|sales|profesor|profesora|professor|docente|teacher|lecturer|formador|formadora|pardavimu|pardosanas|tirdzniecibas|prekybos|obchodni|prodej|ucitel|ucitelka|mokytojas|skolotajs)(?![a-z0-9])/;
 // ➤ The computing vocabulary of job titles, in the sources' languages and in the English of
 // ➤ company boards: a title that carries one and names no occupation ESCO knows is still a
 // ➤ software job, and lands in ICT_FAMILY rather than among the engineers.

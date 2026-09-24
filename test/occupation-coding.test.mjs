@@ -52,6 +52,7 @@ eq([families('HVAC Service Technician'), families('Release Train Engineer')], [[
 // What the sources' own categories showed the gate missing or letting in (September 2026).
 eq([families('Vertriebsmitarbeiter Nord-Ost-Deutschland (m/w) Hospitality Solutions', 'de'), families('Hoofduitvoerder Wegenbouw - A2 Limburg', 'nl')], [[], ['3123']], 'German sales stays out; a head site supervisor is a site supervisor');
 eq([families('Programmeur·se Senior C++', 'fr'), families('Développeur(se) Front-End Vue.js (H/F)', 'fr')], [['2512'], ['2513']], 'French programmers and front-end developers, whatever their gender mark or hyphen');
+eq([families('Développeur(se) de Projet Real Estate – Bruxelles', 'fr'), families('Développeur foncier', 'fr')], [[], []], 'a French project or land developer builds property, not software');
 ok(hygieneReason({ title: 'Berufsausbildung Fachinformatiker für Systemintegration (m/w/d)' }), 'a vocational training place is hygiene, as an Ausbildung is');
 
 // Where ESCO and a national index disagree, the national statistics office decides.

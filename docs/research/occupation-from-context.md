@@ -99,7 +99,8 @@ the categories are wrong in both directions:
   Each would have to reach 95% precision on the labelled set before reaching production.
 
 What the categories did show were a few gaps in the gate, now mended:
-- German sales ("Vertrieb…") as an outside word;
+- German sales ("Vertrieb…") and French project or land developers ("développeur de projet",
+  "développeur foncier") as outside words;
 - "Berufsausbildung" as hygiene, like an Ausbildung;
 - the French "·se" gender mark;
 - "programmeur" and "développeur" as computing words;
