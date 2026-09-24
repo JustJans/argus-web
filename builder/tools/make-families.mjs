@@ -114,7 +114,7 @@ const FRENCH = {
 // ➤ bouw", 3123), and BIM is filed with CAD as in English.
 const DUTCH = {
   3112: ['werkvoorbereider'],
-  3123: ['uitvoerder'],
+  3123: ['uitvoerder', 'hoofduitvoerder'],
   3118: ['bim modelleur', 'bim coördinator', 'bim coordinator', 'bim engineer', 'bim tekenaar'],
 };
 const SPANISH = {

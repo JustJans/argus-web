@@ -5,7 +5,7 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { harness } from 'argus/server-bot/test-harness.mjs';
-import { compileFamilies, classifier, lemma } from '../builder/gate.mjs';
+import { compileFamilies, classifier, lemma, hygieneReason } from '../builder/gate.mjs';
 import { readCodes } from '../builder/codes.mjs';
 
 const { ok, eq, done } = harness('occupation coding');
@@ -48,6 +48,11 @@ eq([families('Payroll Administrator'), families('Windows & Doors Fitter'), famil
 eq([families('Office & Facilities Manager'), families('Truck Workshop Technician'), families('Ingénieur Technico-Commercial', 'fr')], [[], [], []], 'facilities management, vehicle workshops and technical sales are not ours');
 eq(families('Bauleitender Monteur SHK / Obermonteur Sanitär Heizung Klima', 'de'), [], 'a piece of a list ESCO split is not a title');
 eq([families('HVAC Service Technician'), families('Release Train Engineer')], [[], ['2149']], 'a heating service technician is a trade, and an agile release train engineer no train engineer');
+
+// What the sources' own categories showed the gate missing or letting in (September 2026).
+eq([families('Vertriebsmitarbeiter Nord-Ost-Deutschland (m/w) Hospitality Solutions', 'de'), families('Hoofduitvoerder Wegenbouw - A2 Limburg', 'nl')], [[], ['3123']], 'German sales stays out; a head site supervisor is a site supervisor');
+eq([families('Programmeur·se Senior C++', 'fr'), families('Développeur(se) Front-End Vue.js (H/F)', 'fr')], [['2512'], ['2513']], 'French programmers and front-end developers, whatever their gender mark or hyphen');
+ok(hygieneReason({ title: 'Berufsausbildung Fachinformatiker für Systemintegration (m/w/d)' }), 'a vocational training place is hygiene, as an Ausbildung is');
 
 // Where ESCO and a national index disagree, the national statistics office decides.
 eq([families('Junior CNC Operator', 'nl'), families('Facility Manager')], [[], []], 'ESCO\'s "CNC-operator" and "facility manager" are a machine operator and a facilities manager (CBS 7223, ONS 1219)');
