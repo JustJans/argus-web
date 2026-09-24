@@ -110,14 +110,17 @@ const onMap = locate(kept, towns);
 stage('towns');
 
 // ➤ Titles in English, as the bot shows them, and in Spanish for the Spanish site; a cache on
-// ➤ disk per language (keyed by the title alone) means only new titles are asked.
+// ➤ disk per language (keyed by the title alone) means only new titles are asked. Spanish goes
+// ➤ first: nearly every title needs it, and the languages Azure detects on the way spare the
+// ➤ English pass the titles already written in English.
 if (!args.includes('--no-translate')) {
-  for (const [target, field, name] of [['en', 'te', 'English'], ['es', 'ts', 'Spanish']]) {
+  const detected = new Map();
+  for (const [target, field, name] of [['es', 'ts', 'Spanish'], ['en', 'te', 'English']]) {
     const cachePath = join(ROOT, 'builder', 'state', `titles-${target}.json`);
     const cache = loadCache(cachePath);
-    const t = await translateTitles(kept, { target, field, cache, log });
+    const t = await translateTitles(kept, { target, field, cache, detected, log });
     saveCache(cachePath, cache);
-    log(`titles: ${t.translated} in ${name} (${t.asked} new titles asked in ${t.requests} requests${t.spare ? `, ${t.spare} through the spare translator` : ''}${t.limited ? ', the first translator is shut to this machine' : ''})`);
+    log(`titles: ${t.translated} in ${name} (${t.asked} new titles asked in ${t.requests} requests, ${t.used} characters of Azure's month${t.spare ? `, ${t.spare} through the spare translator` : ''})`);
   }
 }
 stage('translation');
