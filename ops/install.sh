@@ -10,12 +10,13 @@ echo "[$(date -u +%FT%TZ)] install at $(git rev-parse --short HEAD)"
 [ -d node_modules ] || npm ci --silent --no-audit --no-fund
 node builder/tools/migrate-store.mjs
 
-# Only the lines that name this project are replaced; the rest of the crontab is untouched.
+# Only this project's own lines (those that cd into it) are replaced; the rest of the crontab is
+# untouched, comments that merely mention it included.
 tmp=$(mktemp)
-crontab -l 2>/dev/null | grep -v 'argus-web' > "$tmp" || true
+crontab -l 2>/dev/null | grep -v -F 'cd $HOME/argus-web &&' > "$tmp" || true
 grep -v '^#' ops/crontab | grep . >> "$tmp"
 crontab "$tmp"
 rm -f "$tmp"
 echo "this project's lines in the schedule:"
-crontab -l | grep argus-web
+crontab -l | grep -F 'cd $HOME/argus-web &&'
 echo "next: node builder/crawl.mjs --minutes 50   (the first fill; --status says how it goes)"
