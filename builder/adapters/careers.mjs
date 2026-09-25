@@ -68,21 +68,18 @@ export function loadSites() {
   const read = f => ['config', 'state/found'].flatMap(dir => { const p = join(ROOT, 'builder', ...dir.split('/'), f); return existsSync(p) ? (yaml.load(readFileSync(p, 'utf-8')) || {}).sites || [] : []; });
   const hand = read('careers.yml');
   const seen = new Set(hand.map(keyOf));
-  // ➤ A found site on a host an earlier entry already reads ("www." or not) is that site again,
-  // ➤ and an address still holding its page's template ("${…}") is no address.
-  const hosts = new Set(hand.map(hostOf));
+  // ➤ Two lists on one host are two sources: each names its own way in (a sitemap per region, a
+  // ➤ listing), and the pages one reads are often not the other's; the requests to the host
+  // ➤ share its pace either way (builder/http.mjs). Only the same address twice is read once, and
+  // ➤ an address still holding its page's template ("${…}") is no address.
   const out = [...hand];
   for (const s of [...read('hunted.yml'), ...read('careers-found.yml')]) {
     const k = keyOf(s);
-    if (!k || seen.has(k) || hosts.has(hostOf(s)) || /\$\{|\$%7B/i.test(k)) continue;
-    seen.add(k); hosts.add(hostOf(s));
+    if (!k || seen.has(k) || /\$\{|\$%7B/i.test(k)) continue;
+    seen.add(k);
     out.push({ ...s, found: true });
   }
   return out.filter(s => s.enabled !== false && keyOf(s));
-}
-function hostOf(site) {
-  const k = String(keyOf(site) || '');
-  try { return (/^https?:\/\//.test(k) ? new URL(k).host : k).toLowerCase().replace(/^www\./, ''); } catch { return k.toLowerCase(); }
 }
 
 // ➤ Where a host's vacancies are read from: the sitemaps its robots.txt names, else the
