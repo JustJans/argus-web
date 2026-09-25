@@ -1,23 +1,21 @@
-// ➤ The loop on the front page: today's offers, a new one entering at the top every five
-// ➤ seconds while every row eases down one slot, the middle row almost solid and the others
-// ➤ fading towards the edges. Only the middle row can be clicked or reached with the keyboard.
-// ➤ It waits while the pointer or the focus is on it and while the tab is hidden, stays still
-// ➤ when the visitor asks for reduced motion, and its Pause button stops it (WCAG 2.2.2:
-// ➤ anything that moves for more than five seconds can be paused).
+// ➤ The loop on the front page, there for the look: today's offers sliding down one slot every
+// ➤ two seconds, a new one entering at the top, all of them faint and the middle one a little
+// ➤ less so. Only the middle row can be clicked or reached with the keyboard. It waits while
+// ➤ the pointer or the focus is on it and while the tab is hidden, and stays still when the
+// ➤ visitor asks the system for reduced motion.
 const EASE = 'cubic-bezier(.45,.05,.25,1)';
-const OPACITY = [0.92, 0.32, 0.12];   // ➤ by slots from the middle
+const OPACITY = [0.55, 0.25, 0.1];   // ➤ by slots from the middle
 const narrow = globalThis.matchMedia?.('(width < 47.5625rem)');
 const still = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
 
-// ➤ box: where the loop goes; offers: today's; row(offer): the link a row shows; button: the
-// ➤ Pause button, and label(paused) its words.
-export function startLoop(box, offers, { row, button, label, interval = 5000, slide = 2300 }) {
+// ➤ box: where the loop goes; offers: today's; row(offer): the link a row shows.
+export function startLoop(box, offers, { row, interval = 2000, slide = 1500 }) {
   if (!offers.length) return;
   const rows = document.createElement('div');
   rows.className = 'loop__rows';
   box.replaceChildren(rows);
   const live = new Map();
-  let tick = 0, paused = false, held = false;
+  let tick = 0, held = false;
 
   // ➤ Five rows of 76px on a desk, three of 92px on a phone; the row just above waits unseen,
   // ➤ and the one just below fades out.
@@ -50,19 +48,11 @@ export function startLoop(box, offers, { row, button, label, interval = 5000, sl
   }
   place(false);
 
-  const moves = () => !paused && !held && !still?.matches && !document.hidden && box.offsetParent !== null;
+  const moves = () => !held && !still?.matches && !document.hidden && box.offsetParent !== null;
   setInterval(() => { if (moves()) { tick++; place(true); } }, interval);
   narrow?.addEventListener('change', () => place(false));
   box.addEventListener('pointerenter', () => { held = true; });
   box.addEventListener('pointerleave', () => { held = false; });
   box.addEventListener('focusin', () => { held = true; });
   box.addEventListener('focusout', () => { held = false; });
-  if (button && !still?.matches) {
-    button.hidden = false;
-    button.addEventListener('click', () => {
-      paused = !paused;
-      button.setAttribute('aria-pressed', String(paused));
-      label(paused);
-    });
-  }
 }

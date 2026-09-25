@@ -63,7 +63,6 @@ export default {
     'must appear in the title': 'deben salir en el título',
     'words that rule an offer out': 'palabras que descartan una oferta',
     "Today's offers": 'Ofertas de hoy',
-    'Pause': 'Pausa',
     'Read my CV': 'Leer mi CV',
     'A PDF or text file, read on this device: it ticks your occupations, degrees and languages.': 'Un PDF o un archivo de texto, leído en este dispositivo: marca tus ocupaciones, titulaciones e idiomas.',
     'Your code': 'Tu código',
@@ -133,8 +132,6 @@ export default {
     'That code could not be read. Check it was copied whole.': 'Ese código no se puede leer. Comprueba que esté copiado entero.',
     'Title, company, town, or paste your code': 'Puesto, empresa, ciudad o pega tu código',
     'Title, company, town or code': 'Puesto, empresa, ciudad o código',
-    'Pause': 'Pausa',
-    'Play': 'Reanudar',
     'The pile is not published yet. Come back in a few hours.': 'La lista aún no está publicada. Vuelve dentro de unas horas.',
     'via {source}': 'vía {source}',
     // ➤ The two sources named by what they are, not by a name of their own.
