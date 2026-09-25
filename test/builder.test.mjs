@@ -272,6 +272,9 @@ ok(idFor('https://cvvp.nva.gov.lv/#/pub/vakances/1') !== idFor('https://cvvp.nva
   eq(dedupe([at('https://a/1', 'Madrid', 'es'), at('https://a/2', 'München', 'de')]).kept.length, 2, 'the same job in two towns is two offers');
   eq(dedupe([at('https://a/1', 'Munich', 'de'), at('https://a/2', 'München', 'de')], rec => (/^m(?:unich|ünchen)$/i.test(rec.ci) ? '#muc' : rec.ci)).kept.length, 1, 'and one when the place reader says both names are one town');
   eq(dedupe([at('https://a/1', 'Madrid', 'es', '2026-09-20'), at('https://a/2', 'Madrid', 'es', '')]).kept[0].d, '2026-09-20', 'a copy with no day does not beat one with a day');
+  const campaign = Array.from({ length: 12 }, (_, i) => at(`https://c/${i}`, `Town ${i}`, i < 8 ? 'nl' : 'be'));
+  eq(dedupe(campaign).kept.map(r => r.cc).sort(), ['be', 'nl'], 'a company and title in more than ten towns is a campaign: once per country');
+  eq(dedupe(campaign.slice(0, 3)).kept.length, 3, 'in a few towns, a job per town');
 }
 
 // ── Shards ──────────────────────────────────────────────────────────────
