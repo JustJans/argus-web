@@ -29,9 +29,11 @@ for (const s of loadSites()) {
 }
 
 const picked = [];
+const taken = new Set();
 for (const [host, h] of Object.entries(hosts)) {
   const b = bare(host);
-  if (!h.kept || isBoardHost(b) || known.has(b)) continue;
+  // ➤ "www.acme.com" and "acme.com" are one host: it goes in once.
+  if (!h.kept || isBoardHost(b) || known.has(b) || taken.has(b)) continue;
   const orgs = Object.entries(h.orgs || {}).sort((a, c) => c[1] - a[1]);
   const total = orgs.reduce((n, [, c]) => n + c, 0);
   // ➤ One organisation on most of the pages is an employer; many are a board.
@@ -40,6 +42,7 @@ for (const [host, h] of Object.entries(hosts)) {
   const labels = b.split('.');
   const registrable = labels.length > 2 && /^(co|com|org|net|ac|gov|edu)$/.test(labels[labels.length - 2]) ? labels[labels.length - 3] : labels[labels.length - 2] || '';
   if (WORK.test(registrable) || WORK.test(orgs[0][0])) continue;
+  taken.add(b);
   picked.push({ host: b, name: orgs[0][0], kept: h.kept });
 }
 picked.sort((a, b) => b.kept - a.kept);

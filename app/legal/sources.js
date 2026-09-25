@@ -10,7 +10,7 @@ const r = await fetch(`${root}data/index.json`, { cache: 'no-cache' }).catch(() 
 if (!r || !r.ok) generated.textContent = t('The pile is not published yet.');
 else {
   const index = await r.json();
-  generated.textContent = t('{n} offers, rebuilt {when} UTC.', { n: number(index.counts.offers), when: String(index.generated_at).slice(0, 16).replace('T', ' ') });
+  generated.textContent = t('{n} offers, rebuilt {when} UTC.', { n: number(index.counts?.offers), when: String(index.generated_at || '').slice(0, 16).replace('T', ' ') });
   for (const s of Object.values(index.sources || {})) {
     const tr = document.createElement('tr');
     const name = document.createElement('td'), terms = document.createElement('td');
