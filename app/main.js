@@ -215,7 +215,7 @@ function draw() {
   const narrowed = words.length || placed || !isEmptyProfile(loaded.profile);
   // ➤ With no occupation and no country named, the site shows the newest of the pile rather
   // ➤ than downloading all of it: say so, and say what to do for the rest.
-  const onlyNewest = !loaded.profile.families.length && !loaded.profile.countries.length && !placed && index.latest?.files?.length;
+  const onlyNewest = !loaded.profile.families.length && !loaded.profile.countries.length && !loaded.profile.remote && !placed && index.latest?.files?.length;
   // ➤ How many match, large above the list. The status line says out of how many (the whole
   // ➤ pile, or the newest part of it that was searched) and where the ones that match are, the
   // ➤ fullest countries first.
