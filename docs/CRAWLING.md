@@ -133,7 +133,7 @@ shards in eleven minutes.
    - `domains-wikidata.mjs`: every company Wikidata places in one of the site's countries,
      with an official website and a staff count — names, no key, no account — minus what the
      lists already name → a queue of domains, biggest employers first.
-   - `hunt.mjs --file <queue> --take 400`: the daily slice of that queue. For each domain:
+   - `hunt.mjs --file <queue> --take 2000`: Sunday's slice of that queue. For each domain:
      its careers pages, which platform serves them, and the adverts, with no API key. What is
      readable is written to `builder/state/found/hunted.yml`, which the builder reads next to
      `config/` and which is never committed, so the server's own discoveries never fight a
@@ -158,7 +158,8 @@ shards in eleven minutes.
    Every read has a deadline, "too many requests" pauses that group until the host says come
    back, a source that fails waits up to six hours, then up to a day, then up to two (each wait
    drawn between half and the whole, so sources that failed together do not come back
-   together), and is parked after a fortnight. `builder/state/STOP` stops everything.
+   together), and is parked after fourteen failed tries, about four weeks. `builder/state/STOP`
+   stops everything.
 3. **Publishing** (`builder/build-pile.mjs`, every three hours): the pile is built from the
    store and nothing else, so a slow site never delays a publish and a publish never waits for
    the network. A source nobody could read for ten days leaves the pile; a build that would
@@ -208,7 +209,7 @@ shards in eleven minutes.
 - Employers' pages only, told from boards by the hiring organisation named on the pages.
 - Every advert links to the page it lives on; nothing personal kept; a takedown within 72 hours
   (see the Sources page).
-- The crawl of a site is bounded: at most 200 new pages a pass and 6,000 across a run, sitemaps
+- The crawl of a site is bounded: at most 200 new pages a pass and 12,000 across a run, sitemaps
   first, and one pass a day per site.
 
 ## What the vendor-hosted careers sites give away without JavaScript (checked 2026-09-06)
@@ -236,9 +237,10 @@ karriere, vacatures (and the usual paths), recognises the platform behind the pa
 and its slug, embedded or linked; a Workday or Oracle site; a `jobs.xml` feed; else a site with
 a sitemap or a listing), reads a sample and says how many adverts the gate keeps in Europe. It
 never follows a link to a job board, an agency or a social network.
-`--write` puts the readable ones in `builder/config/hunted.yml`, which the builder reads like
-`companies.yml` and `careers.yml`. Seen on the first run: Vestas by its feed (761 adverts),
-Van Oord by its sitemap (134 pages), DEME and Damen on Workday (named, switched off),
+`--write` puts the readable ones in `builder/state/found/hunted.yml` (the first run's are in
+`builder/config/hunted.yml`), which the builder reads like `companies.yml` and `careers.yml`.
+Seen on the first run: Vestas by its feed (761 adverts), Van Oord by its sitemap (134 pages),
+DEME and Damen on Workday (read since Workday was switched on),
 Boskalis and Aviva with careers pages whose vacancies are drawn by JavaScript.
 
 ## Intermediaries, on their own terms
