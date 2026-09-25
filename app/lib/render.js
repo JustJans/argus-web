@@ -19,6 +19,10 @@ function adzunaLabel(cc) {
   return tag;
 }
 
+// ➤ The title in the page's language (English, or Spanish on the Spanish site) when the
+// ➤ original is in another.
+const titleOf = o => (lang === 'es' ? o.ts : o.te) || o.t;
+
 // ➤ A card: the title, then the employer and the town, then the tags: the source outlined, then
 // ➤ the pay and the work mode when the source states them. The advert's own text is not shown:
 // ➤ the title, the employer and the place say what it is, and the link says the rest.
@@ -26,9 +30,7 @@ export function card(o, ctx) {
   const li = el('li', 'offer');
   const h = el('h3', 'offer__title');
   const href = safeUrl(o.u);
-  // ➤ The title in the page's language (English, or Spanish on the Spanish site) when the
-  // ➤ original is in another.
-  const shown = (lang === 'es' ? o.ts : o.te) || o.t;
+  const shown = titleOf(o);
   if (href) { const a = el('a', null, shown); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; h.append(a); } else h.textContent = shown;
   li.append(h);
   // ➤ The town, or the country when the advert names no town ("Remote" for no fixed country).
@@ -43,6 +45,22 @@ export function card(o, ctx) {
   if (o.dg?.length) tags.append(el('span', 'tag tag-neutral', t('degree: {list}', { list: o.dg.map(ctx.degreeName).join(' / ') })));
   li.append(tags);
   return li;
+}
+
+// ➤ A row of the front page's loop (lib/ticker.js): the advert's link, with its title, the
+// ➤ employer and the town, and the source, the pay and the work mode.
+export function loopRow(o, ctx) {
+  const a = el('a', 'loop__row');
+  const href = safeUrl(o.u);
+  if (href) { a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+  const text = el('div', 'loop__text');
+  text.append(el('div', 'loop__title', titleOf(o)), el('div', 'loop__meta', [o.c, o.ci || ctx.countryName(o.cc)].filter(Boolean).join(' · ')));
+  const tags = el('div', 'loop__tags');
+  tags.append(el('span', 'tag tag-outline', t('via {source}', { source: ctx.sourceName(o.s) })));
+  if (o.p) tags.append(el('span', 'tag tag-accent', payText(o.p)));
+  if (o.w) tags.append(el('span', 'tag tag-neutral', workModeLabel(o.w)));
+  a.append(text, tags);
+  return a;
 }
 
 // ➤ The intermediaries' adverts come after the employers' own, under one line that says so.

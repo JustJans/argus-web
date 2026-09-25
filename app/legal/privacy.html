@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="../style.css">
 </head>
 <body>
+<div class="relative isolate min-h-screen overflow-hidden">
+<div class="pointer-events-none absolute inset-0 -z-10" aria-hidden="true"></div>
 <div class="mx-auto max-w-[720px] px-5 pb-10 md:px-10 md:pb-14">
   <nav class="flex items-center gap-3 pt-3.5 md:gap-3.5 md:pt-[18px]" aria-label="Site">
     <a class="mr-auto font-head text-lg font-semibold uppercase tracking-[.04em] text-ink no-underline hover:text-ink md:text-xl" href="../">Argus Web</a>
@@ -19,7 +21,7 @@
     <!-- language menu -->
   </nav>
   <main>
-    <h1 class="m-0 mt-8 -ml-[.04em] font-head text-[40px] font-bold uppercase leading-none md:mt-12 md:text-[56px]">Privacy</h1>
+    <h1 class="m-0 mt-10 font-wide text-[36px] font-bold leading-none [font-stretch:108%] md:mt-12 md:text-[44px]">Privacy</h1>
     <p class="m-0 mt-3 text-base text-n-800">What this site does with your data.</p>
     <div class="mt-6 mb-8 h-px bg-line"></div>
     <div class="flex max-w-[52ch] flex-col gap-5">
@@ -29,6 +31,7 @@
       <p class="m-0 mt-2 text-[13px] leading-5 text-n-700">Pages are served by GitHub Pages, which keeps its own <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener noreferrer" target="_blank">access logs</a>. Every offer links to the site it lives on, without a referrer; what those sites do is theirs. A personal, non-commercial project by the maintainer of <a href="https://github.com/JustJans/argus" rel="noopener noreferrer" target="_blank">Argus</a>. Questions or removals: <a href="https://github.com/JustJans/argus-web/issues" rel="noopener noreferrer" target="_blank">open an issue</a>.</p>
     </div>
   </main>
+</div>
 </div>
 <script type="module" src="../lib/theme.js"></script>
 </body>
