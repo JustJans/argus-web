@@ -49,7 +49,10 @@ export function* eachSource(groups = null) {
     try { names = readdirSync(dir); } catch { continue; }
     for (const name of names) {
       if (!name.endsWith('.json')) continue;
-      try { yield JSON.parse(readFileSync(join(dir, name), 'utf8')); } catch { /* a file being written, or damaged: the next pass rewrites it */ }
+      // ➤ A damaged file is left out and said: the source's next pass rewrites it.
+      let data;
+      try { data = JSON.parse(readFileSync(join(dir, name), 'utf8')); } catch (e) { console.warn(`store: ${group}/${name} could not be read (${String(e.message).slice(0, 60)}); its next pass rewrites it`); continue; }
+      yield data;
     }
   }
 }

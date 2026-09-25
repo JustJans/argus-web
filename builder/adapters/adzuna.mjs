@@ -7,7 +7,7 @@
 // ➤ day cost no calls. Adverts link to Adzuna's page for the advert: the tracking bounce is
 // ➤ replaced by the details page, as Argus does. An intermediary: its adverts show in their own
 // ➤ section, after the employers' own.
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { mkdirSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { getJson } from '../http.mjs';
@@ -62,7 +62,7 @@ async function refresh(state, keys, log) {
         let j;
         try { j = await getJson(`https://api.adzuna.com/v1/api/jobs/${cc}/search/${page}?${params}`, { gapMs: 1200, tries: 1 }); calls++; } catch (e) {
           calls++;
-          if (/429/.test(e.message)) { limited = true; break outer; }
+          if (e.status === 429) { limited = true; break outer; }
           log(`adzuna ${cc} ${category} p${page}: ${e.message.slice(0, 80)}`); break;
         }
         const results = j.results || [];

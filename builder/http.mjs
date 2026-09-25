@@ -46,7 +46,8 @@ export async function get(url, { headers = {}, gapMs = 250, tries = 3, timeoutMs
         if (until - Date.now() > 60_000) break;   // ➤ a long wait: not worth a try now
         continue;
       }
-      if (res.status >= 500) { lastError = Object.assign(new Error(`${res.status} from ${host}`), { status: res.status }); continue; }
+      // ➤ A server error is tried again after a pause that grows (1 s, then 2 s), not at once.
+      if (res.status >= 500) { lastError = Object.assign(new Error(`${res.status} from ${host}`), { status: res.status }); if (attempt < tries - 1) await new Promise(r => setTimeout(r, 1000 * (attempt + 1))); continue; }
       return res;
     } catch (e) { lastError = e; }
   }

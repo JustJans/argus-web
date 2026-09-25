@@ -4,12 +4,12 @@ The structure is built for the changes already known. Each item names the seam.
 
 ## Sources
 - **More feeds** (France Travail, Norway's NAV, Poland's CBOP: each needs an account or a signed request from the owner): one file each in
-  `builder/adapters/`, registered in the `adapters` list of `builder/build-pile.mjs`. A feed
+  `builder/adapters/`, registered in `FEED_ADAPTERS` in `builder/sources.mjs`. A feed
   that carries occupation codes puts them in `codes` (`isco` or `ssyk`) and the gate uses
-  them; one that does not is classified by title. Keys go in GitHub Actions secrets and are
-  read from `process.env` inside the adapter.
+  them; one that does not is classified by title. Keys go in `builder/.env` on the server
+  (never in git) and are read from `process.env` inside the adapter.
 - **More company boards**: `node builder/tools/scout.mjs --collect` then `--probe` reads Common Crawl's
-  index for every board on the eight ATS hosts and writes `builder/config/companies-found.yml`
+  index for every board on the ten ATS hosts it knows and writes `builder/config/companies-found.yml`
   (thousands); `--write` writes it from what the probes answered so far; `builder/tools/discover.mjs
   "Company name"` probes one name. Re-run the scout monthly (Common Crawl publishes a new index every
   month); Workable allows about a thousand calls a day, so its slugs take several daily runs.
@@ -86,9 +86,6 @@ The structure is built for the changes already known. Each item names the seam.
 - **No memory of what you have seen.** Without accounts there is nothing to tie it to, and
   keeping a list on the visitor's device would break "nothing stored". Every visit shows the
   whole list again, on purpose.
-
-## Decisions waiting for the owner
-- **A Spanish interface**: the texts sit in the pages today; a strings file would come first.
 
 ## Money and law (when, and only when, wanted)
 - Ads: a certified consent tool before the first ad, the legal notice with the owner's

@@ -54,7 +54,8 @@ export async function* fetchAll(ctx) {
     // ➤ time and the others still come; only a run with nothing at all counts as a failure.
     let rows;
     try { rows = (await getJson(url, { gapMs: 1000 }))._data || []; } catch (e) { failed++; ctx.log(`uzt ${m}: skipped (${e.message.slice(0, 60)})`); continue; }
-    ctx.log(`uzt ${m}: ${rows.length}`);
+    // ➤ One query per group, at most 2,000 rows: a group that fills them is cut, and says so.
+    ctx.log(`uzt ${m}: ${rows.length}${rows.length >= 2000 ? ' (the limit: the rest of this group is not read)' : ''}`);
     for (const r of rows) if (r.darbo_vietos_id) yield toRaw(r);
   }
   if (failed && failed === minors.length) throw new Error('every group failed');

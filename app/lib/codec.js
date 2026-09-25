@@ -5,12 +5,14 @@
 // ➤ the same file runs in the browser and under Node's tests.
 
 // ➤ Version 4 (2026-09-23): the work modes wanted and the pay (a yearly minimum in thousands of
-// ➤ euros, and whether to keep only the offers that state pay). Version 3 (2026-09-23):
+// ➤ euros, and whether to keep only the offers that state pay). Version 3 (2026-09-22):
 // ➤ specialties inside the families (ESCO's occupations), a town and a distance around it, and
 // ➤ more posted windows. Codes of versions 2 and 3 read as they always did; a version-1 code
 // ➤ named families that no longer exist and is refused with a message to make a new one.
 export const VERSION = 4;
-const FAMILY_BYTES = 8, LANGUAGE_BYTES = 2, DEGREE_BYTES = 4;
+// ➤ The room each catalogue has in a code (test/codec.test.mjs fails when one outgrows it:
+// ➤ the next language, the 17th, needs a new version of the code).
+export const FAMILY_BYTES = 8, LANGUAGE_BYTES = 2, DEGREE_BYTES = 4;
 export const MAX_YEARS_STEPS = [null, 1, 2, 3, 5, 7, 10, 15];   // ➤ 3 bits
 export const LEVELS = ['any', 'junior', 'mid', 'senior'];         // ➤ 2 bits
 export const HIGHEST = ['none', 'bachelor', 'master', 'phd'];     // ➤ 2 bits

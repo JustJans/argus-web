@@ -151,6 +151,10 @@ const out = {
   groups: GROUPS.map(g => ({ id: g.id, label: g.label, es: g.es, isco: g.isco })),
   families,
 };
+// ➤ APPEND ONLY, checked: every family the catalogue has keeps its place, or nothing is written.
+const before = (() => { try { return JSON.parse(readFileSync('catalogues/families.json', 'utf8')).families.map(f => f.id); } catch { return []; } })();
+const moved = before.filter((id, i) => families[i]?.id !== id);
+if (moved.length) { console.error(`not written: ${moved.length} families would change place (${moved.slice(0, 5).join(', ')}); a family's place is its bit in every profile code out there, so new families go at the end`); process.exit(1); }
 writeFileSync('catalogues/families.json', JSON.stringify(out, null, 2) + '\n');
 console.log(`families.json: ${GROUPS.length} groups, ${families.length} families`);
 // ➤ Where a few common titles land, to sanity-check the data.

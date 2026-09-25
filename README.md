@@ -37,17 +37,18 @@ vacancy pages, each page carries the schema.org JobPosting block it publishes fo
 robots.txt is obeyed.
 
 Scouts find sources by the thousand instead of by name. `builder/tools/scout.mjs` reads Common
-Crawl's index of the web for every address on the eight ATS hosts, unions three open-source tenant
+Crawl's index of the web for every address on the ten ATS hosts it knows, unions three open-source tenant
 lists, takes the board slug off each and keeps the boards whose public API answers with adverts the
 gate keeps in Europe. `builder/tools/scout-wdc.mjs` reads Web Data Commons' extraction of the
 JobPosting markup Common Crawl saw (3.6 million vacancy pages) and keeps the employers (one hiring
 organisation across their pages, unlike a job board) with adverts of ours in Europe;
 `scout-careers.mjs` walks a domain list the slow way (robots.txt, sitemaps, a few pages). This is
 how aggregators gather their adverts; here it stays with employers' own pages and documented APIs
-(`docs/CRAWLING.md` has the research, with sources). One company at a time, `node
+(`docs/CRAWLING.md` has the research, with sources; `docs/research/` holds the notes behind
+every other feature). One company at a time, `node
 builder/tools/hunt.mjs acme.com` finds its careers pages from its home page, names the platform
 behind them and reads the adverts with no API key; `--write` keeps what it found in
-`builder/config/hunted.yml`. The intermediaries' partner programmes (Adzuna, Jooble, Talent.com,
+`builder/state/found/hunted.yml` (the server's own finds, never committed). The intermediaries' partner programmes (Adzuna, Jooble, Talent.com,
 WhatJobs) are read once their keys are in `builder/.env` on the server (`builder/.env.example`
 lists them); their adverts show after the employers' own, in a section of their own.
 Every source's licence is shown on the sources page. Feeds that need an account or a signed request (France Travail, Norway's NAV,

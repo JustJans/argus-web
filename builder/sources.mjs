@@ -33,7 +33,7 @@ export function loadCrawlConfig() {
   const cfg = existsSync(p) ? (yaml.load(readFileSync(p, 'utf-8')) || {}) : {};
   return {
     cadence_h: { default: 24, ...(cfg.cadence_h || {}) },
-    budget: { minutes: 55, pages_a_run: 6000, pages_a_site: 200, renders_a_run: 200, new_a_run: 400, lanes: 16, ...(cfg.budget || {}), in_flight: { default: 2, careers: 12, feeds: 2, via: 1, browser: 2, ...((cfg.budget || {}).in_flight || {}) } },
+    budget: { minutes: 55, pages_a_run: 6000, pages_a_site: 200, new_a_run: 400, lanes: 16, ...(cfg.budget || {}), in_flight: { default: 2, careers: 12, feeds: 2, via: 1, ...((cfg.budget || {}).in_flight || {}) } },
     backoff_h: cfg.backoff_h || [6, 24, 48],
     park_after_fails: cfg.park_after_fails || 14,
   };
@@ -62,7 +62,8 @@ export function allSources() {
     out.push({ group: ats, key: String(c[ats]).toLowerCase(), kind: 'board', reader: 'board', ats, company: c, found: !!c.found, licence: ATS[ats].licence, deadlineMs: c.found ? 120_000 : 300_000 });
   }
   for (const s of careers.loadSites()) {
-    out.push({ group: 'careers', key: careers.siteKey(s), kind: 'board', reader: s.render ? 'browser' : 'site', site: s, found: !!s.found, licence: careers.licence, deadlineMs: s.found ? 400_000 : 900_000 });
+    // ➤ There is no browser reader (yet): a site marked `render` is read like any other.
+    out.push({ group: 'careers', key: careers.siteKey(s), kind: 'board', reader: 'site', site: s, found: !!s.found, licence: careers.licence, deadlineMs: s.found ? 400_000 : 900_000 });
   }
   // ➤ A key names one source: a list that repeats one is read once.
   const seen = new Set();

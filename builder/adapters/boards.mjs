@@ -11,7 +11,7 @@ import { dirname, join } from 'path';
 import yaml from 'js-yaml';
 import { getJson, getText, deadline } from '../http.mjs';
 import { robotsOf } from '../robots.mjs';
-import { parseGreenhouse, parseAshby, parseLever, parseSmartRecruiters, unescapeEntities } from 'argus/server-bot/scan.mjs';
+import { parseGreenhouse, parseAshby, parseLever, parseSmartRecruiters } from 'argus/server-bot/scan.mjs';
 import { modeWord, mostFlexible, tagMode } from '../work-mode.mjs';
 
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
@@ -57,23 +57,24 @@ export const ATS = {
   greenhouse: {
     licence: { name: 'Greenhouse Job Board API', short: 'Greenhouse', url: 'https://docs.greenhouse.io/job-board.html', licence: 'Public job board API', credit: '', needsKey: false },
     url: slug => `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(slug)}/jobs?content=true`,
-    parse: (j, slug, company = slug) => parseGreenhouse(j, company).map((p, i) => ({
-      sourceId: String(j.jobs[i]?.id || ''), title: p.title, location: p.location, url: p.url,
-      description: text(p.description), posted: day(j.jobs[i]?.updated_at), remote: remoteWord(p.location),
+    // ➤ The parser leaves out empty entries, so the raw list it is paired with does too.
+    parse: (j, slug, company = slug) => { const jobs = (j?.jobs || []).filter(Boolean); return parseGreenhouse({ jobs }, company).map((p, i) => ({
+      sourceId: String(jobs[i]?.id || ''), title: p.title, location: p.location, url: p.url,
+      description: text(p.description), posted: day(jobs[i]?.updated_at), remote: remoteWord(p.location),
       mode: '', modeTag: tagMode(p.description),
-    })),
+    })); },
   },
   ashby: {
     licence: { name: 'Ashby Job Board API', short: 'Ashby', url: 'https://developers.ashbyhq.com/docs/public-job-posting-api', licence: 'Public job board API', credit: '', needsKey: false },
     url: slug => `https://api.ashbyhq.com/posting-api/job-board/${encodeURIComponent(slug)}?includeCompensation=true`,
-    parse: (j, slug, company = slug) => parseAshby(j, company).map((p, i) => {
-      const job = j.jobs[i] || {};
+    parse: (j, slug, company = slug) => { const jobs = (j?.jobs || []).filter(Boolean); return parseAshby({ jobs }, company).map((p, i) => {
+      const job = jobs[i] || {};
       const mode = modeWord(job.workplaceType);
       return {
         sourceId: String(job.id || ''), title: p.title, location: p.location, url: p.url,
         description: text(p.description), posted: day(job.publishedAt), remote: mode === 'remote', mode, modeTag: tagMode(p.description), pay: ashbyPay(job),
       };
-    }),
+    }); },
   },
   lever: {
     licence: { name: 'Lever Postings API', short: 'Lever', url: 'https://github.com/lever/postings-api', licence: 'Public postings API', credit: '', needsKey: false },
@@ -206,7 +207,6 @@ export const ATS = {
     })).filter(p => p.url && p.title); },
   },
 };
-export { unescapeEntities };
 
 export const id = 'boards';
 export const kind = 'board';

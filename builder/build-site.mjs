@@ -55,6 +55,10 @@ for (const page of files.filter(isPage)) {
     html = html.replace('</head>', alternates(page));
     writePage(`es/${page}`, toSpanish(html, page));
   }
+  // ➤ The 404 page has a Spanish twin too, which the root one sends a visitor to when the
+  // ➤ missing address is under es/ (GitHub Pages serves only the root 404).
+  // ➤ Its links are absolute (it is served at any depth): the Spanish one's go to the Spanish pages.
+  if (page === '404.html') writePage('es/404.html', toSpanish(html, page).replace(/href="\/argus-web\/((?:legal\/[a-z]+\.html)?)"/g, 'href="/argus-web/es/$1"'));
   writePage(page, toEnglish(html, page));
   rmSync(join(stage, page));
 }

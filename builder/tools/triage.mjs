@@ -20,6 +20,7 @@
 // ➤ a table. Runs on Sundays from ops/server-discover.sh.
 // ➤   node builder/tools/triage.mjs [--limit 200] [--all] [--out builder/state/triage.tsv]
 import { existsSync, readFileSync, renameSync, writeFileSync } from 'fs';
+import { writeFileAtomic } from 'argus/server-bot/fs-atomic.mjs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { get, getText, deadline } from '../http.mjs';
@@ -175,7 +176,7 @@ for (const r of rows) {
   if (was && was.label !== r.label) changed++;
   kept[r.key] = { label: r.label, note: r.note, step: r.step, seen: today, since: was && was.label === r.label ? was.since : today, ...(was && was.label !== r.label ? { was: was.label } : {}) };
 }
-writeFileSync(KEPT, JSON.stringify(kept, null, 1));
+writeFileAtomic(KEPT, JSON.stringify(kept, null, 1));
 
 const by = {};
 for (const r of rows) (by[r.label] ||= []).push(r);
