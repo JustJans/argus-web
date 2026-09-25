@@ -299,6 +299,8 @@ ok(idFor('https://cvvp.nva.gov.lv/#/pub/vakances/1') !== idFor('https://cvvp.nva
   eq(shardFiles(index, { families: [], countries: [], remote: true }), ['offers/latest.json'], 'a visitor who names neither an occupation nor a country downloads the newest part');
   eq(shardFiles(index, { families: ['2144'], countries: [], remote: true }), ['offers/2144-es.json'], 'one who names an occupation downloads its parts');
   eq(shardFiles(index, { families: [], countries: ['es'], remote: false }), ['offers/2144-es.json', 'offers/3151-es.json'], 'and one who names a country, that country');
+  const withRemote = { ...index, families: { ...index.families, 2144: { countries: { es: { files: ['offers/2144-es.json'] }, xx: { files: ['offers/2144-xx.json'] } } } } };
+  eq(shardFiles(withRemote, { families: [], countries: [], remote: true, onlyRemote: true }), ['offers/2144-xx.json'], 'one who chooses remote work alone, the remote part of every occupation');
   eq(JSON.parse(files['offers/2144-es.json']).offers.map(o => o.id), ['b', 'a'], 'newest first');
   eq(idx['2144'].countries.es.n, 2, 'the index counts');
   eq([idx['3151'].countries.es.files, idx['3151'].group], [['offers/3151-es.json'], 'crews'], 'and names the files and the group');

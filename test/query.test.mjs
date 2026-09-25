@@ -82,6 +82,8 @@ const both = makeLocation({ countries: ['fr', 'es'], places: vigo.towns, said: v
 ok(!both(at('Engineer', [48.85, 2.35], { cc: 'fr' })), 'France and Vigo: all of France');
 eq(both(at('Engineer', [40.42, -3.7]))?.stage, 'PLACE', 'France and Vigo: Spain only around Vigo');
 ok(!makeLocation({ countries: [] })(at('Engineer', [48.85, 2.35], { cc: 'fr' })), 'no place chosen: everywhere');
+const remoteAlone = makeLocation({ countries: [], remote: true });
+eq([remoteAlone(at('Engineer', undefined, { cc: 'xx' })), remoteAlone(at('Engineer', [48.85, 2.35], { cc: 'fr' }))?.stage], [null, 'COUNTRY'], '"Remote, no fixed country" alone: the remote offers only');
 const campaign = at('Engineer', [40.42, -3.7], { ci: 'Madrid', m: [['Vigo', 42.24, -8.72], ['Sevilla', 37.39, -5.98], ['Aldea']] });
 ok(!only(campaign), 'a job run in many towns is near any of them');
 ok(!only(at('Engineer', [40.42, -3.7], { ci: 'Madrid', m: [['Vigo']] })), 'and named by any of them, on the map or not');

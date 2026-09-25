@@ -91,7 +91,7 @@ function profileFromForm() {
   return normaliseProfile({
     families, specialties, countries, place: null, remote: $('#remote').checked, posted: Number($('#filters-form input[name="d"]:checked')?.value) || 0,
     modes: checked('mode'), minPay: Number($('#min-pay').value) || 0, payStated: $('#pay-stated').checked,
-    level: checked('level')[0] || 'any', maxYears: Number($('#max-years').value) || null, highest: $('#highest').value,
+    level: checked('level')[0] || 'any', maxYears: Number($('#max-years').value) || null, highest: 'none',
     languages: checked('lg'), degrees: checked('dg'), roles: words('#roles'), noWords: words('#no-words'),
   });
 }
@@ -177,7 +177,6 @@ function fillFilters(p) {
   $('#max-years').value = p.maxYears ? String(p.maxYears) : '';
   for (const i of $$('#languages-pick input')) i.checked = p.languages.includes(i.value);
   for (const i of $$('#degrees-pick input')) i.checked = p.degrees.includes(i.value);
-  $('#highest').value = p.highest;
   $('#roles').value = p.roles.join(', ');
   $('#no-words').value = p.noWords.join(', ');
   const active = activeGroups(p);
@@ -185,7 +184,7 @@ function fillFilters(p) {
   text('#filters-toggle-label', active.size ? `${t('Filters')} · ${active.size}` : t('Filters'));
 }
 function activeGroups(p) {
-  const on = { country: p.countries.length || p.remote, occupations: p.families.length, posted: p.posted, mode: p.modes.length, pay: p.minPay || p.payStated, level: p.level !== 'any' || p.maxYears, languages: p.languages.length, degrees: p.degrees.length || p.highest !== 'none', roles: p.roles.length, exclude: p.noWords.length };
+  const on = { country: p.countries.length || p.remote, occupations: p.families.length, posted: p.posted, mode: p.modes.length, pay: p.minPay || p.payStated, level: p.level !== 'any' || p.maxYears, languages: p.languages.length, degrees: p.degrees.length, roles: p.roles.length, exclude: p.noWords.length };
   return new Set(Object.keys(on).filter(k => on[k]));
 }
 
@@ -268,7 +267,11 @@ async function startFrontLoop() {
 // ➤ Reads the address, puts it into the controls, downloads what the search needs, judges,
 // ➤ draws. Nothing set and nothing asked: the front. Nothing set but Search pressed: the
 // ➤ newest of the pile.
+// ➤ Each search is numbered: when the visitor changes the search while an earlier one is still
+// ➤ downloading, the earlier one stops at its next step instead of drawing an old answer.
+let searches = 0;
 async function run() {
+  const search = ++searches;
   const { code, q, r, all } = readHash();
   $('#q').value = q;
   $('#code-input').value = code;
@@ -289,6 +292,7 @@ async function run() {
   if (isEmptyProfile(profile) && !q && !all) { showResults(false); loaded = null; $('#radius-pill').hidden = true; startFrontLoop(); return; }
 
   const read = readQuery(q, q ? await loadGazetteer() : null);
+  if (search !== searches) return;
   $('#radius-pill').hidden = !read.towns.length;
   // ➤ The same parts and the same places already judged? Then only redraw.
   const key = JSON.stringify([code, read.towns.map(p => [p.lat, p.lon]), read.countries, read.said, read.towns.length ? r : 0]);
@@ -299,11 +303,12 @@ async function run() {
   // ➤ The parts of the pile: the profile's, and those of the places read (a town's radius may
   // ➤ reach over a border).
   const reach = read.towns.length || read.countries.length ? scopeCountries(read, places, r) : [];
-  const scope = { ...profile, countries: [...new Set([...profile.countries, ...reach])], remote: profile.remote || (!profile.countries.length && !reach.length) };
+  const scope = { ...profile, countries: [...new Set([...profile.countries, ...reach])], remote: profile.remote || (!profile.countries.length && !reach.length), onlyRemote: profile.remote && !profile.countries.length && !reach.length };
   const files = shardFiles(index, scope);
   text('#results-status', files.length === 1 ? t('Downloading 1 part of the pile…') : t('Downloading {n} parts of the pile…', { n: files.length }));
   downloading(0, files.length);
-  const { offers, failed: lost } = await loadShards(files, 'data', getJson, (done, total) => { text('#results-status', t('Downloading {done} of {total}…', { done, total })); downloading(done, total); });
+  const { offers, failed: lost } = await loadShards(files, 'data', getJson, (done, total) => { if (search !== searches) return; text('#results-status', t('Downloading {done} of {total}…', { done, total })); downloading(done, total); });
+  if (search !== searches) return;
   downloading(1, 1);
   const alive = offers.filter(o => !isExpired(o));
   // ➤ The search's profile: the filters, with the places the bar read.
@@ -395,8 +400,7 @@ function wireControls() {
   });
   $('#cv-file').addEventListener('change', e => { const file = e.target.files[0]; if (file) readCvFile(file); e.target.value = ''; });
   // ➤ Typing redraws at once; the address follows once the typing pauses.
-  let timer;
-  $('#q').addEventListener('input', () => { clearNote(); writeHash(stateFromForm(), true); draw(); clearTimeout(timer); timer = setTimeout(() => writeHash(stateFromForm(), true), 600); });
+  $('#q').addEventListener('input', () => { clearNote(); writeHash(stateFromForm(), true); draw(); });
   window.addEventListener('hashchange', () => run().catch(showError));
   // ➤ The other language keeps the visitor's search: the link takes the address's # along.
   const other = $('.nav__lang');

@@ -4,14 +4,15 @@
 // ➤ an advert with two families appears in two files.
 export function shardFiles(index, profile) {
   // ➤ Nothing named, nothing to narrow by: the newest of the pile, not the whole of it.
-  if (!profile.families.length && !profile.countries.length && index.latest?.files?.length) return [...index.latest.files];
+  // ➤ "Remote, no fixed country" chosen alone is a place too: the remote part of every family.
+  if (!profile.families.length && !profile.countries.length && !profile.onlyRemote && index.latest?.files?.length) return [...index.latest.files];
   const families = profile.families.length ? profile.families : Object.keys(index.families || {});
   const wanted = new Set([...profile.countries, ...(profile.remote ? ['xx'] : [])]);
   const files = [];
   for (const fam of families) {
     const countries = index.families?.[fam]?.countries || {};
     for (const [cc, entry] of Object.entries(countries)) {
-      if (profile.countries.length && !wanted.has(cc)) continue;
+      if ((profile.countries.length || profile.onlyRemote) && !wanted.has(cc)) continue;
       files.push(...(entry.files || []));
     }
   }

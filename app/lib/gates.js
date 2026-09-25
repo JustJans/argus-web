@@ -43,7 +43,10 @@ export function makeLocation(profile) {
   const near = o => spots(o).some(g => places.some(p => distanceKm(g, [p.lat, p.lon]) <= km));
   const names = o => said.length > 0 && namesAny([o.t, o.te, o.c, o.ci, o.l, ...(o.m || []).map(p => p[0])].filter(Boolean).join(' · '), said);
   return o => {
-    if ((!countries.size && !places.length) || near(o) || names(o)) return null;
+    if (near(o) || names(o)) return null;
+    // ➤ No country and no place: everywhere, unless "Remote, no fixed country" was chosen
+    // ➤ alone, which asks for the remote offers only.
+    if (!countries.size && !places.length) return !profile.remote || o.cc === 'xx' ? null : { stage: 'COUNTRY', reason: t('not remote work, and remote work alone was chosen') };
     if (o.cc === 'xx') return profile.remote ? null : { stage: 'COUNTRY', reason: t('remote work, and you did not allow it') };
     if (!o.cc) return null;
     if (narrowed.has(o.cc)) return { stage: 'PLACE', reason: spots(o).length ? t('more than {km} km from {place}', { km, place: places.map(p => p.name).join(t(' or ')) }) : t('its place is not on the map') };
