@@ -1,14 +1,20 @@
 // ➤ The same advert reaches the pile twice when two sources carry it, or when a board and a
-// ➤ feed both list it. First by address, then by company plus title (an aggregator's copy
-// ➤ has another address but the same words). A board's copy beats a feed's copy: it is the
-// ➤ page the employer maintains.
+// ➤ feed both list it. First by address, then by company plus title in the same place (an
+// ➤ aggregator's copy has another address but the same words). The same job in two towns is two
+// ➤ offers, as job sites list it. A board's copy beats a feed's copy: it is the page the
+// ➤ employer maintains.
 import { roleKey } from 'argus/server-bot/scan.mjs';
+import { fold } from 'argus/server-bot/text.mjs';
 export { roleKey };
 
 const RANK = { feed: 1, board: 2 };
+// ➤ Where a record is, when nothing better is given: its country and town as written.
+const writtenPlace = rec => `${rec.cc || ''}|${fold(rec.ci || '')}`;
 
-// ➤ records: [{rec, kind}] → the records to keep, and how many fell by each rule.
-export function dedupe(items) {
+// ➤ records: [{rec, kind}] → the records to keep, and how many fell by each rule. placeOf(rec)
+// ➤ names the place the same way however the sources spell it (the pile builder gives the
+// ➤ GeoNames town, so "Munich" and "München" are one place).
+export function dedupe(items, placeOf = writtenPlace) {
   const byUrl = new Map(), byRole = new Map();
   let sameUrl = 0, sameRole = 0;
   for (const it of items) {
@@ -18,13 +24,17 @@ export function dedupe(items) {
     byUrl.set(u, it);
   }
   for (const it of byUrl.values()) {
-    const k = roleKey(it.rec.c, it.rec.t);
-    if (!k) { byRole.set(it.rec.u, it); continue; }
+    const role = roleKey(it.rec.c, it.rec.t);
+    if (!role) { byRole.set(it.rec.u, it); continue; }
+    const k = `${role}@${placeOf(it.rec)}`;
     const prev = byRole.get(k);
     if (prev) {
       sameRole++;
+      // ➤ Of two copies from the same kind of source, the one posted first; a copy that names
+      // ➤ no day does not beat one that does.
       const r = x => RANK[x.kind] || 0;
-      if (r(it) > r(prev) || (r(it) === r(prev) && (it.rec.d || '') < (prev.rec.d || ''))) byRole.set(k, it);
+      const earlier = !!it.rec.d && (!prev.rec.d || it.rec.d < prev.rec.d);
+      if (r(it) > r(prev) || (r(it) === r(prev) && earlier)) byRole.set(k, it);
       continue;
     }
     byRole.set(k, it);

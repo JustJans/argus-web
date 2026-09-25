@@ -13,7 +13,7 @@ import { compileCountries, placeOfAdvert, toRecord } from './normalise.mjs';
 import { compileScreens } from './screens.mjs';
 import { dedupe } from './dedupe.mjs';
 import { buildShards, writePile } from './shard.mjs';
-import { compileTowns, locate } from './towns.mjs';
+import { compileTowns, locate, townOf } from './towns.mjs';
 import { ambiguousNames } from './place-names.mjs';
 import { loopOffers } from './loop-offers.mjs';
 import { loadCache, saveCache, translateTitles } from './translate.mjs';
@@ -103,11 +103,13 @@ for (const data of eachSource()) {
 if (!sourceFiles) { log('the store is empty: run builder/crawl.mjs first'); process.exit(1); }
 stage('store and gate');
 
-const { kept, sameUrl, sameRole } = dedupe(items);
+// ➤ The same job in two towns is two offers; the town is GeoNames', so "Munich" and "München"
+// ➤ are one place.
+const towns = compileTowns(JSON.parse(readFileSync(join(ROOT, 'catalogues', 'codes', 'places.json'), 'utf-8')));
+const { kept, sameUrl, sameRole } = dedupe(items, rec => { const hit = townOf(rec, towns); return hit ? `#${hit.town.id}` : `${rec.cc || ''}|${String(rec.ci || '').toLowerCase()}`; });
 stage('duplicates');
 
 // ➤ Each advert on the map, for the search by town and distance: its town found in GeoNames.
-const towns = compileTowns(JSON.parse(readFileSync(join(ROOT, 'catalogues', 'codes', 'places.json'), 'utf-8')));
 const onMap = locate(kept, towns);
 stage('towns');
 
