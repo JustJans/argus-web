@@ -15,6 +15,7 @@ import { dedupe } from './dedupe.mjs';
 import { buildShards, writePile } from './shard.mjs';
 import { compileTowns, locate } from './towns.mjs';
 import { ambiguousNames } from './place-names.mjs';
+import { loopOffers } from './loop-offers.mjs';
 import { loadCache, saveCache, translateTitles } from './translate.mjs';
 import { eachSource } from './store.mjs';
 import { licenceFor } from './sources.mjs';
@@ -157,7 +158,11 @@ mkdirSync(OUT, { recursive: true });
 // ➤ their own; loaded when a visitor starts to search.
 const ambiguous = ambiguousNames(onMap.list, kept);
 stage('place names');
-const extras = { 'places.json': JSON.stringify({ v: 2, places: onMap.list, ambiguous }) };
+// ➤ And the offers the front page's loop shows.
+const extras = {
+  'places.json': JSON.stringify({ v: 2, places: onMap.list, ambiguous }),
+  'today.json': JSON.stringify({ v: 1, offers: loopOffers(kept, s => viaSources.has(s)) }),
+};
 if (EXPLAIN) extras['explain.txt'] = dropped.map(([why, raw]) => `[${why}] ${raw.title} | ${raw.company} | ${raw.location} (${raw.source})`).join('\n') + '\n';
 writePile(OUT, files, index, extras);
 writeFileSync(join(OUT, 'status.json'), JSON.stringify({ generated_at: generatedAt, crawled_at: crawledAt, offers: kept.length, found: counts.found, sources: sourceFiles, dropped: counts, duplicates: { sameUrl, sameRole }, by_country: perCountry }, null, 2));

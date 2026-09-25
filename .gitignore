@@ -10,3 +10,4 @@ app/lib/engine.js
 *.log
 .DS_Store
 app/vendor/
+app/fonts/

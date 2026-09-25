@@ -1,16 +1,21 @@
-// ➤ The one page. The filters on the left are the visitor's whole profile: country (in the
-// ➤ order ticked) or a town and a distance, occupations by group and their specialties, posted date, level and years, languages, degrees,
-// ➤ title words, words to avoid; each a fold-out. The profile is packed into a short code that
-// ➤ appears as the filters change and can be copied or pasted; the code and the search words
-// ➤ live in the address after the #, so a list can be bookmarked and shared. A CV read on
-// ➤ the device ticks the occupations, degrees and languages it names. Everything downloads
-// ➤ only the parts of the pile it needs, judges them here, hides adverts past their deadline
-// ➤ and draws the list. Nothing about the visitor leaves the browser.
-import { encodeProfile, decodeProfile, normaliseProfile, isEmptyProfile, catalogueIds, familyOfSpecialty, countryProfile } from './lib/codec.js';
+// ➤ The one page. One search bar takes what a visitor types: a title, a company, a town or a
+// ➤ country (lib/query.js reads the towns and countries, which become the search's places, with
+// ➤ the distance in the pill under the bar), or a code pasted whole. The Filters button opens
+// ➤ the rest of the profile under the bar: country, occupations by group and their
+// ➤ specialties, posted date, work mode, level and years, languages, degrees, pay, title words
+// ➤ and words to avoid. The profile is packed into a short code that appears as the filters
+// ➤ change; the code, the search words and the distance live in the address after the #, so a
+// ➤ list can be bookmarked and shared. A CV read on the device ticks the occupations, degrees
+// ➤ and languages it names. A search downloads only the parts of the pile it needs, judges
+// ➤ them here, hides adverts past their deadline and draws the list; with nothing asked, the
+// ➤ front shows today's offers in a loop. Nothing about the visitor leaves the browser.
+import { encodeProfile, decodeProfile, normaliseProfile, isEmptyProfile, catalogueIds, familyOfSpecialty } from './lib/codec.js';
 import { makeJudge, sortOffers } from './lib/gates.js';
 import { shardFiles, loadShards } from './lib/shards.js';
-import { renderList, renderEmpty, renderDebug } from './lib/render.js';
-import { wordsOf, matchesWords, isExpired, newestFirst } from './lib/search.js';
+import { renderList, renderEmpty, renderDebug, loopRow } from './lib/render.js';
+import { matchesWords, isExpired, newestFirst } from './lib/search.js';
+import { compileGazetteer, countryNames, readQuery, scopeCountries } from './lib/query.js';
+import { startLoop } from './lib/ticker.js';
 import { readCv } from './lib/cv.js';
 import * as engine from './lib/engine.js';
 import { t, label, countryLabel, languageLabel, number } from './lib/i18n.js';
@@ -23,22 +28,22 @@ const text = (sel, s) => { const e = $(sel); if (e) e.textContent = s; };
 const ROOT = document.documentElement.dataset.root || '';
 const getJson = async url => { const r = await fetch(ROOT + url, { cache: 'no-cache' }); if (!r.ok) throw new Error(`${r.status} for ${url}`); return r.json(); };
 const STALE_HOURS = 48;
-// ➤ The fold-outs start closed, as the design has them; one opens by itself when it has something set.
-const OPEN_BY_DEFAULT = new Set();
+const RADIUS = 100;   // ➤ km around the towns typed, until the visitor picks another
+const NARROW = matchMedia('(width < 47.5625rem)');
 
 let index, cats, ids, ctx;
 let loaded = null;              // ➤ the last set downloaded and judged, so words and dates redraw without a download
-const foldState = new Map();    // ➤ fold-outs the visitor opened or closed, kept across redraws
 const countryOrder = [];        // ➤ the order countries were ticked in: the first comes first in the list
 let familyTerms = null;         // ➤ ESCO's job titles, fetched the first time a CV is read
-let places = null;              // ➤ the towns with offers, by the words the list shows, fetched the first time the town field is used
-let chosenPlace = null;         // ➤ the town picked from that list: { cc, name, lat, lon }
+let gazetteer = null;           // ➤ the towns and countries the bar reads, fetched the first time something is searched
+let places = null;              // ➤ the same, once fetched
+let looping = false;            // ➤ the front's loop has started
 
-// ➤ The state in the address: p = the code (every filter), q = the search words, all = the
-// ➤ whole pile was asked for with nothing set.
+// ➤ The state in the address: p = the code (every filter), q = the search words, r = the
+// ➤ distance around the towns typed, all = the whole pile was asked for with nothing set.
 function readHash() {
   const p = new URLSearchParams(location.hash.replace(/^#/, ''));
-  return { code: (p.get('p') || '').trim(), q: (p.get('q') || '').trim(), all: p.has('all'), debug: p.has('dbg') };
+  return { code: (p.get('p') || '').trim(), q: (p.get('q') || '').trim(), r: Number(p.get('r')) || RADIUS, all: p.has('all'), debug: p.has('dbg') };
 }
 const hashOf = parts => { const p = new URLSearchParams(); for (const [k, v] of Object.entries(parts)) if (v) p.set(k, v); return p.toString() ? `#${p}` : ''; };
 function writeHash(parts, replace = false) {
@@ -52,8 +57,14 @@ function search(parts) {
 }
 
 const showError = e => text('#results-status', t('Something went wrong: {error}', { error: e.message }));
-// ➤ A code that does not read: what is wrong with it, in the page's language, and what to do.
-const unreadable = e => { showResults(true); text('#results-status', t('That code cannot be read: {error}. Check it was pasted whole, or clear it and tick the filters by hand.', { error: t(e.message) })); };
+// ➤ A code that does not read: said under the bar, where codes are pasted.
+function unreadable() {
+  $('#search').classList.add('is-unreadable');
+  barNote(t('That code could not be read. Check it was copied whole.'));
+}
+function clearNote() { $('#search').classList.remove('is-unreadable'); $('#bar-note').hidden = true; }
+// ➤ A line under the bar for what stops the page itself (no pile yet, an error).
+const barNote = s => { text('#bar-note', s); $('#bar-note').hidden = false; };
 const countryName = cc => cc === 'xx' ? t('Remote') : cc === 'zz' || !cc ? t('Country not stated') : countryLabel(cc);
 const familyOf = id => cats.families.families.find(f => f.id === id);
 const groupLabel = id => label(cats.families.groups.find(g => g.id === id)) || id;
@@ -77,16 +88,16 @@ function profileFromForm() {
   // ➤ A specialty left ticked under a family just unticked goes with it.
   const families = checked('f');
   const specialties = checked('e').filter(c => families.includes(familyOfSpecialty(c)));
-  const place = chosenPlace && { ...chosenPlace, km: Number($('#radius').value) };
   return normaliseProfile({
-    families, specialties, countries, place, remote: $('#remote').checked, posted: Number($('#filters-form input[name="d"]:checked')?.value) || 0,
+    families, specialties, countries, place: null, remote: $('#remote').checked, posted: Number($('#filters-form input[name="d"]:checked')?.value) || 0,
     modes: checked('mode'), minPay: Number($('#min-pay').value) || 0, payStated: $('#pay-stated').checked,
     level: checked('level')[0] || 'any', maxYears: Number($('#max-years').value) || null, highest: $('#highest').value,
     languages: checked('lg'), degrees: checked('dg'), roles: words('#roles'), noWords: words('#no-words'),
   });
 }
 function stateFromForm(profile = profileFromForm()) {
-  return { p: isEmptyProfile(profile) ? '' : encodeProfile(profile, ids), q: $('#q').value.trim(), dbg: readHash().debug ? '1' : '' };
+  const r = Number($('#radius').value);
+  return { p: isEmptyProfile(profile) ? '' : encodeProfile(profile, ids), q: $('#q').value.trim(), r: r && r !== RADIUS ? String(r) : '', dbg: readHash().debug ? '1' : '' };
 }
 
 // ➤ One row per choice: the tick on the left, the label, today's count on the right when given.
@@ -99,16 +110,6 @@ function row(container, { name, value, label, radio = false, count }) {
   container.append(l);
   return i;
 }
-// ➤ The chevron every fold-out summary starts with (it turns when the fold-out opens).
-function chevron() {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('class', 'chev'); svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('fill', 'none'); svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '1.5'); svg.setAttribute('stroke-linecap', 'round'); svg.setAttribute('stroke-linejoin', 'round'); svg.setAttribute('aria-hidden', 'true');
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', 'm9 18 6-6-6-6');
-  svg.append(path);
-  return svg;
-}
-const remember = (fold, key) => fold.addEventListener('toggle', () => foldState.set(key, fold.open));
 // ➤ The choices inside a ticked family (its specialties), under it.
 function subRows(container, name, items) {
   if (!items.length) return;
@@ -130,30 +131,11 @@ function drawCountries(profile) {
   for (const [cc, count] of rows) row(pick, { name: 'c', value: cc, label: countryName(cc), count });
 }
 
-// ➤ The town field's suggestions: the towns with offers, "München, Bavaria, Germany", the fullest
-// ➤ first, with GeoNames' own name as the hint where the adverts spell it otherwise ("Munich").
-// ➤ The browser draws and filters them (a datalist); only a town from the list is taken.
-async function loadPlaces() {
-  if (places) return;
-  places = new Map();
-  const options = document.createDocumentFragment();
-  for (const [shown, other, region, cc, lat, lon] of (await getJson('data/places.json')).places) {
-    const name = region && engine.fold(region) !== engine.fold(shown) ? `${shown}, ${region}` : shown;
-    const value = `${name}, ${countryName(cc)}`;
-    if (places.has(value)) continue;
-    places.set(value, { cc, name, lat, lon });
-    const option = document.createElement('option');
-    option.value = value;
-    if (other) option.label = other;
-    options.append(option);
-  }
-  $('#places-list').append(options);
-}
-
-// ➤ Inside "Occupations", one fold-out per group (Engineers, Technicians, crews…) with the families
-// ➤ that have adverts in the countries ticked, the fullest first; a family the profile names stays
-// ➤ listed even at zero. The counts order the list and decide what is listed; they are not shown.
-function drawFamilyCounts(profile) {
+// ➤ Inside "Occupations", each group's name (Engineers, Technicians, crews…) over the families
+// ➤ that have adverts in the countries ticked, the fullest first; a family the profile names
+// ➤ stays listed even at zero, and a ticked family shows its specialties. The counts order the
+// ➤ list and decide what is listed; they are not shown.
+function drawFamilies(profile) {
   const chosen = new Set(profile.countries);
   const count = id => Object.entries(index.families?.[id]?.countries || {}).filter(([cc]) => !chosen.size || chosen.has(cc)).reduce((s, [, e]) => s + (e.n || 0), 0);
   const pick = $('#families-pick');
@@ -161,18 +143,13 @@ function drawFamilyCounts(profile) {
   for (const g of cats.families.groups) {
     const rows = cats.families.families.filter(f => f.group === g.id).map(f => [f, count(f.id)]).filter(([f, c]) => c > 0 || profile.families.includes(f.id)).sort((a, b) => b[1] - a[1]);
     if (!rows.length) continue;
-    const fold = document.createElement('details'); fold.className = 'filter-group'; fold.dataset.group = `families:${g.id}`;
-    fold.open = foldState.has(fold.dataset.group) ? foldState.get(fold.dataset.group) : rows.some(([f]) => profile.families.includes(f.id));
-    remember(fold, fold.dataset.group);
-    const summary = document.createElement('summary'); summary.append(chevron(), document.createTextNode(label(g)));
+    const name = document.createElement('div'); name.className = 'occupation-group'; name.textContent = label(g);
     const checks = document.createElement('div'); checks.className = 'checks';
-    fold.append(summary, checks);
     for (const [f] of rows) {
       row(checks, { name: 'f', value: f.id, label: label(f) });
-      if (!profile.families.includes(f.id)) continue;
-      subRows(checks, 'e', withChosen(index.families?.[f.id]?.occupations, profile.specialties.filter(c => familyOfSpecialty(c) === f.id)).map(c => [c, specialtyName(c)]));
+      if (profile.families.includes(f.id)) subRows(checks, 'e', withChosen(index.families?.[f.id]?.occupations, profile.specialties.filter(c => familyOfSpecialty(c) === f.id)).map(c => [c, specialtyName(c)]));
     }
-    pick.append(fold);
+    pick.append(name, checks);
   }
 }
 // ➤ The lists that never change: levels, languages, degrees.
@@ -180,21 +157,15 @@ function drawStaticLists() {
   for (const l of cats.seniority.levels) row($('#levels-pick'), { name: 'level', value: l.id, label: label(l), radio: true });
   for (const l of cats.languages.languages) row($('#languages-pick'), { name: 'lg', value: l.code, label: languageName(l.code) });
   for (const d of cats.degrees.degrees) row($('#degrees-pick'), { name: 'dg', value: d.id, label: label(d) });
-  for (const fold of $$('#filters-form > details')) remember(fold, fold.dataset.group);
 }
 
-// ➤ Puts a profile into the controls. A fold-out opens by itself only the first time it is
-// ➤ drawn (the ones open by default, and any the profile already filters by); after that the
-// ➤ visitor's own choice stands, so ticking a filter never unfolds the rest. A group with
-// ➤ something set carries a mark, and the panel's head counts them.
+// ➤ Puts a profile into the controls. A group with something set carries a mark, and the
+// ➤ Filters button counts them.
 function fillFilters(p) {
   countryOrder.length = 0; countryOrder.push(...p.countries);
   drawCountries(p);
-  drawFamilyCounts(p);
+  drawFamilies(p);
   for (const i of $$('#countries-pick input[name="c"]')) i.checked = p.countries.includes(i.value);
-  chosenPlace = p.place && { cc: p.place.cc, name: p.place.name, lat: p.place.lat, lon: p.place.lon };
-  $('#place').value = p.place ? `${p.place.name}, ${countryName(p.place.cc)}` : '';
-  $('#radius').value = String(p.place?.km || 25);
   $('#remote').checked = p.remote;
   for (const i of $$('#families-pick input[name="f"]')) i.checked = p.families.includes(i.value);
   for (const i of $$('#families-pick input[name="e"]')) i.checked = p.specialties.includes(i.value);
@@ -210,79 +181,41 @@ function fillFilters(p) {
   $('#roles').value = p.roles.join(', ');
   $('#no-words').value = p.noWords.join(', ');
   const active = activeGroups(p);
-  for (const fold of $$('#filters-form > details')) {
-    const g = fold.dataset.group;
-    fold.classList.toggle('is-active', active.has(g));
-    if (!foldState.has(g)) foldState.set(g, OPEN_BY_DEFAULT.has(g) || active.has(g));
-    fold.open = foldState.get(g);
-  }
-  const head = active.size ? `${t('Filters')} · ${active.size}` : t('Filters');
-  text('#filters-count', head);
-  text('#filters-toggle-label', head);
+  for (const group of $$('#filters-form .filter-group')) group.classList.toggle('is-active', active.has(group.dataset.group));
+  text('#filters-toggle-label', active.size ? `${t('Filters')} · ${active.size}` : t('Filters'));
 }
 function activeGroups(p) {
-  const on = { country: p.countries.length || p.remote || p.place, occupations: p.families.length, posted: p.posted, mode: p.modes.length, pay: p.minPay || p.payStated, level: p.level !== 'any' || p.maxYears, languages: p.languages.length, degrees: p.degrees.length || p.highest !== 'none', roles: p.roles.length, exclude: p.noWords.length };
+  const on = { country: p.countries.length || p.remote, occupations: p.families.length, posted: p.posted, mode: p.modes.length, pay: p.minPay || p.payStated, level: p.level !== 'any' || p.maxYears, languages: p.languages.length, degrees: p.degrees.length || p.highest !== 'none', roles: p.roles.length, exclude: p.noWords.length };
   return new Set(Object.keys(on).filter(k => on[k]));
 }
 
-// ➤ The pile's numbers: the big count on the front, the count and the age once there are results
-// ➤ (the countries are in the filters, where they are chosen),
-// ➤ the Today table, and the notice when the pile is old.
+// ➤ The pile's numbers: the big count on the front, the count beside the results, and the
+// ➤ notice when the sources have not been read for two days.
 function drawPile() {
-  const hours = Math.round((Date.now() - new Date(index.generated_at).getTime()) / 36e5);
   // ➤ The pile is built from what the crawler read, and the crawler may stop while the
   // ➤ building goes on: the age that matters is the newest read, not the newest build.
   const readHours = Math.round((Date.now() - new Date(index.crawled_at || index.generated_at).getTime()) / 36e5);
-  const rebuilt = hours <= 0 ? t('rebuilt just now') : hours < 48 ? t('rebuilt {n} h ago', { n: hours }) : t('rebuilt {n} days ago', { n: Math.round(hours / 24) });
-  const failed = index.status?.ok ? '' : t(' (some sources failed this time)');
-  const rows = Object.entries(index.counts?.by_country || {}).filter(([cc]) => cc !== 'zz').sort((a, b) => b[1] - a[1]);
   text('#hero-count', n(index.counts.offers));
-  // ➤ Once there are results, the pile's size goes beside the count of those that match.
   text('#hero-stats', t('out of {n} listed today', { n: n(index.counts.offers) }));
-  text('#generated', t('{n} offers, {rebuilt}{failed}.', { n: n(index.counts.offers), rebuilt, failed }));
   if (readHours > STALE_HOURS) { text('#stale-text', t('The sources were last read {n} days ago; some offers may have closed since.', { n: Math.round(readHours / 24) })); $('#stale').hidden = false; }
-  const tbody = $('#countries tbody');
-  tbody.replaceChildren();
-  // ➤ Each country opens its offers: its name is the link, and its count leads there too for a
-  // ➤ pointer (hidden from the keyboard and screen readers, which meet the name). They look as
-  // ➤ plain text, as the table always did. The row with no fixed country stays text: no filter
-  // ➤ opens that group alone, and remote work at large would not match its count.
-  const link = (cc, content, quiet) => {
-    if (!ids.countries.includes(cc)) return document.createTextNode(content);
-    const a = document.createElement('a');
-    a.href = `#p=${encodeProfile(countryProfile(cc), ids)}`;
-    a.textContent = content;
-    if (quiet) { a.tabIndex = -1; a.setAttribute('aria-hidden', 'true'); }
-    return a;
-  };
-  // ➤ Two countries a row, read across (1 2 / 3 4), so the table is half as tall.
-  for (let i = 0; i < rows.length; i += 2) {
-    const tr = document.createElement('tr');
-    for (const pair of [rows[i], rows[i + 1]]) {
-      const name = document.createElement('td');
-      const num = document.createElement('td'); num.className = 'num';
-      if (pair) { name.append(link(pair[0], countryName(pair[0]), false)); num.append(link(pair[0], n(pair[1]), true)); }
-      tr.append(name, num);
-    }
-    tbody.append(tr);
-  }
-  $('#countries').hidden = rows.length === 0;
 }
 
-// ➤ The words and the date, applied to what is already downloaded and judged. No network here.
+// ➤ The words and the date, applied to what is already downloaded and judged. No network here:
+// ➤ while the visitor types, the words the bar reads now; the places change on Search.
 function draw() {
   if (!loaded) return;
-  const { q, debug } = readHash();
-  const words = wordsOf(q);
+  const { debug } = readHash();
+  const words = readQuery($('#q').value, places).words;
   const since = loaded.profile.posted ? new Date(Date.now() - loaded.profile.posted * 864e5).toISOString().slice(0, 10) : '';
   const inDate = loaded.offers.filter(o => !since || (o.d && o.d >= since));
   const shown = inDate.filter(o => matchesWords(o, words, countryName));
   const lost = loaded.failed.length;
   const partsFailed = !lost ? '' : lost === 1 ? t(' (1 part failed to download)') : t(' ({n} parts failed to download)', { n: lost });
-  const narrowed = words.length || !isEmptyProfile(loaded.profile);
+  const placed = loaded.read.towns.length || loaded.read.countries.length;
+  const narrowed = words.length || placed || !isEmptyProfile(loaded.profile);
   // ➤ With no occupation and no country named, the site shows the newest of the pile rather
   // ➤ than downloading all of it: say so, and say what to do for the rest.
-  const onlyNewest = !loaded.profile.families.length && !loaded.profile.countries.length && index.latest?.files?.length;
+  const onlyNewest = !loaded.profile.families.length && !loaded.profile.countries.length && !placed && index.latest?.files?.length;
   // ➤ How many match, large above the list. The status line says out of how many (the whole
   // ➤ pile, or the newest part of it that was searched) and where the ones that match are, the
   // ➤ fullest countries first.
@@ -301,8 +234,7 @@ function draw() {
   if (debug && loaded.dropped) renderDebug($('#debug'), loaded.dropped); else $('#debug').hidden = true;
 }
 
-// ➤ Results shown or hidden: the page changes shape with them (the hero shrinks to a line,
-// ➤ How it works and Today make room).
+// ➤ Results shown or hidden: the front's count and loop make way for them.
 function showResults(on) {
   $('#results').hidden = !on;
   document.body.classList.toggle('has-results', on);
@@ -313,41 +245,76 @@ function downloading(done, total) {
   $('#progress > i').style.width = total ? `${Math.round((done / total) * 100)}%` : '0%';
 }
 
-// ➤ Reads the address, puts it into the controls, downloads what the scope needs, judges, draws.
-// ➤ Nothing set and nothing asked: the front. Nothing set but Search pressed: the whole pile.
+// ➤ The towns and countries the bar reads: data/places.json, fetched once, the first time
+// ➤ something is searched.
+function loadGazetteer() {
+  gazetteer ||= getJson('data/places.json').then(p => (places = compileGazetteer(p, countryNames(cats.countries)))).catch(() => null);
+  return gazetteer;
+}
+
+// ➤ The front's loop of today's offers (data/today.json), started once.
+async function startFrontLoop() {
+  if (looping) return;
+  looping = true;
+  try {
+    const { offers } = await getJson('data/today.json');
+    startLoop($('#loop'), offers || [], { row: o => loopRow(o, ctx), button: $('#loop-pause'), label: paused => text('#loop-pause-label', paused ? t('Play') : t('Pause')) });
+  } catch { $('#loop').hidden = true; }
+}
+
+// ➤ Reads the address, puts it into the controls, downloads what the search needs, judges,
+// ➤ draws. Nothing set and nothing asked: the front. Nothing set but Search pressed: the
+// ➤ newest of the pile.
 async function run() {
-  const { code, q, all } = readHash();
+  const { code, q, r, all } = readHash();
   $('#q').value = q;
   $('#code-input').value = code;
+  $('#radius').value = String(r);
+  clearNote();
   let profile = normaliseProfile({});
   if (code) {
-    try { profile = decodeProfile(code, ids); } catch (e) { unreadable(e); $('#list').replaceChildren(); loaded = null; return; }
+    try { profile = decodeProfile(code, ids); } catch { unreadable(); showResults(false); loaded = null; startFrontLoop(); return; }
+  }
+  // ➤ An older code with a town in it: the town goes into the bar and its distance into the
+  // ➤ pill, where the search reads places now, and the code is written again without it.
+  if (profile.place) {
+    const moved = { ...profile, place: null };
+    const km = profile.place.km || RADIUS;
+    writeHash({ p: isEmptyProfile(moved) ? '' : encodeProfile(moved, ids), q: [q, profile.place.name].filter(Boolean).join(' '), r: km !== RADIUS ? String(km) : '', dbg: readHash().debug ? '1' : '' }, true);
+    return run();
   }
   fillFilters(profile);
-  if (isEmptyProfile(profile) && !q && !all) { showResults(false); loaded = null; return; }
+  if (isEmptyProfile(profile) && !q && !all) { showResults(false); loaded = null; $('#radius-pill').hidden = true; startFrontLoop(); return; }
 
-  // ➤ The same scope already downloaded? Then only redraw.
-  const scope = { ...profile, remote: profile.remote || !profile.countries.length };
-  const key = JSON.stringify([code]);
+  const read = readQuery(q, q ? await loadGazetteer() : null);
+  $('#radius-pill').hidden = !read.towns.length;
+  // ➤ The same parts and the same places already judged? Then only redraw.
+  const key = JSON.stringify([code, read.towns.map(p => [p.lat, p.lon]), read.countries, read.said, read.towns.length ? r : 0]);
   if (loaded && loaded.key === key) { showResults(true); draw(); return; }
   loaded = null;
   showResults(true);
   $('#list').replaceChildren();
+  // ➤ The parts of the pile: the profile's, and those of the places read (a town's radius may
+  // ➤ reach over a border).
+  const reach = read.towns.length || read.countries.length ? scopeCountries(read, places, r) : [];
+  const scope = { ...profile, countries: [...new Set([...profile.countries, ...reach])], remote: profile.remote || (!profile.countries.length && !reach.length) };
   const files = shardFiles(index, scope);
   text('#results-status', files.length === 1 ? t('Downloading 1 part of the pile…') : t('Downloading {n} parts of the pile…', { n: files.length }));
   downloading(0, files.length);
   const { offers, failed: lost } = await loadShards(files, 'data', getJson, (done, total) => { text('#results-status', t('Downloading {done} of {total}…', { done, total })); downloading(done, total); });
   downloading(1, 1);
   const alive = offers.filter(o => !isExpired(o));
+  // ➤ The search's profile: the filters, with the places the bar read.
+  const judged = { ...profile, countries: [...new Set([...profile.countries, ...read.countries])], places: read.towns, said: read.said, km: r };
   const stages = {}, dropped = [];
   let kept = alive;
-  if (!isEmptyProfile(profile)) {
-    const judge = makeJudge(profile, cats, engine);
+  if (!isEmptyProfile(profile) || read.towns.length || read.countries.length) {
+    const judge = makeJudge(judged, cats, engine);
     kept = [];
     for (const o of alive) { const v = judge(o); if (v.ok) kept.push(o); else { dropped.push({ o, verdict: v }); stages[v.stage] = (stages[v.stage] || 0) + 1; } }
-    kept = sortOffers(kept, profile);
+    kept = sortOffers(kept, judged);
   } else kept = newestFirst(kept);
-  loaded = { key, offers: kept, total: alive.length, failed: lost, profile, stages, dropped };
+  loaded = { key, offers: kept, total: alive.length, failed: lost, profile: judged, read, stages, dropped };
   draw();
 }
 
@@ -381,39 +348,40 @@ async function readCvFile(file) {
   }
 }
 
-// ➤ On a phone the filters are a panel the button opens and closes; on a desk they sit on the left.
 function wireControls() {
-  const panel = $('#filters');
+  // ➤ The Filters button opens and closes the panel under the bar.
   const toggle = $('#filters-toggle');
-  const open = on => { panel.classList.toggle('is-open', on); toggle.setAttribute('aria-expanded', String(on)); document.body.classList.toggle('filters-open', on); };
-  toggle.addEventListener('click', () => open(!panel.classList.contains('is-open')));
-  $('#filters-close').addEventListener('click', () => open(false));
-  // ➤ Any change in the panel is the new profile; ticking a country puts it last in the order.
-  // ➤ The town: taken when the text is one of the suggestions (picked, or typed whole); an empty
-  // ➤ field drops it; anything else is put back as it was when the field is left.
-  const placeField = $('#place');
-  placeField.addEventListener('focus', () => loadPlaces().catch(() => {}));
-  placeField.addEventListener('input', () => { const hit = places?.get(placeField.value.trim()); if (hit) { chosenPlace = hit; writeHash(stateFromForm()); } });
-  placeField.addEventListener('change', () => {
-    if (!placeField.value.trim()) { chosenPlace = null; writeHash(stateFromForm()); } else if (!places?.has(placeField.value.trim())) run().catch(showError);
+  toggle.addEventListener('click', () => {
+    const open = $('#filters').hidden;
+    $('#filters').hidden = !open;
+    toggle.setAttribute('aria-expanded', String(open));
   });
-  $('#radius').addEventListener('change', () => { if (chosenPlace) writeHash(stateFromForm()); });
+  // ➤ Any change in the panel is the new profile; ticking a country puts it last in the order.
   $('#filters-form').addEventListener('change', e => {
     if (e.target.name === 'c') { const k = countryOrder.indexOf(e.target.value); if (e.target.checked && k < 0) countryOrder.push(e.target.value); else if (!e.target.checked && k >= 0) countryOrder.splice(k, 1); }
     writeHash(stateFromForm());
   });
-  $('#filters-clear').addEventListener('click', () => { countryOrder.length = 0; writeHash({ q: $('#q').value.trim() }); });
-  // ➤ Search: a code pasted over the current one loads it; otherwise the filters and words as
-  // ➤ they are; with nothing at all, the whole pile.
+  $('#radius').addEventListener('change', () => search(stateFromForm()));
+  $('#filters-clear').addEventListener('click', () => { countryOrder.length = 0; const { q, r } = stateFromForm(); writeHash({ q, r }); });
+  // ➤ The bar: a code pasted whole loads the filters it packs; anything else is searched, and
+  // ➤ with nothing at all, the newest of the pile. What looks like a code but does not read is
+  // ➤ said under the bar, and searched as words all the same.
   $('#search').addEventListener('submit', e => {
     e.preventDefault();
-    const state = stateFromForm();
-    const typed = $('#code-input').value.trim();
-    if (typed && typed !== state.p) {
-      try { decodeProfile(typed, ids); state.p = typed; } catch (err) { unreadable(err); return; }
+    const typed = $('#q').value.trim();
+    if (/^[A-Za-z0-9_-]{8,}$/.test(typed)) {
+      try { decodeProfile(typed, ids); $('#q').value = ''; search({ ...stateFromForm(), p: typed, q: '' }); return; } catch { if (/\d/.test(typed) && /[A-Z]/.test(typed)) unreadable(); }
     }
+    const state = stateFromForm();
     if (!state.p && !state.q) state.all = '1';
     search(state);
+  });
+  // ➤ The code in the panel: pasted or typed over, it loads when it reads; emptied, the filters go.
+  $('#code-input').addEventListener('change', () => {
+    const code = $('#code-input').value.trim();
+    const { q, r } = stateFromForm();
+    if (!code) { writeHash({ q, r }); return; }
+    try { decodeProfile(code, ids); search({ p: code, q, r }); } catch { unreadable(); }
   });
   const copy = $('#copy-code');
   copy.addEventListener('click', async () => {
@@ -424,15 +392,19 @@ function wireControls() {
   $('#cv-file').addEventListener('change', e => { const file = e.target.files[0]; if (file) readCvFile(file); e.target.value = ''; });
   // ➤ Typing redraws at once; the address follows once the typing pauses.
   let timer;
-  $('#q').addEventListener('input', () => { writeHash(stateFromForm(), true); draw(); clearTimeout(timer); timer = setTimeout(() => writeHash(stateFromForm(), true), 600); });
+  $('#q').addEventListener('input', () => { clearNote(); writeHash(stateFromForm(), true); draw(); clearTimeout(timer); timer = setTimeout(() => writeHash(stateFromForm(), true), 600); });
   window.addEventListener('hashchange', () => run().catch(showError));
-  // ➤ The other language keeps the visitor's filters: the link takes the address's # along.
+  // ➤ The other language keeps the visitor's search: the link takes the address's # along.
   const other = $('.nav__lang');
   if (other) other.addEventListener('click', () => { other.hash = location.hash; });
+  // ➤ A phone's bar is narrower: a shorter hint.
+  const hint = () => { $('#q').placeholder = NARROW.matches ? t('Title, company, town or code') : t('Title, company, town, or paste your code'); };
+  hint();
+  NARROW.addEventListener('change', hint);
 }
 
 async function main() {
-  try { index = await getJson('data/index.json'); } catch { text('#generated', t('The pile is not published yet. Come back in a few hours.')); text('#hero-count', '0'); return; }
+  try { index = await getJson('data/index.json'); } catch { text('#hero-count', '0'); barNote(t('The pile is not published yet. Come back in a few hours.')); return; }
   const names = ['families', 'occupations', 'countries', 'languages', 'degrees', 'seniority', 'vetoes'];
   const all = await Promise.all(names.map(name => getJson(`catalogues/${name}.json`)));
   cats = Object.fromEntries(names.map((name, i) => [name, all[i]]));
@@ -444,4 +416,4 @@ async function main() {
   await run();
 }
 
-main().catch(e => { text('#generated', t('Something went wrong: {error}', { error: e.message })); });
+main().catch(e => barNote(t('Something went wrong: {error}', { error: e.message })));

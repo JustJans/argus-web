@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="/argus-web/style.css">
 </head>
 <body>
+<div class="relative isolate min-h-screen overflow-hidden">
+<div class="pointer-events-none absolute inset-0 -z-10" aria-hidden="true"></div>
 <div class="mx-auto max-w-[720px] px-5 pb-10 md:px-10 md:pb-14">
   <nav class="flex items-center gap-3 pt-3.5 md:gap-3.5 md:pt-[18px]" aria-label="Site">
     <a class="mr-auto font-head text-lg font-semibold uppercase tracking-[.04em] text-ink no-underline hover:text-ink md:text-xl" href="/argus-web/">Argus Web</a>
@@ -19,12 +21,13 @@
     <!-- language menu -->
   </nav>
   <main>
-    <div class="mt-10 -ml-[.04em] font-head text-[80px] font-bold leading-[.9] tracking-[-.02em] tabular-nums md:mt-16 md:text-[120px]">404</div>
-    <h1 class="m-0 mt-4 font-head text-[32px] font-bold uppercase leading-none">That page does not exist.</h1>
+    <div class="mt-12 font-wide text-[80px] font-bold leading-[.9] tabular-nums [font-stretch:108%] md:mt-16 md:text-[112px]">404</div>
+    <h1 class="m-0 mt-10 font-wide text-[36px] font-bold leading-none [font-stretch:108%] md:mt-12 md:text-[44px]">That page does not exist.</h1>
     <div class="mt-6 mb-8 h-px bg-line"></div>
-    <p class="m-0 max-w-[48ch] text-[15px] leading-6">Everything lives on the <a href="/argus-web/">first page</a>; your filters, packed into a code, go after the <code>#</code> of its address.</p>
-    <a class="mt-6 inline-flex min-h-11 items-center border border-accent bg-accent px-7 font-head text-[15px] font-semibold uppercase tracking-[.06em] text-ground no-underline hover:bg-accent-600 hover:text-ground" href="/argus-web/">Back to the list</a>
+    <p class="m-0 max-w-[48ch] text-[15px] leading-6">Everything lives on the <a href="/argus-web/">first page</a>. Paste your code in its search bar to get your filters back.</p>
+    <a class="mt-6 inline-flex min-h-12 items-center rounded-full bg-accent px-8 font-head text-[15px] font-semibold uppercase tracking-[.06em] text-ground no-underline hover:bg-accent-600 hover:text-ground" href="/argus-web/">Back to search</a>
   </main>
+</div>
 </div>
 <script type="module" src="/argus-web/lib/theme.js"></script>
 </body>

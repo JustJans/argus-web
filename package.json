@@ -21,6 +21,7 @@
     "modern-ahocorasick": "^3.3.0"
   },
   "devDependencies": {
+    "@fontsource-variable/archivo": "^5.3.0",
     "@tailwindcss/cli": "^4.3.3",
     "tailwindcss": "^4.3.3",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
