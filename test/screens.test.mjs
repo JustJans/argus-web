@@ -31,4 +31,12 @@ eq(requiredLanguages('German required. Actually not required for this position.'
 eq(requiredLanguages('Our office is in Germany, near the German border.', s), [], 'a country is not a language demand');
 eq(requiredLanguages('Excellent communication skills in English and Spanish are essential.', s).sort(), ['en', 'es'], 'two languages in one demand');
 
+// ➤ Words that only look like a language, and demands a softener in another part does not undo.
+eq(requiredLanguages('Fluent Spanish is required, con fines comerciales.', s), ['es'], '"fines" (purposes) is not Finnish');
+eq(['Must know heat exchanger fins.', 'Must manage VMware resource pools.', 'Polished communication skills are essential.', 'Must hold a work permit for the Czech Republic.', 'Must be willing to relocate to Germany.', 'Imprescindible residir en la región Romana.'].map(t => requiredLanguages(t, s)), [[], [], [], [], [], []], 'fins, pools, polished, a country and a region are no language demand');
+eq([requiredLanguages('Sehr gute Deutschkenntnisse erforderlich.', s), requiredLanguages('Nederlandstalig is vereist.', s)], [['de'], ['nl']], 'a name with its tail still counts');
+eq(requiredLanguages('Fluent German is required; English is a plus.', s), ['de'], 'a softener in another part of the sentence does not undo a demand');
+eq(['Scrum Master for our software teams.', 'Our office is near the university, with free energy drinks.', 'Master data management in SAP is required.', 'Wo Technik auf Zukunft trifft.'].map(t => requiredDegrees(t, s)), [[], [], [], []], 'a scrum master, a university nearby, master data and the German "wo" demand no degree');
+eq([requiredDegrees('Abgeschlossenes Studium der Elektrotechnik.', s), requiredDegrees('Een afgeronde opleiding op WO-niveau in werktuigbouwkunde.', s), requiredDegrees("A master's degree in mechanical engineering is required; a PhD is a plus.", s)], [['electrical'], ['mechanical'], ['mechanical']], 'a completed Studium, WO level and a demand before a softener still count');
+
 done();
