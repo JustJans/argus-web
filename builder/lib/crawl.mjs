@@ -6,35 +6,8 @@
 import { text, decodeEntities } from '../adapters/boards.mjs';
 import { tagMode } from '../work-mode.mjs';
 
-// ➤ robots.txt: the Disallow lines that bind everyone or us, the crawl delay, the sitemaps.
-export function parseRobots(txt, agent = 'argusweb') {
-  const groups = [];
-  let current = null;
-  for (const raw of String(txt || '').split(/\r?\n/)) {
-    const line = raw.replace(/#.*/, '').trim();
-    const m = line.match(/^([a-z-]+)\s*:\s*(.*)$/i);
-    if (!m) continue;
-    const key = m[1].toLowerCase(), value = m[2].trim();
-    if (key === 'user-agent') { if (!current || current.rules.length || current.delay) { current = { agents: [], rules: [], delay: 0 }; groups.push(current); } current.agents.push(value.toLowerCase()); }
-    else if (current && key === 'disallow') { if (value) current.rules.push({ allow: false, path: value }); }
-    else if (current && key === 'allow') { if (value) current.rules.push({ allow: true, path: value }); }
-    else if (current && key === 'crawl-delay') current.delay = Number(value) || 0;
-  }
-  const mine = groups.find(g => g.agents.some(a => a === agent)) || groups.find(g => g.agents.includes('*')) || { rules: [], delay: 0 };
-  const sitemaps = [...String(txt || '').matchAll(/^\s*sitemap\s*:\s*(\S+)/gim)].map(m => m[1]);
-  return { rules: mine.rules, delay: mine.delay, sitemaps };
-}
-
-// ➤ May this path be read? The most specific rule wins, as the standard says.
-export function allowed(robots, path) {
-  const p = String(path || '/');
-  let best = null;
-  for (const r of robots?.rules || []) {
-    const pattern = r.path.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\\\$$/, '$');
-    if (new RegExp(`^${pattern}`).test(p) && (!best || r.path.length > best.path.length)) best = r;
-  }
-  return !best || best.allow;
-}
+// ➤ robots.txt lives in builder/robots.mjs; these stay importable from here.
+export { parseRobots, allowed, robotsPath } from '../robots.mjs';
 
 // ➤ A sitemap or a sitemap index: the addresses it lists, with their lastmod when given.
 export function parseSitemap(xml) {

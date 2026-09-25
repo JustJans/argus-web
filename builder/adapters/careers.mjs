@@ -11,7 +11,8 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import yaml from 'js-yaml';
 import { get, getText } from '../http.mjs';
-import { parseRobots, allowed, parseSitemap, looksLikeJob, pathShape, jobPostings, jobLinks, nextLink } from '../lib/crawl.mjs';
+import { parseSitemap, looksLikeJob, pathShape, jobPostings, jobLinks, nextLink } from '../lib/crawl.mjs';
+import { robotsOf } from '../robots.mjs';
 import { parseSuccessFactors } from 'argus/server-bot/scan.mjs';
 
 export const id = 'careers';
@@ -85,8 +86,9 @@ function hostOf(site) {
 }
 
 // ➤ Where a host's vacancies are read from: the sitemaps its robots.txt names, else the
-// ➤ usual sitemap addresses, else the listing the addresses seen hang from. Remembered.
-export async function resolve(site, state, opts) {
+// ➤ usual sitemap addresses, else the listing the addresses seen hang from. Remembered. Every
+// ➤ address tried is one robots.txt lets us read.
+export async function resolve(site, state, opts, robots = robotsOf(opts)) {
   if (site.feed || site.sitemap || site.listing) return site;
   // ➤ The addresses the scout saw share a path ("/en/careers/jobs/"): only pages under it are
   // ➤ read, the rest of a big site's sitemap is not.
@@ -104,13 +106,14 @@ export async function resolve(site, state, opts) {
   const known = worked ? state.resolved?.[site.host] : null;
   if (known) return { ...site, ...known };
   const origin = `https://${site.host}`;
-  let robots = { sitemaps: [] };
-  // ➤ A host that does not answer its robots.txt at all is dead for the day: no sitemaps
-  // ➤ are tried on it (each would wait its whole timeout).
-  try { const r = await get(`${origin}/robots.txt`, opts); if (r.ok) robots = parseRobots(await r.text()); } catch (e) { throw new Error(`no answer (${e.message.slice(0, 40)})`); }
+  // ➤ A host that does not answer its robots.txt at all is dead for the day: nothing may be read
+  // ➤ on it (RFC 9309), and no sitemap is tried (each would wait its whole timeout).
+  let rules;
+  try { rules = await robots.rules(origin); } catch (e) { throw new Error(`no answer (${e.message.slice(0, 60)})`); }
   // ➤ A vacancies feed first, where the site publishes one: the whole list with its places and
   // ➤ its text in a single read, which is kinder to the site than a page per vacancy.
   for (const path of ['/jobs.xml', '/jobs.rss']) {
+    if (!(await robots.may(origin + path))) continue;
     try {
       const jobs = parseSuccessFactors(await getText(origin + path, opts), site.name || '');
       if (jobs.filter(j => j.url && j.location).length >= 3) { (state.resolved ||= {})[site.host] = { feed: origin + path }; return { ...site, feed: origin + path }; }
@@ -119,11 +122,12 @@ export async function resolve(site, state, opts) {
   // ➤ A big site names a sitemap per region ("/apac/en/", "/global/en/"): the one whose address
   // ➤ shares the path the vacancies seen are under is the one that holds them, and a sitemap
   // ➤ that names vacancies beats one that names anything else.
-  const candidates = [...new Set([...robots.sitemaps, `${origin}/sitemap.xml`])]
+  const candidates = [...new Set([...rules.sitemaps, `${origin}/sitemap.xml`])]
     .sort((a, b) => (site.match && b.includes(site.match) ? 1 : 0) - (site.match && a.includes(site.match) ? 1 : 0))
     .slice(0, 4);
   let elsewhere = '';
   for (const sm of candidates) {
+    if (!(await robots.may(sm))) continue;
     try {
       const parsed = parseSitemap(await getText(sm, opts));
       if (!parsed.items.length) continue;
@@ -144,7 +148,8 @@ export async function resolve(site, state, opts) {
   // ➤ names where the vacancies went.
   let listing = guess;
   if (guess !== `${origin}/`) {
-    try { const r = await get(guess, opts); if (!r.ok) listing = `${origin}/`; } catch { listing = `${origin}/`; }
+    if (!(await robots.may(guess))) listing = `${origin}/`;
+    else try { const r = await get(guess, opts); if (!r.ok) listing = `${origin}/`; } catch { listing = `${origin}/`; }
   }
   (state.resolved ||= {})[site.host] = { listing };
   return { ...site, listing };
@@ -155,12 +160,13 @@ export async function resolve(site, state, opts) {
 // ➤ The addresses the scout saw a vacancy at say what this site's vacancy pages look like.
 const shapesOf = site => new Set((site.urls || []).map(pathShape).filter(Boolean));
 
-export async function listed(site, opts) {
+export async function listed(site, opts, robots = robotsOf(opts)) {
   const shapes = shapesOf(site);
   if (!site.sitemap) {
     const seen = new Set();
     let url = site.listing;
     for (let page = 0; url && page < LISTING_PAGES; page++) {
+      if (!(await robots.may(url))) break;
       let html;
       try { html = await getText(url, opts); } catch (e) { if (page || /^\d{3} for /.test(e.message)) break; throw e; }
       const before = seen.size;
@@ -173,12 +179,13 @@ export async function listed(site, opts) {
     return (under.length ? under : found.filter(looksLikeJob)).map(url => ({ url, lastmod: '' }));
   }
   let first;
+  if (!(await robots.may(site.sitemap))) return [];
   try { first = parseSitemap(await getText(site.sitemap, opts)); } catch (e) { if (/^\d{3} for /.test(e.message)) return []; throw e; }
   let items = first.items;
   if (first.index) {
     items = [];
     const children = first.items.filter(i => !site.match || i.url.includes(site.match) || /job|vacan|career|stellen|emploi|empleo|vacature/i.test(i.url)).slice(0, SITEMAP_CAP);
-    for (const c of children.length ? children : first.items.slice(0, SITEMAP_CAP)) { try { items.push(...parseSitemap(await getText(c.url, opts)).items); } catch { /* one child missing */ } }
+    for (const c of children.length ? children : first.items.slice(0, SITEMAP_CAP)) { if (!(await robots.may(c.url))) continue; try { items.push(...parseSitemap(await getText(c.url, opts)).items); } catch { /* one child missing */ } }
   }
   const jobbish = items.filter(i => looksLikeJob(i.url) || shapes.has(pathShape(i.url)));
   if (!site.match) return jobbish;
@@ -205,19 +212,23 @@ export function toRaw(job, site, url) {
 // ➤ (the pages left are read in the next pass).
 export async function readSite(given, store, budget = {}, log = () => {}, until = Infinity) {
   const opts = { tries: 1, timeoutMs: given.found ? 6000 : 12000, gapMs: 400 };
-  const site = await resolve(given, store, opts);
+  const robots = robotsOf(opts);
+  const site = await resolve(given, store, opts, robots);
   // ➤ A feed (SuccessFactors' jobs.xml) is the whole list with the adverts' text: one read.
   if (site.feed) {
+    if (!(await robots.may(site.feed))) return { adverts: [], listed: 0, fetched: 0, backlog: 0, blocks: true };
     const adverts = parseSuccessFactors(await getText(site.feed, opts), site.name || '')
       .map(p => toRaw({ title: p.title, company: p.company || site.name, location: p.location, description: String(p._jd || '').slice(0, DESCRIPTION) }, site, p.url));
     return { adverts, listed: adverts.length, fetched: 1, backlog: 0, blocks: true };
   }
   const from = site.sitemap || site.listing;
   const host = new URL(from).origin;
-  let robots = { rules: [], delay: 0 };
-  try { const r = await get(`${host}/robots.txt`, opts); if (r.ok) robots = parseRobots(await r.text()); } catch { /* no robots: everything may be read */ }
-  if (robots.delay) opts.gapMs = Math.max(opts.gapMs, Math.min(robots.delay, 10) * 1000);
-  const items = (await listed(site, opts)).filter(i => allowed(robots, new URL(i.url).pathname));
+  // ➤ The site's own robots.txt: silent, the pass stops here and the site waits for its next one.
+  const rules = await robots.rules(host);
+  if (rules.delay) opts.gapMs = Math.max(opts.gapMs, Math.min(rules.delay, 10) * 1000);
+  const listedNowAll = await listed(site, opts, robots);
+  const readable = await Promise.all(listedNowAll.map(i => robots.may(i.url)));
+  const items = listedNowAll.filter((_, n) => readable[n]);
   const pages = (store.pages ||= {});
   const wanted = items.filter(i => { const p = pages[i.url]; return !p || (p.failed && p.failed < PAGE_TRIES) || (i.lastmod && p.lastmod && i.lastmod > p.lastmod); });
   const canRead = Math.max(0, Math.min(isBarren(pages) ? BARREN_PROBE : budget.pagesASite ?? PAGES_A_SITE, budget.left ?? PAGES_A_SITE));
@@ -248,7 +259,7 @@ export async function readSite(given, store, budget = {}, log = () => {}, until 
       pages[q.url] = { lastmod: q.lastmod, job, r: READER, ...(q.from ? { from: q.from } : {}) };
       if (!job && !q.from && deeper < DEEPER_A_SITE) {
         for (const u of jobLinks(html, q.url, shapesOf(site))) {
-          if (seen.has(u) || deeper >= DEEPER_A_SITE || !allowed(robots, new URL(u).pathname)) continue;
+          if (seen.has(u) || deeper >= DEEPER_A_SITE || !(await robots.may(u))) continue;
           seen.add(u); deeper++;
           queue.push({ url: u, lastmod: '', from: q.url });
         }
