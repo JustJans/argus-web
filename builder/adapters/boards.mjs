@@ -11,7 +11,7 @@ import { dirname, join } from 'path';
 import yaml from 'js-yaml';
 import { getJson, getText, deadline } from '../http.mjs';
 import { robotsOf } from '../robots.mjs';
-import { parseGreenhouse, parseAshby, parseLever, parseSmartRecruiters, unescapeEntities } from 'argus/server-bot/scan.mjs';
+import { parseGreenhouse, parseAshby, parseLever, parseSmartRecruiters } from 'argus/server-bot/scan.mjs';
 import { modeWord, mostFlexible, tagMode } from '../work-mode.mjs';
 
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
@@ -207,7 +207,6 @@ export const ATS = {
     })).filter(p => p.url && p.title); },
   },
 };
-export { unescapeEntities };
 
 export const id = 'boards';
 export const kind = 'board';

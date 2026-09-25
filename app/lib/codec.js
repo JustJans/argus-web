@@ -5,7 +5,7 @@
 // ➤ the same file runs in the browser and under Node's tests.
 
 // ➤ Version 4 (2026-09-23): the work modes wanted and the pay (a yearly minimum in thousands of
-// ➤ euros, and whether to keep only the offers that state pay). Version 3 (2026-09-23):
+// ➤ euros, and whether to keep only the offers that state pay). Version 3 (2026-09-22):
 // ➤ specialties inside the families (ESCO's occupations), a town and a distance around it, and
 // ➤ more posted windows. Codes of versions 2 and 3 read as they always did; a version-1 code
 // ➤ named families that no longer exist and is refused with a message to make a new one.
