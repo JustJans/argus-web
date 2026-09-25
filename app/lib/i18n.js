@@ -17,22 +17,29 @@ const regions = new Intl.DisplayNames([lang], { type: 'region' });
 const languages = new Intl.DisplayNames([lang], { type: 'language' });
 export const countryLabel = cc => regions.of(cc.toUpperCase()) || cc.toUpperCase();
 export const languageLabel = code => upper(languages.of(code) || code);
-export const number = n => Number(n || 0).toLocaleString(lang);
+// ➤ Numbers as the site writes them on both pages: a dot between thousands ("97.189", and
+// ➤ "6.489" too) and a comma before decimals. Intl lays them out in the page's language (where
+// ➤ the currency sign goes); only the two marks are set, and thousands are always grouped
+// ➤ (Spanish alone would leave four digits together).
+const MARKS = { group: '.', decimal: ',' };
+const marked = parts => parts.map(p => MARKS[p.type] ?? p.value).join('');
+const plain = new Intl.NumberFormat(lang, { useGrouping: 'always' });
+export const number = n => marked(plain.formatToParts(Number(n || 0)));
 
-// ➤ "€3,500–€4,500 a month", "3500-4500 € al mes": the pay an offer states, in its own currency
-// ➤ and period, written the page's way; cents only when an hourly pay has them.
+// ➤ "€3.500–€4.500 a month", "3.500-4.500 € al mes": the pay an offer states, in its own
+// ➤ currency and period, written the site's way; cents only when an hourly pay has them.
 const PERIOD_TEXT = { y: '{pay} a year', m: '{pay} a month', w: '{pay} a week', d: '{pay} a day', h: '{pay} an hour' };
 export function payText([min, max, currency, period]) {
   const cents = period === 'h' && !(Number.isInteger(min) && Number.isInteger(max)) ? 2 : 0;
   let pay;
   try {
-    const f = new Intl.NumberFormat(lang, { style: 'currency', currency, minimumFractionDigits: cents, maximumFractionDigits: cents });
-    pay = min === max ? f.format(min) : f.formatRange ? f.formatRange(min, max) : `${f.format(min)}–${f.format(max)}`;
+    const f = new Intl.NumberFormat(lang, { style: 'currency', currency, minimumFractionDigits: cents, maximumFractionDigits: cents, useGrouping: 'always' });
+    pay = min === max ? marked(f.formatToParts(min)) : f.formatRangeToParts ? marked(f.formatRangeToParts(min, max)) : `${marked(f.formatToParts(min))}–${marked(f.formatToParts(max))}`;
   } catch { pay = `${min === max ? number(min) : `${number(min)}–${number(max)}`} ${currency}`; }
   return t(PERIOD_TEXT[period] || '{pay}', { pay });
 }
-// ➤ Euros a year, for the reasons an offer is left out: "€45,000".
-export const euros = n => new Intl.NumberFormat(lang, { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
+// ➤ Euros a year, for the reasons an offer is left out: "€45.000".
+export const euros = n => marked(new Intl.NumberFormat(lang, { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0, useGrouping: 'always' }).formatToParts(n));
 
 // ➤ The three work modes, by the letter the offers carry.
 const MODE_TEXT = { o: 'On-site', h: 'Hybrid', r: 'Remote' };

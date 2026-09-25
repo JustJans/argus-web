@@ -70,7 +70,7 @@ eq(judge({ ...base, lg: ['en'] }).ok, true, 'a language spoken is fine');
   const paid = p => makeJudge(normaliseProfile({ minPay: 45, ...p }), cats, engine);
   const at = (judgeIt, o) => judgeIt({ f: ['2512'], t: 'Software Engineer', cc: 'es', ...o });
   eq([at(paid(), { p: [40000, 50000, 'EUR', 'y'], pa: 50000 }).ok, at(paid(), { p: [3000, 3500, 'EUR', 'm'], pa: 42000 }).stage, at(paid(), {}).ok], [true, 'PAY', true], 'a range reaching €45,000 stays, one under it goes, an offer with no pay stays');
-  ok(/42,000/.test(at(paid(), { p: [3000, 3500, 'EUR', 'm'], pa: 42000 }).reason), 'the reason names the top of the year in euros');
+  ok(/42\.000/.test(at(paid(), { p: [3000, 3500, 'EUR', 'm'], pa: 42000 }).reason), 'the reason names the top of the year in euros, thousands after a dot');
   eq([at(paid({ payStated: true }), {}).stage, at(paid({ payStated: true }), { p: [20, 25, 'EUR', 'h'] }).ok], ['PAY', true], 'only stated pay: no pay is out; pay with no yearly figure is stated, and stays');
 }
 {
