@@ -11,7 +11,9 @@ import { readBoard, wrapBoardAdvert, loadCompanies } from './adapters/boards.mjs
 import * as careers from './adapters/careers.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const ADVERTS_A_FOUND_BOARD = 500;   // ➤ a few boards list thousands (survey platforms, agencies)
+// ➤ A few boards list thousands (survey platforms, agencies); the big employers' boards the
+// ➤ scout finds list a thousand or more too, so the cap is the ATSs' own paging limit.
+const ADVERTS_A_FOUND_BOARD = 1000;
 
 // ➤ What the feed adapters expect: the vertical's own codes, so a source that classifies by
 // ➤ code is asked only for what belongs here. Built once per process.

@@ -181,7 +181,8 @@ export const ATS = {
     url: slug => { const [tenant, dc, site] = wdParts(slug); return `https://${tenant}.${dc}.myworkdayjobs.com/wday/cxs/${tenant}/${site}/jobs`; },
     request: (slug, offset = 0) => ({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ limit: 20, offset, appliedFacets: {}, searchText: '' }) }),
     count: j => (j?.jobPostings || []).length,
-    more: (j, got) => got < Math.min(Number(j?.total) || 0, 1000),
+    // ➤ Workday states the total on the first page only; the pages after it say 0.
+    more: (j, got, first) => got < Math.min(Number(first?.total) || 0, 1000),
     // ➤ The list carries no advert text; "2 Locations" says nothing and is left blank.
     parse: (j, slug) => { const [tenant, dc, site] = wdParts(slug); return (j?.jobPostings || []).map(p => ({
       sourceId: String(p.bulletFields?.[0] || p.externalPath || ''), title: String(p.title || '').trim(),
@@ -237,14 +238,15 @@ export async function readBoard(ats, slug, company, opts = {}) {
   const a = ATS[ats];
   if (a.xml) return a.parse(await getText(a.url(slug), opts), slug, company);
   const out = [];
-  let got = 0;
+  let got = 0, first = null;
   for (;;) {
     const req = a.request ? a.request(slug, got) : {};
     const j = await getJson(a.url(slug, got), { ...opts, ...req, headers: { ...(opts.headers || {}), ...(req.headers || {}) } });
+    first ??= j;
     const page = a.parse(j, slug, company);
     out.push(...page);
     got += (a.count ? a.count(j) : (j.content || j.jobs || j).length) || 0;
-    if (!a.more || !page.length || !a.more(j, got)) break;
+    if (!a.more || !page.length || !a.more(j, got, first)) break;
   }
   return out;
 }

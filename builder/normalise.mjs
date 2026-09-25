@@ -73,6 +73,12 @@ const US_NAMED = /^(?:us|usa|u s a|united states(?: of america)?|etats-unis(?: d
 // ➤ "LA ROCHELLE" is not Louisiana, "ID #3gf8b" not Idaho, "US or UK" not Oregon.
 const OPENS_US = new RegExp(`^(?:(?:us|usa|u\\.s\\.a?\\.?|united states(?: of america)?)[\\s.,:–-]+(?:${US_STATE_NAMES}|new york)(?![a-z])|(?:${US_STATE_NAMES}|new york)\\s+[–-]\\s+)`);
 const OPENS_US_CODE = new RegExp(`^\\s*(?:(?:US|USA|U\\.S\\.A?\\.?|United States)[\\s.,:–-]+)?(?:${[...US_STATES].join('|').toUpperCase()})\\s*[–.-]\\s*\\S`);
+// ➤ Canada's provinces by code, the ones no European country shares ("London, ON"); NL and SK
+// ➤ are read with STATE_TOWNS.
+const CA_PROVINCES = new Set(['on', 'qc', 'bc', 'ab', 'mb', 'ns', 'nb', 'pe', 'yt', 'nt', 'nu']);
+// ➤ Germany's states by name, in German and English: a place that names one is in Germany, and
+// ➤ the Swiss town of Baden is not in "Baden-Württemberg".
+const DE_STATES = /(?:^|[^a-z0-9-])(?:baden-wurttemberg|baden-wuerttemberg|baden-baden|bayern|bavaria|hessen|hesse|niedersachsen|lower saxony|nordrhein-westfalen|north rhine-westphalia|rheinland-pfalz|rhineland-palatinate|saarland|sachsen|saxony|sachsen-anhalt|saxony-anhalt|schleswig-holstein|mecklenburg-vorpommern|thuringen|thueringen|thuringia)(?![a-z0-9]|-[a-z])/;
 // ➤ "Island" is Iceland in German and the Nordic languages and a plain word in English place
 // ➤ names ("Long Island City", "Rhode Island"): it names the country only standing on its own
 // ➤ ("Reykjavík, Island").
@@ -152,15 +158,24 @@ export function placeOf(location, compiled) {
   const named = namedCountry(raw, compiled);
   if (named?.european) return { cc: named.cc, city: cityIn(raw, named.european) };
   if (named) return { cc: named.cc, city };
+  // ➤ A European country's code in small letters ending the place ("Karlsdorf, BW, de",
+  // ➤ "Barcelona, CT, es"): the region's code before it is not a US state.
+  const endIso = withoutTail(raw).match(/,\s*([a-z]{2})\s*$/)?.[1];
+  const endCountry = endIso && compiled.find(c => c.iso === endIso);
+  if (endCountry) return { cc: endCountry.iso, city: cityIn(raw, endCountry) };
   for (const iso of Object.keys(FAR)) if (lastCode === iso) return { cc: iso, city };
-  for (const c of compiled) {
-    if (!codes.has(c.iso)) continue;
+  if (CA_PROVINCES.has(lastCode)) return { cc: 'ca', city };
+  // ➤ The last code that is a European country's, as in "Frosinone, FR, IT" or "Bern, BE, CH".
+  for (const code of (isoHit || []).map(s => s.replace(/[^A-Z]/g, '').toLowerCase()).reverse()) {
+    const c = compiled.find(k => k.iso === code);
+    if (!c) continue;
     const state = STATE_CODES[c.iso] && !(c.cityRe && c.cityRe.test(f)) ? STATE_CODES[c.iso]
       : (STATE_TOWNS[c.iso] || []).some(t => word(fold(t)).test(f)) ? (c.iso === 'de' ? 'us' : 'ca') : '';
     return state ? { cc: state, city } : { cc: c.iso, city: cityIn(raw, c) };
   }
   if ([...codes].some(c => US_STATES.has(c))) return { cc: 'us', city };
-  if (/(?:^|[^a-z])remote(?![a-z])|home ?office|teletrabajo|télétravail|homeoffice|thuiswerk|distans/.test(f)) return { cc: 'xx', city: '' };
+  if (DE_STATES.test(f)) return { cc: 'de', city: cityIn(raw, compiled.find(c => c.iso === 'de') || { cities: [], name: '' }) };
+  if (/(?:^|[^a-z])remote(?![a-z])|home ?office|teletrabajo|teletravail|homeoffice|thuiswerk|distans/.test(f)) return { cc: 'xx', city: '' };
   for (const c of compiled) if (c.cityRe && c.cityRe.test(f)) return { cc: c.iso, city: cityIn(raw, c) };
   for (const [iso, names] of Object.entries(FAR_CITIES)) if (names.some(n => word(fold(n)).test(f))) return { cc: iso, city };
   return { cc: '', city };

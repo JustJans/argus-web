@@ -38,13 +38,15 @@ export function makeLocation(profile) {
   const km = profile.km || profile.place?.km || 25;
   const said = profile.said || places.map(p => nameKey(p.name));
   const narrowed = new Set(places.map(p => p.cc));
-  const near = o => !!o.g && places.some(p => distanceKm(o.g, [p.lat, p.lon]) <= km);
-  const names = o => said.length > 0 && namesAny([o.t, o.te, o.c, o.ci, o.l].filter(Boolean).join(' · '), said);
+  // ➤ A job run in many towns (`m`, one offer per country) is near any of them.
+  const spots = o => [o.g, ...(o.m || []).filter(p => p.length === 3).map(p => [p[1], p[2]])].filter(Boolean);
+  const near = o => spots(o).some(g => places.some(p => distanceKm(g, [p.lat, p.lon]) <= km));
+  const names = o => said.length > 0 && namesAny([o.t, o.te, o.c, o.ci, o.l, ...(o.m || []).map(p => p[0])].filter(Boolean).join(' · '), said);
   return o => {
     if ((!countries.size && !places.length) || near(o) || names(o)) return null;
     if (o.cc === 'xx') return profile.remote ? null : { stage: 'COUNTRY', reason: t('remote work, and you did not allow it') };
     if (!o.cc) return null;
-    if (narrowed.has(o.cc)) return { stage: 'PLACE', reason: o.g ? t('more than {km} km from {place}', { km, place: places.map(p => p.name).join(t(' or ')) }) : t('its place is not on the map') };
+    if (narrowed.has(o.cc)) return { stage: 'PLACE', reason: spots(o).length ? t('more than {km} km from {place}', { km, place: places.map(p => p.name).join(t(' or ')) }) : t('its place is not on the map') };
     if (!countries.has(o.cc)) return { stage: 'COUNTRY', reason: t('in a country you did not choose ({cc})', { cc: o.cc.toUpperCase() }) };
     return null;
   };

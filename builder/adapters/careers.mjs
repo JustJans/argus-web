@@ -40,6 +40,13 @@ const LISTING_PAGES = 10;          // ➤ pages of a listing followed through it
 const DEEPER_A_SITE = 60;         // ➤ vacancy pages followed from a list the site names
 const ALIVE_PAGES_A_SITE = 2000;   // ➤ pages one site keeps in its file: the newest by last change
 const DESCRIPTION = 1500;          // ➤ characters kept per advert: only the screens read them
+// ➤ How pages are read (builder/lib/crawl.mjs), as a number kept with each page. Version 2 reads
+// ➤ the place from the street's field and the days sites write in words: a page read before
+// ➤ that whose advert has no place or no day is read again, after the new pages, within the
+// ➤ same budget, the ones without a place first.
+const READER = 2;
+const unplaced = job => !(job.location || job.country);
+const toReadAgain = p => p?.job && (p.r || 1) < READER && (unplaced(p.job) || !p.job.posted);
 
 // ➤ A site is a feed, a sitemap or a listing page to read; the careers scouts may only give
 // ➤ a host and a few vacancy addresses seen, and the adapter then works out where to read
@@ -60,9 +67,21 @@ export function loadSites() {
   const read = f => ['config', 'state/found'].flatMap(dir => { const p = join(ROOT, 'builder', ...dir.split('/'), f); return existsSync(p) ? (yaml.load(readFileSync(p, 'utf-8')) || {}).sites || [] : []; });
   const hand = read('careers.yml');
   const seen = new Set(hand.map(keyOf));
+  // ➤ A found site on a host an earlier entry already reads ("www." or not) is that site again,
+  // ➤ and an address still holding its page's template ("${…}") is no address.
+  const hosts = new Set(hand.map(hostOf));
   const out = [...hand];
-  for (const s of [...read('hunted.yml'), ...read('careers-found.yml')]) { const k = keyOf(s); if (!k || seen.has(k)) continue; seen.add(k); out.push({ ...s, found: true }); }
+  for (const s of [...read('hunted.yml'), ...read('careers-found.yml')]) {
+    const k = keyOf(s);
+    if (!k || seen.has(k) || hosts.has(hostOf(s)) || /\$\{|\$%7B/i.test(k)) continue;
+    seen.add(k); hosts.add(hostOf(s));
+    out.push({ ...s, found: true });
+  }
   return out.filter(s => s.enabled !== false && keyOf(s));
+}
+function hostOf(site) {
+  const k = String(keyOf(site) || '');
+  try { return (/^https?:\/\//.test(k) ? new URL(k).host : k).toLowerCase().replace(/^www\./, ''); } catch { return k.toLowerCase(); }
 }
 
 // ➤ Where a host's vacancies are read from: the sitemaps its robots.txt names, else the
@@ -202,10 +221,16 @@ export async function readSite(given, store, budget = {}, log = () => {}, until 
   const pages = (store.pages ||= {});
   const wanted = items.filter(i => { const p = pages[i.url]; return !p || (p.failed && p.failed < PAGE_TRIES) || (i.lastmod && p.lastmod && i.lastmod > p.lastmod); });
   const canRead = Math.max(0, Math.min(isBarren(pages) ? BARREN_PROBE : budget.pagesASite ?? PAGES_A_SITE, budget.left ?? PAGES_A_SITE));
+  const listedNow = new Set(items.map(i => i.url));
+  const isWanted = new Set(wanted.map(i => i.url));
+  const again = Object.entries(pages)
+    .filter(([u, p]) => toReadAgain(p) && !isWanted.has(u) && (listedNow.has(u) || (p.from && listedNow.has(p.from))))
+    .sort(([, a], [, b]) => Number(unplaced(b.job)) - Number(unplaced(a.job)))
+    .map(([url, p]) => ({ url, lastmod: p.lastmod, from: p.from || '', again: true }));
   // ➤ A sitemap often names the careers page itself ("/jobs", "/kariera") and not the
   // ➤ vacancies on it. A page with no JobPosting block that links to several vacancy pages of
   // ➤ its own site is such a list, and those pages are read too: one step further, no more.
-  const queue = wanted.sort((a, b) => String(b.lastmod).localeCompare(String(a.lastmod))).slice(0, canRead).map(i => ({ url: i.url, lastmod: i.lastmod, from: '' }));
+  const queue = [...wanted.sort((a, b) => String(b.lastmod).localeCompare(String(a.lastmod))).map(i => ({ url: i.url, lastmod: i.lastmod, from: '' })), ...again].slice(0, canRead);
   const seen = new Set([...items.map(i => i.url), ...queue.map(q => q.url)]);
   let fetched = 0, deeper = 0, failures = 0;
   const readNow = new Set();
@@ -220,7 +245,7 @@ export async function readSite(given, store, budget = {}, log = () => {}, until 
       const html = await getText(q.url, opts);
       const job = jobPostings(html, q.url)[0] || null;
       if (job?.description?.length > DESCRIPTION) job.description = job.description.slice(0, DESCRIPTION);
-      pages[q.url] = { lastmod: q.lastmod, job, ...(q.from ? { from: q.from } : {}) };
+      pages[q.url] = { lastmod: q.lastmod, job, r: READER, ...(q.from ? { from: q.from } : {}) };
       if (!job && !q.from && deeper < DEEPER_A_SITE) {
         for (const u of jobLinks(html, q.url, shapesOf(site))) {
           if (seen.has(u) || deeper >= DEEPER_A_SITE || !allowed(robots, new URL(u).pathname)) continue;
@@ -234,12 +259,12 @@ export async function readSite(given, store, budget = {}, log = () => {}, until 
       // ➤ answer is not a page without an advert, and is tried again.
       if (e.status === 429) { readNow.delete(q.url); break; }
       const answered = e.status >= 400 && e.status < 500 && e.status !== 408;
-      pages[q.url] = { lastmod: q.lastmod, job: null, ...(answered ? {} : { failed: (pages[q.url]?.failed || 0) + 1 }), ...(q.from ? { from: q.from } : {}) };
+      // ➤ A page read again that does not answer keeps the advert it had.
+      if (!(q.again && !answered)) pages[q.url] = { lastmod: q.lastmod, job: null, ...(answered ? {} : { failed: (pages[q.url]?.failed || 0) + 1 }), ...(q.from ? { from: q.from } : {}) };
       if (!answered && ++failures >= FAILURES_A_PASS) break;
     }
   }
   // ➤ Alive: what the list still names, and what a page it still names led to.
-  const listedNow = new Set(items.map(i => i.url));
   for (const [u, p] of Object.entries(pages)) if (!listedNow.has(u) && !(p.from && listedNow.has(p.from))) delete pages[u];
   const urls = Object.keys(pages);
   if (urls.length > ALIVE_PAGES_A_SITE) {

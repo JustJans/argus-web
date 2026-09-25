@@ -110,6 +110,8 @@ export default {
     'newest offers': 'ofertas más recientes',
     'offer matches your filters': 'oferta encaja con tus filtros',
     'offers match your filters': 'ofertas encajan con tus filtros',
+    '{town} and one more town': '{town} y una ciudad más',
+    '{town} and {n} more towns': '{town} y {n} ciudades más',
     'Downloading 1 part of the pile…': 'Descargando una parte de la lista…',
     'Downloading {n} parts of the pile…': 'Descargando {n} partes de la lista…',
     'Downloading {done} of {total}…': 'Descargando {done} de {total}…',

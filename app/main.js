@@ -207,7 +207,8 @@ function draw() {
   const { debug } = readHash();
   const words = readQuery($('#q').value, places).words;
   const since = loaded.profile.posted ? new Date(Date.now() - loaded.profile.posted * 864e5).toISOString().slice(0, 10) : '';
-  const inDate = loaded.offers.filter(o => !since || (o.d && o.d >= since));
+  // ➤ An offer whose page names no day is not known to be old: it stays.
+  const inDate = loaded.offers.filter(o => !since || !o.d || o.d >= since);
   const shown = inDate.filter(o => matchesWords(o, words, countryName));
   const lost = loaded.failed.length;
   const partsFailed = !lost ? '' : lost === 1 ? t(' (1 part failed to download)') : t(' ({n} parts failed to download)', { n: lost });
@@ -230,6 +231,8 @@ function draw() {
   text('#results-status', [head, ...countries].join(' · ') + partsFailed);
   // ➤ Zero results: every stage that dropped something, the date and the words included.
   const stages = { ...loaded.stages, 'posted date': loaded.offers.length - inDate.length, 'search words': inDate.length - shown.length };
+  // ➤ The towns searched, so a job run in many towns names the nearest.
+  ctx.places = loaded.read.towns;
   if (shown.length) renderList($('#list'), shown, ctx); else renderEmpty($('#list'), stages, loaded.total);
   if (debug && loaded.dropped) renderDebug($('#debug'), loaded.dropped); else $('#debug').hidden = true;
 }

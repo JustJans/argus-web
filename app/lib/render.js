@@ -3,6 +3,7 @@
 // ➤ link opens in a new tab without a referrer.
 import { splitVia } from './search.js';
 import { t, number, lang, payText, workModeLabel } from './i18n.js';
+import { distanceKm } from './distance.js';
 
 const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined) e.textContent = txt; return e; };
 
@@ -23,6 +24,17 @@ function adzunaLabel(cc) {
 // ➤ original is in another.
 const titleOf = o => (lang === 'es' ? o.ts : o.te) || o.t;
 
+// ➤ The town, or the country when the advert names no town ("Remote" for no fixed country). A
+// ➤ job run in many towns (`m`) names the town nearest the place searched, and how many more.
+function placeOf(o, ctx) {
+  if (!o.m?.length) return o.ci || ctx.countryName(o.cc);
+  const all = [[o.ci, ...(o.g || [])], ...o.m];
+  const away = p => (p.length === 3 && ctx.places?.length ? Math.min(...ctx.places.map(q => distanceKm([p[1], p[2]], [q.lat, q.lon]))) : Infinity);
+  const town = all.reduce((a, b) => (away(b) < away(a) ? b : a))[0] || ctx.countryName(o.cc);
+  const more = all.length - 1;
+  return more === 1 ? t('{town} and one more town', { town }) : t('{town} and {n} more towns', { town, n: number(more) });
+}
+
 // ➤ A card: the title, then the employer and the town, then the tags: the source outlined, then
 // ➤ the pay and the work mode when the source states them. The advert's own text is not shown:
 // ➤ the title, the employer and the place say what it is, and the link says the rest.
@@ -33,9 +45,7 @@ export function card(o, ctx) {
   const shown = titleOf(o);
   if (href) { const a = el('a', null, shown); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; h.append(a); } else h.textContent = shown;
   li.append(h);
-  // ➤ The town, or the country when the advert names no town ("Remote" for no fixed country).
-  const place = o.ci || ctx.countryName(o.cc);
-  li.append(el('p', 'offer__meta', [o.c, place].filter(Boolean).join(' · ')));
+  li.append(el('p', 'offer__meta', [o.c, placeOf(o, ctx)].filter(Boolean).join(' · ')));
   const tags = el('p', 'offer__tags');
   tags.append(o.s === 'adzuna' ? adzunaLabel(o.cc) : el('span', 'tag tag-outline', t('via {source}', { source: ctx.sourceName(o.s) })));
   if (o.p) tags.append(el('span', 'tag tag-accent', payText(o.p)));

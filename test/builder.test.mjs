@@ -11,7 +11,7 @@ import { readCodes } from '../builder/codes.mjs';
 import { compileCountries, placeOf, placeOfAdvert, normUrl, idFor, toRecord } from '../builder/normalise.mjs';
 import { dedupe, roleKey } from '../builder/dedupe.mjs';
 import { buildShards, latestOf, occupationCounts } from '../builder/shard.mjs';
-import { compileTowns, townOf, locate } from '../builder/towns.mjs';
+import { compileTowns, townOf, locate, campaignPlaces } from '../builder/towns.mjs';
 import { shardFiles } from '../app/lib/shards.js';
 import { parseLanbide, isoDay } from '../builder/adapters/lanbide.mjs';
 import { parseFeinaActiva } from '../builder/adapters/feinaactiva.mjs';
@@ -26,7 +26,7 @@ import { toRaw as adzunaRaw, detailsUrl } from '../builder/adapters/adzuna.mjs';
 import { toRaw as joobleRaw } from '../builder/adapters/jooble.mjs';
 import { parseJobFeed } from '../builder/adapters/jobfeed.mjs';
 import { jobicy, remotive, arbeitnow } from '../builder/adapters/remote.mjs';
-import { parseRobots, allowed, parseSitemap, looksLikeJob, pathShape, jobLinks, jobPostings, careerLinks, nextLink, detectPlatform, feedName, repairJson } from '../builder/lib/crawl.mjs';
+import { parseRobots, allowed, parseSitemap, looksLikeJob, pathShape, jobLinks, jobPostings, careerLinks, nextLink, detectPlatform, feedName, repairJson, day } from '../builder/lib/crawl.mjs';
 import { toRaw as careersRaw } from '../builder/adapters/careers.mjs';
 import { deadline } from '../builder/http.mjs';
 import { brandName } from '../builder/lib/names.mjs';
@@ -78,6 +78,8 @@ eq(familiesOf({ title: 'Technical Support Engineer - Digital Marketing', codes: 
 eq(familiesOf({ title: "Ingénieur d'affaires confirmé", codes: {}, hintLangs: ['fr'] }, gate), [], 'a French business engineer sells');
 eq([hygieneReason({ title: 'shift supervisor - Store# 08570' }) !== null, hygieneReason({ title: 'Werkstudent IT Servicemanagement' }) !== null, hygieneReason({ title: 'Quality Control Operator' }) !== null], [true, true, true], 'shop shifts, working students and operatives are hygiene');
 eq(hygieneReason({ title: 'SAP Retail Consultant' }), null, 'a SAP Retail consultant is not a shop job');
+eq([hygieneReason({ title: 'Offshore Survey Engineer' }), hygieneReason({ title: 'Mechanical Engineering Technician (Survey)' })], [null, null], 'a survey engineer or technician is ours');
+eq([hygieneReason({ title: 'Data Entry Clerk - Survey Panelist' }) !== null, hygieneReason({ title: 'Remote Data Entry Agent - Survey Assistant' }) !== null, hygieneReason({ title: 'Take Paid Surveys From Home' }) !== null], [true, true, true], 'the paid-survey gigs are not');
 
 // The specialties: which ESCO occupation a title names, inside the families it was given.
 const occ = (title, extra = {}) => { const raw = { title, codes: {}, ...extra }; return occupationsOf(raw, familiesOf(raw, gate), gate); };
@@ -207,6 +209,11 @@ eq([placeOf("St. Julian's, MT", cc).cc, placeOf('Billings, MT', cc).cc, placeOf(
 eq([placeOf('Wilmington, DE', cc).cc, placeOf('Rottach-Egern, DE', cc).cc], ['us', 'de'], 'DE is Germany except for the towns of Delaware');
 eq([placeOf('Saskatoon, SK', cc).cc, placeOf('Trnava, SK', cc).cc, placeOf("St. John's, NL, CA", cc).cc, placeOf('Zwolle, NL', cc).cc], ['ca', 'sk', 'ca', 'nl'], 'SK and NL the same way');
 eq([placeOf('Erfurt, TH, DE', cc).cc, placeOf('Rockville, MD or Hawthorne, CA', cc).cc], ['de', 'ca'], 'the last code is the country: a code before it is a region');
+eq([placeOf('Frosinone, FR, IT', cc).cc, placeOf('Bern, BE, CH', cc).cc, placeOf('Fribourg, FR, CH', cc).cc], ['it', 'ch', 'ch'], "a region's code that is also a country's does not beat the country's code after it");
+eq([placeOf('Karlsdorf-Neuthard, BW, de', cc).cc, placeOf('Barcelona, CT, es', cc).cc, placeOf('Breukelen, UT, nl', cc).cc], ['de', 'es', 'nl'], "a European country's code in small letters ends the place: the region before it is no US state");
+eq([placeOf('London, ON', cc).cc, placeOf('Laval, QC, CA', cc).cc], ['ca', 'ca'], "Canada's provinces by code");
+eq([placeOf('Offenburg, Baden-Württemberg', cc).cc, placeOf('Baden-Baden', cc).cc, placeOf('Unterschleißheim, Bayern', cc).cc], ['de', 'de', 'de'], "a German state named is Germany, and the Swiss Baden is not in Baden-Württemberg");
+eq([placeOf('Télétravail', cc).cc, placeOf('Paris (télétravail)', cc).cc, placeOf('Remoto', cc).cc], ['xx', 'xx', ''], 'télétravail with its accents is remote work, as remote is (a town named does not make it less remote); Remoto alone stays unplaced');
 eq(placeOf('Fort Myers, FL; Hybrid; La Belle, FL; Naples, FL', cc).cc, 'us', 'places split by semicolons are read, and Naples, Florida is not Naples in Italy');
 eq([placeOf('Munich, DE; Austin, TX', cc).cc, placeOf('Madrid, ES; Barcelona, ES', cc).cc], ['de', 'es'], 'a European place in a mixed list keeps the advert in Europe');
 eq(placeOf('Naples, Italy', cc).cc, 'it', 'and Naples with its country is still Italy');
@@ -261,6 +268,17 @@ ok(idFor('https://cvvp.nva.gov.lv/#/pub/vakances/1') !== idFor('https://cvvp.nva
   eq(r.kept.find(x => x.u === 'https://a.example/1') ? 'board-wins' : 'lost', 'board-wins', 'the board copy of a shared address wins');
   eq([r.sameUrl, r.sameRole], [1, 1], 'and the counts say what fell');
   eq(roleKey('', 'Engineer'), '', 'no employer, no role key');
+  const at = (u, ci, cc, d = '2026-09-01') => ({ rec: { u, c: 'Acme', t: 'Process Engineer', ci, cc, d }, kind: 'board' });
+  eq(dedupe([at('https://a/1', 'Madrid', 'es'), at('https://a/2', 'München', 'de')]).kept.length, 2, 'the same job in two towns is two offers');
+  eq(dedupe([at('https://a/1', 'Munich', 'de'), at('https://a/2', 'München', 'de')], rec => (/^m(?:unich|ünchen)$/i.test(rec.ci) ? '#muc' : rec.ci)).kept.length, 1, 'and one when the place reader says both names are one town');
+  eq(dedupe([at('https://a/1', 'Madrid', 'es', '2026-09-20'), at('https://a/2', 'Madrid', 'es', '')]).kept[0].d, '2026-09-20', 'a copy with no day does not beat one with a day');
+  const campaign = Array.from({ length: 12 }, (_, i) => at(`https://c/${i}`, `Town ${i}`, i < 8 ? 'nl' : 'be'));
+  eq(dedupe(campaign).kept.map(r => r.cc).sort(), ['be', 'nl'], 'a company and title in more than ten towns is a campaign: once per country');
+  eq(dedupe(campaign.slice(0, 3)).kept.length, 3, 'in a few towns, a job per town');
+  const nl = dedupe(campaign).kept.find(r => r.cc === 'nl');
+  eq(nl.alsoAt.length, 7, 'the offer kept for a country carries the copies of its other towns');
+  nl.ci = 'Town 0'; nl.alsoAt.forEach((r, i) => { r.ci = i === 3 ? 'Town 0' : r.ci; if (i < 2) r.g = [52 + i, 5]; });
+  eq(campaignPlaces(nl).map(p => p.length), [3, 3, 1, 1, 1, 1], 'each other town once, with its coordinates when it is on the map');
 }
 
 // ── Shards ──────────────────────────────────────────────────────────────
@@ -385,7 +403,17 @@ ok(idFor('https://cvvp.nva.gov.lv/#/pub/vakances/1') !== idFor('https://cvvp.nva
   const fixed = jobPostings(handwritten, 'https://igen.example/vacature')[0];
   eq([fixed.title, fixed.company, fixed.location, fixed.country], ['ICT Servicedeskmedewerker', 'igen', 'Apeldoorn, NL', 'nl'], 'a block with newlines inside its strings is still read');
   eq(fixed.description.split('\n'), ['Line one', 'line two'], 'and the text comes back whole, line break and all');
-  eq(fixed.posted, '', 'a day written in words is no day at all');
+  eq(fixed.posted, '2026-08-27', 'a day written with its month in words and its year is a day');
+  eq([day('Wed Sep 09 02:00:00 UTC 2026'), day('2026/9/04'), day('2026-9-4'), day('September 9, 2026'), day('Wed, 09 Sep 2026 02:00:00 GMT'), day('18.09.2026'), day('25/08/2026'), day('08/25/2026')],
+    ['2026-09-09', '2026-09-04', '2026-09-04', '2026-09-09', '2026-09-09', '2026-09-18', '2026-08-25', '2026-08-25'], 'the days sites write: Java\'s way (SuccessFactors), unpadded, in English words, with dots, and slashes that cannot be swapped');
+  eq([day('Mon Aug 24'), day('08/10/2026'), day('2026-02-30'), day('31.13.2026'), day('Market 9, 2026')], ['', '', '', '', ''], 'no day from a date without its year, a day and month that could be swapped, a day the calendar lacks, or a word that is no month');
+  const sf = '<div itemscope itemtype="http://schema.org/JobPosting"><span itemprop="title">Ingeniero de caminos</span><span itemprop="jobLocation" itemscope itemtype="http://schema.org/Place"><span itemprop="address" itemscope itemtype="http://schema.org/PostalAddress"><meta itemprop="streetAddress" content="Madrid, ES"></span></span><meta itemprop="datePosted" content="Thu Sep 10 02:00:00 UTC 2026"><meta itemprop="hiringOrganization" content="IDOM, S.A.U."></div>';
+  const sfJob = jobPostings(sf, 'https://career.idom.com/job/1')[0];
+  eq([sfJob.location, sfJob.posted, sfJob.company], ['Madrid, ES', '2026-09-10', 'IDOM, S.A.U.'], 'SAP SuccessFactors: the place in the street\'s field, the day the Java way');
+  const oneLine = '<script type="application/ld+json">{"@type":"JobPosting","title":"Process Engineer","jobLocation":{"@type":"Place","address":"Dublin"},"datePosted":"2026-06-30"}</script>';
+  eq(jobPostings(oneLine, 'https://x.example/1')[0].location, 'Dublin', 'an address written as one line is the place');
+  const named = '<script type="application/ld+json">{"@type":"JobPosting","title":"Site Engineer","jobLocation":{"@type":"Place","address":{"name":"London, "}}}</script>';
+  eq(jobPostings(named, 'https://x.example/2')[0].location, 'London,', "an address that only has a name gives it");
   eq(jobPostings('<script type="application/ld+json">{"@type":"JobPosting","title":"Site Engineer","datePosted":"2026-09-01T08:00:00Z"}</script>', 'https://x.example/1')[0].posted, '2026-09-01', 'a day written the way the schema asks is kept');
   eq(JSON.parse(repairJson('{"a":"b\\nc"}')).a, 'b\nc', 'what was already good JSON is untouched');
   eq(jobPostings('<script type="application/ld+json">{ this is not json at all }</script>', 'https://x.example/1'), [], 'a block that is truly broken is still left alone');
@@ -428,7 +456,8 @@ eq([wd[0].url, wd[0].sourceId, wd[0].location, wd[1].location, wd[1].posted], ['
 eq(wd[0].posted, new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10), 'and "Posted 3 Days Ago" is three days ago');
 const ora = ATS.oracle.parse({ items: [{ TotalJobsCount: 1, requisitionList: [{ Id: '344589', Title: 'Data Center Engineer', PrimaryLocation: 'Madrid, Spain', PostedDate: '2026-09-01', ShortDescriptionStr: '<p>Ops</p>' }] }] }, 'eeho.fa.us2.oraclecloud.com/CX_1');
 eq([ora[0].url, ora[0].location, ora[0].posted, ora[0].description], ['https://eeho.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/requisitions/preview/344589', 'Madrid, Spain', '2026-09-01', 'Ops'], 'Oracle: the preview address, the place, the day, the short text');
-eq([ATS.workday.more({ total: 148 }, 20), ATS.workday.more({ total: 148 }, 160), ATS.oracle.more({ items: [{ TotalJobsCount: 2261 }] }, 1000)], [true, false, false], 'paging stops at the total, or at a thousand');
+eq([ATS.workday.more({ total: 148 }, 20, { total: 148 }), ATS.workday.more({ total: 148 }, 160, { total: 148 }), ATS.oracle.more({ items: [{ TotalJobsCount: 2261 }] }, 1000)], [true, false, false], 'paging stops at the total, or at a thousand');
+eq([ATS.workday.more({ total: 0 }, 40, { total: 2000 }), ATS.workday.more({ total: 0 }, 1000, { total: 2000 })], [true, false], "Workday states the total on its first page only: the pages after it say 0 and the paging goes on");
 eq(ATS.workday.request('aviva.wd1/External', 40).method, 'POST', 'the Workday list is asked the way its page asks it');
 
 // The intermediaries: Jooble's records and the partner feeds' <job> schema.

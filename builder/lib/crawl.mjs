@@ -93,9 +93,42 @@ export function jobLinks(html, pageUrl, shapes) {
   return [...out];
 }
 
-// ➤ The day a site names, when it names one the way the schema asks (2026-09-07, or a whole
-// ➤ timestamp): a date written in words belongs to no calendar the pile can sort by.
-const day = v => (/^\d{4}-\d{2}-\d{2}/.test(String(v || '').trim()) ? String(v).trim().slice(0, 10) : '');
+// ➤ The day a site names. The schema asks for 2026-09-07 or a whole timestamp; sites also write
+// ➤ the month unpadded ("2026-9-4", "2026/9/04"), the way Java prints a date ("Wed Sep 09
+// ➤ 02:00:00 UTC 2026", every SAP SuccessFactors careers site), with the month in words
+// ➤ ("September 9, 2026", "27 augustus 2026", "Wed, 09 Sep 2026") or with dots ("18.09.2026").
+// ➤ Day and month in figures with slashes only when they cannot be swapped ("25/08/2026"); a
+// ➤ date without its year ("Mon Aug 24") names no day.
+// ➤ The months as the sites' languages write them, whole or shortened the usual way.
+const MONTHS = new Map([
+  'january jan januar januari janvier enero gennaio janeiro', 'february feb februar februari fevrier febrero febbraio fevereiro',
+  'march mar marz maerz maart mars marzo marco marts', 'april apr avril abril aprile',
+  'may mai mei maj mayo maggio maio', 'june jun juni juin junio giugno junho',
+  'july jul juli juillet julio luglio julho', 'august aug augustus augusti aout agosto',
+  'september sep sept septembre septiembre settembre setembro', 'october oct oktober octobre octubre ottobre outubro',
+  'november nov novembre noviembre novembro', 'december dec dezember decembre diciembre dicembre dezembro',
+].flatMap((names, i) => names.split(' ').map(n => [n, i + 1])));
+const monthOf = w => MONTHS.get(String(w).normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()) || 0;
+function calendarDay(y, m, d) {
+  const date = new Date(Date.UTC(y, m - 1, d));
+  if (date.getUTCMonth() !== m - 1 || date.getUTCDate() !== d || y < 2000 || y > new Date().getUTCFullYear() + 1) return '';
+  return date.toISOString().slice(0, 10);
+}
+export function day(v) {
+  const s = String(v || '').trim();
+  let m;
+  if ((m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})(?![\d])/))) return calendarDay(+m[1], +m[2], +m[3]);
+  if ((m = s.match(/^\p{L}{3,9},? (\p{L}{3,9})\.? (\d{1,2}) (?:\d{1,2}:\d{2}(?::\d{2})? )?(?:[a-z]{2,5} )?(\d{4})$/iu)) && monthOf(m[1])) return calendarDay(+m[3], monthOf(m[1]), +m[2]);
+  if ((m = s.match(/^(?:\p{L}{3,9},? )?(\d{1,2})\.? (\p{L}{3,9})\.?,? (\d{4})(?![\d])/iu)) && monthOf(m[2])) return calendarDay(+m[3], monthOf(m[2]), +m[1]);
+  if ((m = s.match(/^(\p{L}{3,9})\.? (\d{1,2})(?:st|nd|rd|th)?,? (\d{4})(?![\d])/iu)) && monthOf(m[1])) return calendarDay(+m[3], monthOf(m[1]), +m[2]);
+  if ((m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?![\d])/))) return calendarDay(+m[3], +m[2], +m[1]);
+  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?![\d])/))) {
+    const [a, b] = [+m[1], +m[2]];
+    if (a > 12 && b <= 12) return calendarDay(+m[3], b, a);
+    if (b > 12 && a <= 12) return calendarDay(+m[3], a, b);
+  }
+  return '';
+}
 
 // ➤ The older way of marking a vacancy up: microdata (itemtype JobPosting, itemprop fields).
 // ➤ Read leniently: a property is its content attribute, else the text inside its tag.
@@ -113,7 +146,8 @@ function microdataPostings(html, pageUrl) {
   const title = prop('title') || prop('name');
   if (!title) return [];
   const country = prop('addressCountry');
-  const location = [prop('addressLocality'), prop('addressRegion'), country].filter(Boolean).join(', ');
+  // ➤ SAP SuccessFactors writes the whole place in the street's field ("Bogota, CO").
+  const location = [prop('addressLocality'), prop('addressRegion'), country].filter(Boolean).join(', ') || prop('streetAddress');
   return [{
     title, company: prop('hiringOrganization'), location, country: /^[A-Za-z]{2}$/.test(country) ? country.toLowerCase() : '',
     url: pageUrl, description: prop('description'), posted: day(prop('datePosted')), expires: day(prop('validThrough')), remote: /remote/i.test(location),
@@ -167,9 +201,12 @@ export function jobPostings(html, pageUrl) {
       const type = [].concat(node?.['@type'] || []);
       if (!type.includes('JobPosting')) continue;
       const places = [].concat(node.jobLocation || []);
-      const address = places.map(l => l?.address).find(a => a && typeof a === 'object') || (typeof places[0]?.address === 'string' ? { streetAddress: places[0].address } : {});
+      const address = places.map(l => l?.address).find(a => a && typeof a === 'object') || { streetAddress: places.map(l => l?.address).find(a => typeof a === 'string') || '' };
       const country = str(address.addressCountry);
-      const location = [str(address.addressLocality), str(address.addressRegion), country].filter(Boolean).join(', ') || str(places[0]) || (node.jobLocationType === 'TELECOMMUTE' ? 'Remote' : '');
+      // ➤ Without a town, region or country, the place is whatever the address does say: the
+      // ➤ address as one line ("Dublin"), the street's field, its name.
+      const location = [str(address.addressLocality), str(address.addressRegion), country].filter(Boolean).join(', ')
+        || str(address.streetAddress) || str(address.name) || str(places[0]) || (node.jobLocationType === 'TELECOMMUTE' ? 'Remote' : '');
       const title = str(node.title) || str(node.name);
       if (!title) continue;
       const telecommute = [].concat(node.jobLocationType || []).includes('TELECOMMUTE');
