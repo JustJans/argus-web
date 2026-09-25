@@ -11,7 +11,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { loadSites } from '../adapters/careers.mjs';
-import { BOARD_HOSTS } from '../lib/crawl.mjs';
+import { isBoardHost } from '../lib/crawl.mjs';
 
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 const flag = (name, dflt) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : dflt; };
@@ -31,7 +31,7 @@ for (const s of loadSites()) {
 const picked = [];
 for (const [host, h] of Object.entries(hosts)) {
   const b = bare(host);
-  if (!h.kept || BOARD_HOSTS.test(b) || known.has(b)) continue;
+  if (!h.kept || isBoardHost(b) || known.has(b)) continue;
   const orgs = Object.entries(h.orgs || {}).sort((a, c) => c[1] - a[1]);
   const total = orgs.reduce((n, [, c]) => n + c, 0);
   // ➤ One organisation on most of the pages is an employer; many are a board.

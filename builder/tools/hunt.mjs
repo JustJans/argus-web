@@ -16,7 +16,8 @@ import yaml from 'js-yaml';
 import { get, getText, deadline } from '../http.mjs';
 import { ATS, readBoard, loadVendors, loadCompanies } from '../adapters/boards.mjs';
 import { resolve, listed, loadSites } from '../adapters/careers.mjs';
-import { careerLinks, detectPlatform, jobPostings, feedName, BOARD_HOSTS } from '../lib/crawl.mjs';
+import { robotsOf } from '../robots.mjs';
+import { careerLinks, detectPlatform, jobPostings, feedName, isBoardHost } from '../lib/crawl.mjs';
 import { compileFamilies, familiesOf, hygieneReason } from '../gate.mjs';
 import { readCodes } from '../codes.mjs';
 import { compileCountries, placeOf } from '../normalise.mjs';
@@ -29,6 +30,8 @@ const PATHS = ['/careers', '/jobs', '/career', '/en/careers', '/en/jobs', '/join
 const PAGES_READ = 12;    // ➤ vacancy pages read on a site to judge it
 const LOOKED = 12;        // ➤ candidate pages looked at per company
 const opts = { tries: 1, timeoutMs: 12000, gapMs: 300 };
+// ➤ Every page the hunter reads is one its host's robots.txt lets us read.
+const robots = robotsOf(opts);
 
 const read = p => JSON.parse(readFileSync(join(ROOT, ...p.split('/')), 'utf-8'));
 const gate = compileFamilies(read('catalogues/families.json'), readCodes(ROOT));
@@ -57,7 +60,11 @@ function judge(jobs, source) {
 
 const pretty = domain => { const label = domain.replace(/^https?:\/\//, '').replace(/^www\./, '').split('.')[0]; return label.charAt(0).toUpperCase() + label.slice(1); };
 const bare = domain => domain.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '');
-async function page(url) { const r = await get(url, opts); return { url: r.url || url, ok: r.ok, status: r.status, html: r.ok ? await r.text() : '' }; }
+async function page(url) {
+  if (!(await robots.may(url))) return { url, ok: false, status: 'robots.txt', html: '' };
+  const r = await get(url, opts);
+  return { url: r.url || url, ok: r.ok, status: r.status, html: r.ok ? await r.text() : '' };
+}
 
 // ➤ The home page: the bare domain, else www (some certificates and servers know only one).
 async function homeOf(domain) {
@@ -84,7 +91,7 @@ async function recognise(url, html) {
   }
   const o = new URL(url).origin;
   // ➤ The feed a SuccessFactors site publishes at /jobs.xml (SAP, Vestas): every advert, with its text.
-  try {
+  if (await robots.may(`${o}/jobs.xml`)) try {
     const xml = await getText(`${o}/jobs.xml`, { ...opts, timeoutMs: 30000, tries: 2 });
     if (/<rss/i.test(xml) && /<item>/i.test(xml)) {
       const name = feedName(xml);
@@ -96,14 +103,14 @@ async function recognise(url, html) {
   // ➤ A site: its sitemap when it lists vacancies, else this page as the listing; a few
   // ➤ vacancy pages read for their JobPosting block.
   let site;
-  try { site = await resolve({ host: new URL(url).host, urls: [url], name: '' }, {}, opts); } catch (e) { return { jobs: [], error: `no answer (${e.message.slice(0, 40)})` }; }
+  try { site = await resolve({ host: new URL(url).host, urls: [url], name: '' }, {}, opts, robots); } catch (e) { return { jobs: [], error: `no answer (${e.message.slice(0, 40)})` }; }
   let items = [];
-  if (site.sitemap) { try { items = await listed(site, opts); } catch { items = []; } }
-  if (!items.length) { site = { ...site, sitemap: undefined, listing: url }; try { items = await listed(site, opts); } catch { items = []; } }
+  if (site.sitemap) { try { items = await listed(site, opts, robots); } catch { items = []; } }
+  if (!items.length) { site = { ...site, sitemap: undefined, listing: url }; try { items = await listed(site, opts, robots); } catch { items = []; } }
   if (!items.length) return { jobs: [], error: 'no vacancy addresses in its sitemap or on the page' };
   const jobs = [];
   const sample = spread(items, PAGES_READ);
-  for (const i of sample) { try { const job = jobPostings(await getText(i.url, opts), i.url)[0]; if (job) jobs.push({ ...job, url: i.url }); } catch { /* one page */ } }
+  for (const i of sample) { if (!(await robots.may(i.url))) continue; try { const job = jobPostings(await getText(i.url, opts), i.url)[0]; if (job) jobs.push({ ...job, url: i.url }); } catch { /* one page */ } }
   const how = site.sitemap ? 'sitemap' : 'listing';
   const entry = site.sitemap ? { sitemap: site.sitemap, ...(site.match ? { match: site.match } : {}) } : { listing: url };
   if (!jobs.length) return { how, entry, jobs: [], listed: items.length, error: `${items.length} addresses look like vacancies, the ${sample.length} read carry no JobPosting block (drawn by JavaScript?)` };
@@ -131,7 +138,7 @@ async function hunt(domain) {
     let got;
     try { got = await page(c); } catch { continue; }
     // ➤ A page that turns out to be a job board's or a social network's is not read.
-    if (!got.ok || seen.has(`${got.url}#`) || BOARD_HOSTS.test(new URL(got.url).hostname)) continue;
+    if (!got.ok || seen.has(`${got.url}#`) || isBoardHost(new URL(got.url).hostname)) continue;
     seen.add(`${got.url}#`);
     looked++;
     const found = await recognise(got.url, got.html);

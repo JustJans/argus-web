@@ -191,7 +191,15 @@ shards in eleven minutes.
 ## Politeness and the law, as practised
 
 - `ArgusWeb/0.1 (+https://github.com/JustJans/argus-web)` as the user agent everywhere;
-  robots.txt read and obeyed, `Crawl-delay` honoured, one request at a time per host with a gap.
+  one request at a time per host with a gap.
+- robots.txt as [RFC 9309](https://www.rfc-editor.org/rfc/rfc9309) has it (`builder/robots.mjs`),
+  asked before every address of an employer's site the crawler or a scout reads (the front page,
+  feeds, sitemaps, listings, vacancy pages) and before the listing calls of Workday and Oracle:
+  the groups that name ArgusWeb, else those for everyone, combined; the longest rule wins, an
+  Allow over a Disallow as long, and the query counts; `Crawl-delay` honoured. No robots.txt (a
+  4xx) lets everything be read; a robots.txt that does not answer (a server error, a timeout, a
+  429) lets nothing be read, so the site waits for its next pass. The ATSs' documented APIs are
+  read on their own terms; Lever's API asks for a second between requests, and gets it.
 - "Too many requests" (429) is honoured with its `Retry-After`: the host is left alone until then
   and the reader moves on. Workable's widget API allows an IP about a thousand calls a day and
   then answers 429 for a day (seen 2026-09-06, `Retry-After: 78149`), so its boards are read

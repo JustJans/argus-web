@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import yaml from 'js-yaml';
 import { getJson, getText, deadline } from '../http.mjs';
+import { robotsOf } from '../robots.mjs';
 import { parseGreenhouse, parseAshby, parseLever, parseSmartRecruiters, unescapeEntities } from 'argus/server-bot/scan.mjs';
 import { modeWord, mostFlexible, tagMode } from '../work-mode.mjs';
 
@@ -77,6 +78,7 @@ export const ATS = {
   lever: {
     licence: { name: 'Lever Postings API', short: 'Lever', url: 'https://github.com/lever/postings-api', licence: 'Public postings API', credit: '', needsKey: false },
     url: slug => `https://api.lever.co/v0/postings/${encodeURIComponent(slug)}?mode=json`,
+    gapMs: 1000,   // ➤ api.lever.co's robots.txt asks for a second between requests
     parse: (arr, slug, company = slug) => parseLever(arr, company).map((p, i) => {
       const job = arr[i] || {};
       const mode = modeWord(job.workplaceType);
@@ -236,6 +238,10 @@ export function loadCompanies() {
 // ➤ more; an ATS with a `request` says how the call is made (Workday's list is a POST).
 export async function readBoard(ats, slug, company, opts = {}) {
   const a = ATS[ats];
+  // ➤ Workday's and Oracle's listing calls are the employer's careers site read without an
+  // ➤ API: its robots.txt decides, as on any other employer's site.
+  if (a.vendor && !(await robotsOf(opts).may(a.url(slug, 0)))) return [];
+  if (a.gapMs) opts = { gapMs: a.gapMs, ...opts };
   if (a.xml) return a.parse(await getText(a.url(slug), opts), slug, company);
   const out = [];
   let got = 0, first = null;
