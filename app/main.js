@@ -258,7 +258,7 @@ async function startFrontLoop() {
   looping = true;
   try {
     const { offers } = await getJson('data/today.json');
-    startLoop($('#loop'), offers || [], { row: o => loopRow(o, ctx), button: $('#loop-pause'), label: paused => text('#loop-pause-label', paused ? t('Play') : t('Pause')) });
+    startLoop($('#loop'), offers || [], { row: o => loopRow(o, ctx) });
   } catch { $('#loop').hidden = true; }
 }
 

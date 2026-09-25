@@ -38,8 +38,8 @@ The home and list page:
   (Read my CV, Clear), then the groups in four columns (Country with today's counts,
   Occupations by group with a ticked family's specialties, Posted, Work mode, Level and a years
   cap, Languages, Degrees and the highest one), then Pay at least, Title words and Exclude.
-- **The loop** (front only): today's offers from `data/today.json`, a new one at the top every
-  five seconds (`app/lib/ticker.js`), with a Pause button.
+- **The loop** (front only), there for the look: today's offers from `data/today.json`, faint,
+  sliding down one slot every two seconds (`app/lib/ticker.js`).
 - **Results:**
   - the status line: "14 of 3,330 offers · Spain 9 · Remote 5", with the per-country counts
     of the offers that match;
@@ -67,7 +67,7 @@ the `<!-- language menu -->` mark:
   `#copy-label`, `#cv-file`, `#cv-status`, `#filters-clear`, `#filters-form`, `#countries-pick`,
   `#remote`, `#families-pick`, `#levels-pick`, `#max-years`, `#languages-pick`,
   `#degrees-pick`, `#highest`, `#min-pay`, `#pay-stated`, `#roles`, `#no-words`, `#stale`,
-  `#stale-text`, `#loop`, `#loop-pause`, `#loop-pause-label`, `#results`, `#results-status`,
+  `#stale-text`, `#loop`, `#results`, `#results-status`,
   `#progress`, `#skeleton`, `#list`, `#debug`, `#hero-count`, `#hero-match`,
   `#hero-match-text`, `#hero-stats`, `#dark-mode`. On the Sources page: `#generated`,
   `#source-rows`.
@@ -100,8 +100,8 @@ the `<!-- language menu -->` mark:
   notice.
 - The CV line: idle, reading (spinner), ticked (accent), nothing found, file could not be read.
 - The code line: empty (placeholder), showing the current code, Copied (accent border).
-- The loop: moving; still while the pointer or the focus is on it, while the tab is hidden, under
-  reduced motion (no Pause button then), or paused (the button reads Play).
+- The loop: moving; still while the pointer or the focus is on it, while the tab is hidden, and
+  under reduced motion.
 
 ## Preview locally
 
