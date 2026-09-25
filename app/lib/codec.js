@@ -66,7 +66,9 @@ class Writer {
   // ➤ A set of catalogue choices as a bitfield of n bytes: position p of the catalogue is
   // ➤ bit (p mod 8) of byte (p div 8). Positions beyond the field are left out.
   bits(ids, catalogue, n) { const b = new Array(n).fill(0); for (const id of ids || []) { const p = catalogue.indexOf(id); if (p >= 0 && p < n * 8) b[p >> 3] |= 1 << (p & 7); } for (const x of b) this.byte(x); }
-  string(s, max = MAX_TERM_BYTES) { let b = enc.encode(String(s).trim()); if (b.length > max) b = b.slice(0, max); this.varint(b.length); for (const x of b) this.byte(x); }
+  // ➤ A word cut to fit is cut between two characters, never inside one ("producción", not
+  // ➤ "producci�"): the bytes that continue a character (10xxxxxx) go with it.
+  string(s, max = MAX_TERM_BYTES) { let b = enc.encode(String(s).trim()); if (b.length > max) { let end = max; while (end > 0 && (b[end] & 0xc0) === 0x80) end--; b = b.slice(0, end); } this.varint(b.length); for (const x of b) this.byte(x); }
   int16(v) { const x = Math.round(v) & 0xffff; this.byte(x >> 8); this.byte(x); }
 }
 class Reader {
