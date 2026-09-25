@@ -53,7 +53,7 @@
       </div>
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-hair px-4 py-3 md:px-6">
         <div class="flex flex-wrap items-center gap-3">
-          <label class="btn btn-secondary min-h-11 px-4 md:min-h-9"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>Read my CV<input id="cv-file" type="file" accept=".pdf,.txt,.md,text/plain,application/pdf" hidden></label>
+          <label class="btn btn-secondary relative min-h-11 px-4 md:min-h-9 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>Read my CV<input id="cv-file" type="file" accept=".pdf,.txt,.md,text/plain,application/pdf" class="sr-only"></label>
           <span id="cv-status" data-state="idle" aria-live="polite">A PDF or text file, read on this device: it ticks your occupations, degrees and languages.</span>
         </div>
         <button id="filters-clear" class="min-h-11 cursor-pointer rounded-full border-0 bg-transparent px-3 text-sm font-medium text-accent-700 hover:bg-accent/10 md:min-h-8" type="button">Clear</button>
@@ -104,9 +104,6 @@
           <div class="filter-group" data-group="degrees">
             <div class="group-name">Degrees</div>
             <div id="degrees-pick" class="checks"></div>
-            <label class="field"><span>Highest degree</span>
-              <select id="highest" class="input"><option value="none">not stated</option><option value="bachelor">bachelor</option><option value="master">master</option><option value="phd">doctorate</option></select>
-            </label>
           </div>
         </div>
         <div class="grid gap-5 border-t border-hair px-4 py-5 md:grid-cols-3 md:gap-6 md:px-6">
