@@ -8,8 +8,8 @@ import { fold } from 'argus/server-bot/text.mjs';
 // ➤ country → folded name → the towns that go by it.
 export function compileTowns(catalogue) {
   const byCountry = new Map();
-  for (const [id, name, cc, region, lat, lon, pop, names] of catalogue.places) {
-    const town = { id, name, cc, region, lat, lon, pop, names: names || [] };
+  for (const [id, name, cc, region, lat, lon, pop, names, known] of catalogue.places) {
+    const town = { id, name, cc, region, lat, lon, pop, names: names || [], known: known || [] };
     if (!byCountry.has(cc)) byCountry.set(cc, new Map());
     const byName = byCountry.get(cc);
     for (const n of [name, ...names]) {
@@ -45,15 +45,15 @@ export function townOf(rec, towns) {
   return null;
 }
 
-// ➤ The towns whose names in other languages go along ("Londres", "Gotemburgo"): the fullest,
-// ➤ where a visitor is likely to type one; four letters at least, three words at most.
-const NAMED_TOWNS = 200;
-const otherNames = (town, taken) => [...new Set(town.names.filter(n => n.length >= 4 && n.split(/\s+/).length <= 3 && /^[\p{L}' .-]+$/u.test(n) && !taken.has(fold(n))))];
+// ➤ A town's names in the languages visitors write in ("Londres", "Gotemburgo", "Genf"), for the
+// ➤ search bar: four letters at least, three words at most.
+const otherNames = (town, taken) => [...new Set(town.known.filter(n => n.length >= 4 && n.split(/\s+/).length <= 3 && /^[\p{L}' .-]+$/u.test(n) && !taken.has(fold(n))))];
 
 // ➤ Every record on the map: its coordinates as `g` (two decimals, about a kilometre), and the
 // ➤ towns with offers for the place search, each under the name its adverts use most
 // ➤ ("Göteborg" more than "Gothenburg"), the fullest first:
-// ➤ [shown name, GeoNames' name when it differs, region, country, lat, lon, offers, other names].
+// ➤ [shown name, GeoNames' name when it differs, region, country, lat, lon, offers, names in
+// ➤ other languages when it has any].
 export function locate(records, towns) {
   const round = x => Math.round(x * 100) / 100;
   const tally = new Map();
@@ -72,10 +72,10 @@ export function locate(records, towns) {
     t.n++;
     t.names.set(said, (t.names.get(said) || 0) + 1);
   }
-  const list = [...tally.values()].sort((a, b) => b.n - a.n).map(({ town, n, names }, i) => {
+  const list = [...tally.values()].sort((a, b) => b.n - a.n).map(({ town, n, names }) => {
     const shown = [...names].sort((a, b) => b[1] - a[1])[0][0];
     const row = [shown, fold(shown) === fold(town.name) ? '' : town.name, town.region, town.cc, round(town.lat), round(town.lon), n];
-    const more = i < NAMED_TOWNS ? otherNames(town, new Set([fold(shown), fold(town.name)])) : [];
+    const more = otherNames(town, new Set([fold(shown), fold(town.name)]));
     return more.length ? [...row, more] : row;
   });
   return { placed, list };

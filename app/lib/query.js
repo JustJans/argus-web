@@ -1,24 +1,22 @@
-// ➤ The search bar's reading of what a visitor typed: the towns and countries in it and the
-// ➤ words left over, which are matched against titles, employers and places as before. It is
-// ➤ the query tagging of the big job sites done with a dictionary instead of a model: the
-// ➤ site's own towns (every name data/places.json gives them) and countries, found with
-// ➤ Aho–Corasick, the longest name first. A name the pile uses more often as a word ("Orange",
-// ➤ "Change") counts as a town only with a cue: "in", "en", "near"…, a comma after it, or a
-// ➤ country next to it. Two towns of one name: the one in a country the query names, else the
-// ➤ one with the most offers. docs/research/single-search.md.
+// ➤ The search bar's reading of what a visitor typed: the towns and countries named in it,
+// ➤ which become the search's places (lib/gates.js), and the words left, which are matched as
+// ➤ before. It is the query tagging of the big job sites ("mooring engineer geneve" is Geneva on
+// ➤ LinkedIn) done with a dictionary instead of a model: the towns with offers under every name
+// ➤ data/places.json gives them, and the countries under theirs, found with Aho–Corasick, the
+// ➤ longest name first. docs/research/single-search.md.
 import AhoCorasick from '../vendor/ahocorasick/index.js';
-import { fold } from './engine.js';
+import { nameKey, nameKeys } from './name-key.js';
+import { wordsOf } from './search.js';
+import { distanceKm } from './distance.js';
 
-// ➤ Letters no accent-stripping takes apart, spelt the way people type them without the key.
-const LATIN = { ø: 'o', æ: 'ae', œ: 'oe', ß: 'ss', ł: 'l', đ: 'd', ð: 'd', þ: 'th', ı: 'i', ħ: 'h' };
-const plain = s => fold(s).replace(/[øæœßłđðþıħ]/g, c => LATIN[c]);
-// ➤ The form names and queries are compared in: plain letters and digits, one space between.
-export const searchKey = s => plain(s).replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
-
-// ➤ Words that point at a place ("in Nice", "en León") and words that join two ("Barcelona y
-// ➤ Girona"); both are dropped from the words when they stand just before a town or country.
-const CUES = new Set(['in', 'en', 'near', 'around', 'cerca', 'bei', 'nahe', 'nara', 'nabij', 'vicino', 'perto']);
-const JOINS = new Set(['and', 'or', 'y', 'o', 'e', 'i', 'und', 'oder', 'et', 'ou', 'og', 'och', 'eller']);
+// ➤ Words that point at a place ("in Nice", "cerca de León", "bei München"): after one, even a
+// ➤ name the pile mostly uses as a word ("Orange") is read as the town.
+const CUES = new Set(['in', 'en', 'near', 'nearby', 'around', 'cerca', 'bei', 'nahe', 'nara', 'naer', 'nabij', 'vicino', 'presso', 'perto', 'pres', 'autour', 'dans']);
+// ➤ Words between a place and the rest ("Barcelona y Girona", "cerca de Vigo"): they go with the
+// ➤ place, so the words left are the job's.
+const LINKS = new Set(['and', 'or', 'y', 'o', 'e', 'i', 'a', 'und', 'oder', 'et', 'ou', 'og', 'och', 'eller', 'of', 'to', 'the', 'de', 'del', 'la', 'le', 'les', 'di', 'da', 'do', 'von', 'zu', 'im', 'am', 'um', 'al', 'au', 'w']);
+// ➤ "Vigo y alrededores", "Bergen og omegn": the surroundings, said after the place.
+const AROUND = new Set(['alrededores', 'surroundings', 'environs', 'umgebung', 'umkreis', 'omgeving', 'omegn', 'dintorni', 'arredores', 'omgivelser', 'omgivningar']);
 
 // ➤ The countries by every name a visitor may type: the catalogue's, and each one's name in
 // ➤ English and Spanish from the browser's own Intl ("Germany", "Alemania", "Deutschland").
@@ -28,65 +26,105 @@ export function countryNames(catalogue) {
 }
 
 // ➤ places: data/places.json ({ places: [[shown, other, region, cc, lat, lon, offers, other
-// ➤ names]], ambiguous: [names] }); countries: [{ iso, names: [...] }].
+// ➤ names]], ambiguous: [names] }); countries: [{ iso, names: [...] }]. A town's name has three
+// ➤ letters at least ("ST" in a title is STMicroelectronics); a country's two ("UK").
 export function compileGazetteer({ places = [], ambiguous = [] }, countries = []) {
-  const entries = new Map();
+  const entries = new Map(), towns = [];
   const add = (name, entry) => {
-    const k = searchKey(name);
-    if (k.length < 2) return;
-    if (!entries.has(k)) entries.set(k, []);
-    const list = entries.get(k);
-    if (!list.some(e => e.kind === entry.kind && e.cc === entry.cc && e.name === entry.name)) list.push(entry);
+    for (const k of nameKeys(name)) {
+      if (k.length < (entry.kind === 'town' ? 3 : 2)) continue;
+      if (!entries.has(k)) entries.set(k, []);
+      if (!entries.get(k).includes(entry)) entries.get(k).push(entry);
+    }
   };
   for (const [shown, other, , cc, lat, lon, n, more = []] of places) {
     const town = { kind: 'town', name: shown, cc, lat, lon, n: n || 0 };
+    towns.push(town);
     for (const name of [shown, other, ...more]) if (name) add(name, town);
   }
-  for (const c of countries) for (const name of c.names) add(name, { kind: 'country', cc: c.iso, n: Infinity });
-  for (const list of entries.values()) list.sort((a, b) => b.n - a.n);
-  return { entries, ambiguous: new Set(ambiguous.map(searchKey)), matcher: new AhoCorasick([...entries.keys()].map(k => ` ${k} `)) };
+  for (const c of countries) {
+    const country = { kind: 'country', cc: c.iso };
+    for (const name of c.names) add(name, country);
+  }
+  return { entries, towns, ambiguous: new Set(ambiguous.map(nameKey)), matcher: new AhoCorasick([...entries.keys()].map(k => ` ${k} `)) };
 }
 
-// ➤ Answers { places: [{ name, cc, lat, lon }], countries: [cc], words: 'what is left' }.
+// ➤ Answers { words: the words left, as the plain search reads them; placeWords: the words that
+// ➤ named places, with their "in", "y", "cerca de"; towns: [{ name, cc, lat, lon }]; countries:
+// ➤ [cc]; said: the places' names as typed, in name form }. Two towns of one name are both
+// ➤ kept ("Bergen": Norway's and the Netherlands'), unless the query names the country
+// ➤ ("Bergen, Norway").
 export function readQuery(text, gazetteer) {
-  // ➤ Commas stay, as words of their own: a name before one is a place ("Nice, France"), and
-  // ➤ no name runs across one ("Barcelona, Girona" is two towns).
-  const tokens = plain(text).replace(/,/g, ' , ').replace(/[^\p{L}\p{N},]+/gu, ' ').trim().split(' ').filter(Boolean);
-  if (!gazetteer || !tokens.length) return { places: [], countries: [], words: tokens.filter(t => t !== ',').join(' ') };
-  const padded = ` ${tokens.join(' ')} `;
-  // ➤ Where each word starts in the padded text, to find the words around a match.
-  const starts = [];
-  for (let i = 0, at = 1; i < tokens.length; at += tokens[i].length + 1, i++) starts.push(at);
-  const wordAt = pos => starts.findIndex((s, i) => pos >= s && pos < s + tokens[i].length);
+  // ➤ The words as the plain search splits them, with each comma kept as a word of its own: no
+  // ➤ name runs across a comma ("Barcelona, Girona" is two towns).
+  const tokens = String(text || '').replace(/,/g, ' , ').split(/[\s;]+/).filter(Boolean);
+  if (!gazetteer || !tokens.length) return { words: tokens.flatMap(wordsOf), placeWords: [], towns: [], countries: [], said: [] };
+  // ➤ Each word in the form names are kept in, in parts ("Saint-Étienne": saint, etienne), and
+  // ➤ where each word's parts begin and end.
+  const parts = [], owner = [], first = [], last = [];
+  tokens.forEach((tok, i) => {
+    first[i] = parts.length;
+    for (const p of tok === ',' ? [','] : nameKey(tok).split(' ').filter(Boolean)) { parts.push(p); owner.push(i); }
+    last[i] = parts.length - 1;
+  });
+  const partAt = new Map();
+  for (let i = 0, pos = 1; i < parts.length; pos += parts[i].length + 1, i++) partAt.set(pos, i);
 
-  // ➤ Every name found, the longest first; a shorter one inside a longer one is not a match.
-  const taken = [];
-  const hits = gazetteer.matcher.search(padded)
-    .map(h => ({ start: h.start + 1, end: h.end - 1, k: h.pattern.trim() }))
-    .sort((a, b) => (b.end - b.start) - (a.end - a.start) || a.start - b.start);
-  for (const h of hits) if (!taken.some(t => h.start < t.end && t.start < h.end)) taken.push({ ...h, first: wordAt(h.start), last: wordAt(h.end - 1) });
-  taken.sort((a, b) => a.start - b.start);
+  // ➤ Every name that covers whole words, the longest first; a name inside a longer one found
+  // ➤ ("Frankfurt" in "Frankfurt am Main") does not count.
+  const found = [];
+  const hits = gazetteer.matcher.search(` ${parts.join(' ')} `).map(h => {
+    const k = h.pattern.trim(), from = partAt.get(h.start + 1);
+    return { k, from, to: from + k.split(' ').length - 1 };
+  }).filter(h => first[owner[h.from]] === h.from && last[owner[h.to]] === h.to)
+    .sort((a, b) => b.k.length - a.k.length || a.from - b.from);
+  for (const h of hits) if (!found.some(f => h.from <= f.to && f.from <= h.to)) found.push({ ...h, a: owner[h.from], b: owner[h.to] });
+  found.sort((x, y) => x.from - y.from);
 
-  const countryOf = t => gazetteer.entries.get(t.k).find(e => e.kind === 'country');
-  const countries = new Set(taken.filter(countryOf).map(t => countryOf(t).cc));
-  const places = [], found = [];
-  for (const t of taken) {
-    if (countryOf(t)) { found.push(t); continue; }
-    const next = taken.find(o => o.first === t.last + 1);
-    const cued = CUES.has(tokens[t.first - 1]) || tokens[t.last + 1] === ',' || (next && countryOf(next));
-    if (gazetteer.ambiguous.has(t.k) && !cued) continue;
-    const towns = gazetteer.entries.get(t.k).filter(e => e.kind === 'town');
-    const town = towns.find(e => countries.has(e.cc)) || towns[0];
-    if (!places.some(p => p.name === town.name && p.cc === town.cc)) places.push({ name: town.name, cc: town.cc, lat: town.lat, lon: town.lon });
-    found.push(t);
+  const countryOf = f => gazetteer.entries.get(f.k).find(e => e.kind === 'country');
+  // ➤ The name right after another, with or without a comma between.
+  const nextTo = f => found.find(g => g.a === f.b + 1 || (tokens[f.b + 1] === ',' && g.a === f.b + 2));
+  const towns = [], countries = new Set(), used = [], qualifiers = new Set(), said = new Set();
+  for (const f of found) {
+    if (countryOf(f)) continue;
+    const next = nextTo(f);
+    const country = next && countryOf(next);
+    if (gazetteer.ambiguous.has(f.k) && !CUES.has(nameKey(tokens[f.a - 1])) && !country) continue;
+    let named = gazetteer.entries.get(f.k);
+    // ➤ "Newport, UK": only the towns of that name in the country named after it.
+    if (country && named.some(t => t.cc === country.cc)) { named = named.filter(t => t.cc === country.cc); qualifiers.add(next); }
+    for (const t of named) if (!towns.includes(t)) towns.push(t);
+    used.push(f);
+    said.add(f.k);
   }
-  // ➤ The words left: everything but the towns and countries found and the cue or joining words
-  // ➤ just before them.
+  for (const f of found) {
+    if (!countryOf(f)) continue;
+    used.push(f);
+    if (qualifiers.has(f)) continue;
+    countries.add(countryOf(f).cc);
+    said.add(f.k);
+  }
+
+  // ➤ The words that go with the places: their own, the cue and link words just before them,
+  // ➤ and "y alrededores" just after.
   const drop = new Set();
-  for (const t of found) {
-    for (let i = t.first; i <= t.last; i++) drop.add(i);
-    for (let i = t.first - 1; i >= 0 && (CUES.has(tokens[i]) || JOINS.has(tokens[i]) || tokens[i] === ','); i--) drop.add(i);
+  const isLink = i => tokens[i] === ',' || LINKS.has(nameKey(tokens[i]));
+  for (const f of used) {
+    for (let i = f.a; i <= f.b; i++) drop.add(i);
+    for (let i = f.a - 1; i >= 0 && (isLink(i) || CUES.has(nameKey(tokens[i]))); i--) drop.add(i);
+    let j = f.b + 1;
+    while (j < tokens.length && isLink(j)) j++;
+    if (AROUND.has(nameKey(tokens[j]))) for (let i = f.b + 1; i <= j; i++) drop.add(i);
   }
-  const words = tokens.filter((w, i) => !drop.has(i) && w !== ',').join(' ');
-  return { places, countries: [...countries], words };
+  const words = [], placeWords = [];
+  tokens.forEach((tok, i) => (drop.has(i) ? placeWords : words).push(...wordsOf(tok)));
+  return { words, placeWords, towns: towns.map(({ name, cc, lat, lon }) => ({ name, cc, lat, lon })), countries: [...countries], said: [...said] };
+}
+
+// ➤ The countries a reading reaches: the ones it names, and those of every town with offers within
+// ➤ km of a town it names (Vigo at 50 km reaches Portugal). They are the parts of the pile to fetch.
+export function scopeCountries(read, gazetteer, km) {
+  const out = new Set(read.countries);
+  for (const t of read.towns) for (const o of gazetteer.towns) if (!out.has(o.cc) && distanceKm([t.lat, t.lon], [o.lat, o.lon]) <= km) out.add(o.cc);
+  return [...out];
 }
