@@ -113,7 +113,7 @@ them are served by one platform (Jibe, career.page, PageUp).
    page that did not answer is tried again, up to three tries, and a site with five such pages
    in one pass is left until the next one (Nutch's defaults). A 404, 410 or 403 counts as an
    answer. The pages kept without the block before this change, on sites that publish it, are
-   read again once (`builder/tools/reread-empty-pages.mjs`). A careers pass stops reading pages
+   read again once (a one-off tool, removed once it had run). A careers pass stops reading pages
    a minute before its deadline and keeps what it read; the rest waits for the next pass. The
    wait after a failure is drawn between half and the whole of the backoff.
 3. **Conditional requests** for the boards of Greenhouse, Ashby, Personio and Teamtailor, and

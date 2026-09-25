@@ -6,6 +6,7 @@
 // ➤   node builder/crawl.mjs [--minutes 55] [--limit 50] [--only careers|greenhouse|feeds|via]
 // ➤   node builder/crawl.mjs --source careers/vanoord.com     # one source, now
 // ➤   node builder/crawl.mjs --status | --purge | --dry
+import './env.mjs';
 import { existsSync, readFileSync, mkdirSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
