@@ -35,7 +35,7 @@ export function idFor(url) {
 // ➤ that is not a European country counts too ("Sherbrooke, QC, CA").
 // ➤ The biggest cities outside Europe that boards name without their country.
 const FAR_CITIES = { us: ['new york', 'nyc', 'san francisco', 'los angeles', 'seattle', 'austin', 'boston', 'chicago', 'denver', 'atlanta', 'dallas', 'houston', 'miami', 'washington dc', 'washington, dc', 'san diego', 'san jose', 'palo alto', 'mountain view', 'sunnyvale', 'menlo park', 'redwood city', 'santa clara', 'santa barbara', 'portland', 'phoenix', 'philadelphia', 'pittsburgh', 'minneapolis', 'detroit', 'raleigh', 'salt lake city', 'las vegas', 'silicon valley', 'bay area'], ca: ['toronto', 'vancouver', 'montreal', 'montréal', 'ottawa', 'calgary', 'waterloo'], au: ['sydney', 'melbourne', 'brisbane', 'perth'], in: ['bangalore', 'bengaluru', 'mumbai', 'hyderabad', 'pune', 'chennai', 'delhi', 'new delhi', 'gurgaon', 'gurugram', 'noida'], sg: ['singapore'], jp: ['tokyo', 'osaka'], kr: ['seoul'], cn: ['shanghai', 'beijing', 'shenzhen', 'hangzhou'], hk: ['hong kong'], tw: ['taipei'], br: ['sao paulo', 'são paulo', 'rio de janeiro'], mx: ['mexico city', 'guadalajara', 'monterrey'], ar: ['buenos aires'], co: ['bogota', 'bogotá'], cl: ['santiago'], ae: ['dubai', 'abu dhabi'], il: ['tel aviv'], za: ['cape town', 'johannesburg'], ke: ['nairobi'], ng: ['lagos'], eg: ['cairo'], nz: ['auckland'], ph: ['manila'], id: ['jakarta'], my: ['kuala lumpur'], th: ['bangkok'], vn: ['ho chi minh', 'hanoi'] };
-const FAR = { us: ['united states', 'usa', 'u s a'], ca: ['canada'], au: ['australia'], nz: ['new zealand'], cn: ['china'], in: ['india'], jp: ['japan'], kr: ['korea', 'south korea'], sg: ['singapore'], tw: ['taiwan'], th: ['thailand'], my: ['malaysia'], id: ['indonesia'], vn: ['vietnam'], ph: ['philippines'], br: ['brazil', 'brasil'], mx: ['mexico'], ar: ['argentina'], cl: ['chile'], co: ['colombia'], pe: ['peru'], za: ['south africa'], eg: ['egypt'], ma: ['morocco'], ng: ['nigeria'], ke: ['kenya'], ae: ['united arab emirates', 'uae', 'dubai'], sa: ['saudi arabia'], qa: ['qatar'], il: ['israel'], kz: ['kazakhstan'], pk: ['pakistan'] };
+const FAR = { us: ['united states', 'usa', 'u s a', 'etats-unis', 'stati uniti', 'estados unidos', 'vereinigte staaten', 'verenigde staten', 'forenta staterna'], ca: ['canada'], au: ['australia'], nz: ['new zealand'], cn: ['china'], in: ['india'], jp: ['japan'], kr: ['korea', 'south korea'], sg: ['singapore'], tw: ['taiwan'], th: ['thailand'], my: ['malaysia'], id: ['indonesia'], vn: ['vietnam'], ph: ['philippines'], br: ['brazil', 'brasil'], mx: ['mexico'], ar: ['argentina'], cl: ['chile'], co: ['colombia'], pe: ['peru'], za: ['south africa'], eg: ['egypt'], ma: ['morocco'], ng: ['nigeria'], ke: ['kenya'], ae: ['united arab emirates', 'uae', 'dubai'], sa: ['saudi arabia'], qa: ['qatar'], il: ['israel'], kz: ['kazakhstan'], pk: ['pakistan'] };
 
 // ➤ Country and city from a free-text location, against the countries catalogue: an ISO
 // ➤ code as its own word, a country name or alias, or a known city. "Remote" is 'xx'.
@@ -60,29 +60,67 @@ const STATE_TOWNS = { de: ['wilmington', 'newark', 'dover'], nl: ["st. john's", 
 // ➤ beside them they are the United States, before any town name is read, or "Naples, FL"
 // ➤ would be Naples in Italy.
 const US_STATES = new Set('ak az ar ca co ct fl ga hi id il in ia ks ky la ma mi mn ms mo ne nv nh nj nm ny nc nd oh ok or pa ri sc sd tn tx ut vt va wa wv wi wy dc'.split(' '));
+// ➤ The states by name, for "Dublin, Ohio" and "Long Island, New York": not Georgia (a
+// ➤ country too), Washington (a town in Tyne and Wear) or Montana (a province of Bulgaria).
+const US_STATE_NAMES = ['alabama', 'alaska', 'arizona', 'arkansas', 'california', 'colorado', 'connecticut', 'delaware', 'florida', 'hawaii', 'idaho', 'illinois', 'indiana', 'iowa', 'kansas', 'kentucky', 'louisiana', 'maine', 'maryland', 'massachusetts', 'michigan', 'minnesota', 'mississippi', 'missouri', 'nebraska', 'nevada', 'new hampshire', 'new jersey', 'new mexico', 'new york', 'north carolina', 'north dakota', 'ohio', 'oklahoma', 'oregon', 'pennsylvania', 'rhode island', 'south carolina', 'south dakota', 'tennessee', 'texas', 'utah', 'vermont', 'virginia', 'west virginia', 'wisconsin', 'wyoming', 'district of columbia'].join('|');
+const STATE_NAMES = new RegExp(`(?:^|[^a-z])(${US_STATE_NAMES})(?![a-z])`, 'g');
+const A_STATE = new RegExp(`^(?:${US_STATE_NAMES})$`);
+// ➤ The United States named as a country, alone ("…, Ohio, United States").
+const US_NAMED = /^(?:us|usa|u s a|united states(?: of america)?|etats-unis(?: d'amerique)?|stati uniti(?: d'america)?|estados unidos(?: de america)?|vereinigte staaten(?: von amerika)?)$/;
+// ➤ An address that opens with the country and its state ("USA - New York - Malta", "USA
+// ➤ Wisconsin Luxemburg", "US-NY-Long Island City") or with the state ("Ohio - Columbus",
+// ➤ "NY - Long Island"); a state's code counts in capitals only ("US or UK" is not Oregon).
+const OPENS_US = new RegExp(`^(?:(?:us|usa|u\\.s\\.a?\\.?|united states(?: of america)?)[\\s.,:–-]+(?:${US_STATE_NAMES})(?![a-z])|(?:${US_STATE_NAMES})\\s+[–-]\\s+)`);
+const OPENS_US_CODE = new RegExp(`^\\s*(?:(?:US|USA|U\\.S\\.A?\\.?|United States)[\\s.,:–-]+)?(?:${[...US_STATES].join('|').toUpperCase()})(?:\\s*[–.-]\\s*|\\s+)\\S`);
 
 // ➤ Where in a text a pattern last ends, or -1.
 const lastEnd = (re, text) => { let end = -1; for (const m of text.matchAll(re)) end = m.index + m[0].length; return end; };
 const FAR_NAMES = Object.entries(FAR).map(([iso, names]) => [iso, new RegExp(names.map(n => `(?:^|[^a-z0-9])${n}(?![a-z0-9])`).join('|'), 'g')]);
 
+// ➤ A place without what may trail it and hide its country: a postcode ("…, NY, US, 11101",
+// ➤ "Holland MI 49423", "…, CA, C1N 3C4", "Gouda, NL, 2801 SC") or an empty value ("null"); and
+// ➤ without the directions of a street ("1910 SE Federal Hwy"), which are not Sweden.
+const POSTCODE = /^(?:[\d\s-]+|\d{4} ?[A-Z]{2}|[A-Z]\d[A-Z] ?\d[A-Z]\d|[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2})$/;
+const EMPTY = /^(?:null|undefined|_|-)?$/i;
+function withoutTail(place) {
+  const parts = place.replace(/\b(\d+)\s+(?:NE|NW|SE|SW)\s+(?=\w)/g, '$1 ').split(',');
+  while (parts.length > 1 && (EMPTY.test(parts.at(-1).trim()) || POSTCODE.test(parts.at(-1).trim()))) parts.pop();
+  parts.push(parts.pop().replace(/(?:\s+[\w-]*\d[\w-]*)+\s*$/, ''));
+  return parts.join(',');
+}
+
 // ➤ The country a place names, read the way addresses are written, from the town to the country:
 // ➤ within one place the country named last is the country, so in "Sydney, New South Wales,
 // ➤ Australia" or "North Kingstown, Rhode Island, USA" the European word inside a state's name
-// ➤ (Wales, Island) is not one. A list of places ("Berlin, Germany; Austin, USA") keeps the first
-// ➤ that is in Europe. Answers { cc, european } or null when no country is named.
+// ➤ (Wales, Island) is not one. A US state ending the place ("Dublin, Ohio", "Long Island, New
+// ➤ York", "Kent Island, MD") or opening it ("USA - New York - Malta") makes it American, and
+// ➤ a European word inside a state's name ("Rhode Island") never names a country. A list of
+// ➤ places ("Berlin, Germany; Austin, USA") keeps the first that is in Europe. Answers
+// ➤ { cc, european } or null when no country is named.
 function namedCountry(raw, compiled) {
   let far = null;
   for (const segment of raw.split(/[;|]|\s\/\s/)) {
-    const f = fold(segment);
+    const place = withoutTail(segment);
+    const f = fold(place);
+    const states = [...f.matchAll(STATE_NAMES)].map(m => [m.index, m.index + m[0].length]);
+    const inState = m => states.some(([a, b]) => m.index >= a && m.index + m[0].length <= b);
     let euro = null, euroEnd = -1, farIso = null, farEnd = -1;
-    for (const c of compiled) { const end = lastEnd(c.nameAll, f); if (end > euroEnd) { euro = c; euroEnd = end; } }
+    for (const c of compiled) for (const m of f.matchAll(c.nameAll)) if (m.index + m[0].length > euroEnd && !inState(m)) { euro = c; euroEnd = m.index + m[0].length; }
     for (const [iso, re] of FAR_NAMES) { const end = lastEnd(re, f); if (end > farEnd) { farIso = iso; farEnd = end; } }
+    // ➤ "US" in capitals, as its own word ("New England US Region").
+    const us = lastEnd(/(?:^|[^A-Za-z])US(?![A-Za-z])/g, place);
+    if (us > farEnd) { farIso = 'us'; farEnd = us; }
     // ➤ A code outside Europe ending the place ("…, New South Wales, AU") names its country; a US
-    // ➤ state's ("Wallops Island, VA") only outranks the European word, and is read as the US
-    // ➤ further on, after the European codes.
-    const endCode = segment.match(/(?:^|[\s,(-])([A-Z]{2})\)?\s*$/)?.[1]?.toLowerCase();
+    // ➤ state's ("Wallops Island, VA"), or one European countries share when that country is not
+    // ➤ the one named ("Kent Island, MD"), only outranks the European word, and is read as the
+    // ➤ US further on, after the European codes.
+    const endCode = place.match(/(?:^|[\s,(-])([A-Z]{2})\)?\s*$/)?.[1]?.toLowerCase();
     if (endCode && FAR[endCode]) { farIso = endCode; farEnd = f.length; }
-    const stateEnd = endCode && US_STATES.has(endCode) ? f.length : -1;
+    const stateEnd = endCode && (US_STATES.has(endCode) || (STATE_CODES[endCode] && euro && euro.iso !== endCode)) ? f.length : -1;
+    // ➤ The last part that is not the country itself, and the first.
+    const parts = f.split(/,|\s[-–]\s/).map(s => s.trim()).filter(Boolean);
+    while (parts.length > 1 && US_NAMED.test(parts.at(-1))) parts.pop();
+    if (A_STATE.test(parts.at(-1) || '') || OPENS_US.test(f) || OPENS_US_CODE.test(place)) { farIso = 'us'; farEnd = f.length; }
     if (euro && euroEnd > Math.max(farEnd, stateEnd)) return { cc: euro.iso, european: euro };
     far ||= farIso;
   }
@@ -99,7 +137,8 @@ export function placeOf(location, compiled) {
   const f = fold(raw);
   if (!raw) return { cc: '', city: '' };
   // ➤ Places are separated by commas, semicolons, slashes or bars ("Fort Myers, FL; Naples, FL").
-  const isoHit = raw.match(/(?:^|[\s,;/|(-])([A-Z]{2})(?=$|[\s,;/|)-])/g);
+  // ➤ A postcode or a street's direction is not a code ("Gouda, NL, 2801 SC", "1910 SE Federal Hwy").
+  const isoHit = withoutTail(raw).match(/(?:^|[\s,;/|(-])([A-Z]{2})(?=$|[\s,;/|)-])/g);
   const codes = new Set((isoHit || []).map(s => s.replace(/[^A-Z]/g, '').toLowerCase()));
   // ➤ The country's code comes last ("Erfurt, TH, DE"): a code before it is a region's.
   const lastCode = isoHit ? isoHit.at(-1).replace(/[^A-Z]/g, '').toLowerCase() : '';
