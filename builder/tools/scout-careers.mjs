@@ -11,7 +11,8 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import yaml from 'js-yaml';
 import { get, getText } from '../http.mjs';
-import { parseRobots, allowed, parseSitemap, looksLikeJob, jobPostings, jobLinks } from '../lib/crawl.mjs';
+import { parseSitemap, looksLikeJob, jobPostings, jobLinks } from '../lib/crawl.mjs';
+import { robotsOf } from '../robots.mjs';
 import { compileFamilies, familiesOf, hygieneReason } from '../gate.mjs';
 import { readCodes } from '../codes.mjs';
 import { compileCountries, placeOf } from '../normalise.mjs';
@@ -48,29 +49,34 @@ async function seed() {
 // ➤ steps (the --domain mode), so a site that gives nothing can be understood.
 async function look(domain, say = () => {}) {
   // ➤ The site's real address first: many answer only with www, or somewhere else entirely.
+  // ➤ Every address asked is one the host's robots.txt lets us read; a site whose robots.txt
+  // ➤ does not answer is not read at all.
+  const robots = robotsOf(OPTS);
   let origin = `https://${domain}`;
-  try { const r = await get(`${origin}/`, OPTS); if (r.ok) origin = new URL(r.url).origin; } catch { origin = `https://www.${domain}`; }
+  if (await robots.may(`${origin}/`)) try { const r = await get(`${origin}/`, OPTS); if (r.ok) origin = new URL(r.url).origin; } catch { origin = `https://www.${domain}`; }
   say(`origin ${origin}`);
-  let robots = { rules: [], delay: 0, sitemaps: [] };
-  try { const r = await get(`${origin}/robots.txt`, OPTS); if (r.ok && /text\/plain/i.test(r.headers.get('content-type') || '')) robots = parseRobots(await r.text()); } catch { /* none */ }
-  const sitemaps = robots.sitemaps.length ? robots.sitemaps : [`${origin}/sitemap.xml`, `${origin}/sitemap_index.xml`, `${origin}/sitemap-index.xml`];
-  say(`robots: ${robots.rules.length} rules, delay ${robots.delay}, sitemaps ${robots.sitemaps.length ? robots.sitemaps.join(' ') : 'none named, trying the usual addresses'}`);
+  let rules;
+  try { rules = await robots.rules(origin); } catch (e) { say(e.message); return null; }
+  const sitemaps = rules.sitemaps.length ? rules.sitemaps : [`${origin}/sitemap.xml`, `${origin}/sitemap_index.xml`, `${origin}/sitemap-index.xml`];
+  say(`robots: ${rules.rules.length} rules, delay ${rules.delay}, sitemaps ${rules.sitemaps.length ? rules.sitemaps.join(' ') : 'none named, trying the usual addresses'}`);
   const urls = [];
   const seen = new Set();
   for (const sm of sitemaps.slice(0, 4)) {
+    if (!(await robots.may(sm))) { say(`sitemap ${sm}: robots.txt closes it`); continue; }
     let parsed;
     try { parsed = parseSitemap(await getText(sm, OPTS)); } catch (e) { say(`sitemap ${sm}: ${e.message.slice(0, 60)}`); continue; }
     say(`sitemap ${sm}: ${parsed.index ? 'an index of ' : ''}${parsed.items.length} entries`);
     const children = parsed.index ? parsed.items.filter(i => /job|vacan|career|stellen|emploi|empleo|vacature|karriere|lediga|praca|oferta/i.test(i.url)).slice(0, 4) : [];
     if (parsed.index && !children.length) children.push(...parsed.items.slice(0, 3));
     const lists = parsed.index ? [] : [parsed];
-    for (const c of children) { try { lists.push(parseSitemap(await getText(c.url, OPTS))); } catch { /* skip */ } }
+    for (const c of children) { if (!(await robots.may(c.url))) continue; try { lists.push(parseSitemap(await getText(c.url, OPTS))); } catch { /* skip */ } }
     for (const l of lists) for (const i of l.items) if (looksLikeJob(i.url) && !seen.has(i.url)) { seen.add(i.url); urls.push({ url: i.url, sitemap: sm, child: l }); }
     if (urls.length >= 60) break;
   }
   say(`${urls.length} addresses that look like vacancies`);
   if (!urls.length) return null;
-  const readable = urls.filter(u => allowed(robots, new URL(u.url).pathname));
+  const open = await Promise.all(urls.map(u => robots.may(u.url)));
+  const readable = urls.filter((_, n) => open[n]);
   const postings = [];
   const pages = {};
   const readPages = async list => { for (const u of list) { try { const html = await getText(u, OPTS); pages[u] = html; postings.push(...jobPostings(html, u).map(p => ({ ...p, page: u }))); } catch (e) { say(`page ${u}: ${e.message.slice(0, 60)}`); } } };
@@ -79,7 +85,9 @@ async function look(domain, say = () => {}) {
   // ➤ The sitemap may name only the listing pages: the vacancies are then the links on them.
   let listing = '';
   if (postings.length < 2) {
-    const links = [...new Set(Object.entries(pages).flatMap(([u, html]) => jobLinks(html, u)))].filter(u => !pages[u] && allowed(robots, new URL(u).pathname));
+    const found = [...new Set(Object.entries(pages).flatMap(([u, html]) => jobLinks(html, u)))].filter(u => !pages[u]);
+    const openLinks = await Promise.all(found.map(u => robots.may(u)));
+    const links = found.filter((_, n) => openLinks[n]);
     if (links.length) {
       listing = Object.keys(pages).find(u => jobLinks(pages[u], u).length) || '';
       await readPages(links.slice(0, PAGES_A_DOMAIN));

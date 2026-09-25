@@ -5,7 +5,8 @@
 // ➤ answers stops the walk, and its answer is the source's label.
 // ➤
 // ➤   1  Does it read now?            → reads-now   nothing is wrong; the last pass was old
-// ➤   2  Does the host answer at all? → dead        nothing to do until it comes back
+// ➤   2  Does robots.txt let us in?   → robots      left alone, as robots.txt asks
+// ➤      Does the host answer at all? → dead        nothing to do until it comes back
 // ➤   3  Is a bot wall in the way?    → wall        left alone on purpose
 // ➤   4  Is it an ATS under a name?   → vendor:x    read it through the ATS, not the site
 // ➤   5  Does it publish a feed?      → feed        one read for the whole list
@@ -24,6 +25,7 @@ import { dirname, join } from 'path';
 import { get, getText, deadline } from '../http.mjs';
 import { parseSitemap, looksLikeJob, detectPlatform } from '../lib/crawl.mjs';
 import { listed, readSite } from '../adapters/careers.mjs';
+import { robotsOf } from '../robots.mjs';
 import { eachSource } from '../store.mjs';
 
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
@@ -67,16 +69,21 @@ export function feedItems(body, path = '') {
 // ➤ The ladder. Each rung asks one thing and either answers or hands on to the next.
 async function why(site) {
   const where = site.sitemap || site.listing;
-  const origin = where ? new URL(where).origin : `https://${site.key}`;
+  // ➤ A site named by an address is kept under its host and a hash ("host~1a2b3c").
+  const host = String(site.key).replace(/~[0-9a-f]{6}$/, '');
+  const origin = where ? new URL(where).origin : `https://${host}`;
+  // ➤ Every address asked is one robots.txt lets us read; a site it closes is closed.
+  const robots = robotsOf(opts);
 
   // ➤ 1. Does it read now? A pass can be old: what the reader does today is the first fact.
   let read = null;
   try {
-    read = await readSite({ ...site, host: site.key, found: true }, {}, { pagesASite: 12, left: 12 }, () => {});
+    read = await readSite({ ...site, host, found: true }, {}, { pagesASite: 12, left: 12 }, () => {});
     if (read.adverts.length) return { step: 1, label: 'reads-now', note: `${read.adverts.length} adverts of ${read.listed} listed` };
   } catch (e) { read = { error: e.message.slice(0, 60) }; }
 
   // ➤ 2. Does the host answer at all? Nothing below matters if it does not.
+  if (!(await robots.may(`${origin}/`))) return { step: 2, label: 'robots', note: 'robots.txt closes the site, or does not answer' };
   let home;
   try { home = await get(origin, opts); } catch (e) { return { step: 2, label: 'dead', note: e.message.slice(0, 40) }; }
   const html = home.ok ? await home.text() : '';
@@ -93,6 +100,7 @@ async function why(site) {
 
   // ➤ 5. Does it publish a vacancies feed? One read for the whole list beats a page at a time.
   for (const path of FEEDS) {
+    if (!(await robots.may(origin + path))) continue;
     try {
       const n = feedItems(await getText(origin + path, { ...opts, timeoutMs: 8000 }), path);
       if (n) return { step: 5, label: 'feed', note: `${path} (${n} items)` };
@@ -101,14 +109,15 @@ async function why(site) {
 
   // ➤ 6. Has the address we hold gone? Then the next pass works out where the site is read from.
   if (where) {
+    if (!(await robots.may(where))) return { step: 6, label: 'robots', note: `robots.txt closes ${where}` };
     try { const r = await get(where, opts); if (!r.ok) return { step: 6, label: 'moved', note: `${r.status} for ${where}` }; } catch (e) { return { step: 6, label: 'moved', note: e.message.slice(0, 40) }; }
   }
 
   // ➤ 7. Does it list vacancies at all?
   let items = [];
-  try { items = await listed({ ...site, host: site.key }, opts); } catch (e) { return { step: 7, label: 'odd', note: `the lister stopped: ${e.message.slice(0, 40)}` }; }
+  try { items = await listed({ ...site, host }, opts, robots); } catch (e) { return { step: 7, label: 'odd', note: `the lister stopped: ${e.message.slice(0, 40)}` }; }
   if (!items.length) {
-    if (site.sitemap) {
+    if (site.sitemap && (await robots.may(site.sitemap))) {
       try {
         const parsed = parseSitemap(await getText(site.sitemap, opts));
         if (parsed.items.length) return { step: 7, label: 'unrecognised', note: parsed.index ? `an index of ${parsed.items.length} sitemaps` : `${parsed.items.length} addresses, none look like a vacancy` };
@@ -177,12 +186,12 @@ for (const [label, list] of Object.entries(by).sort((a, b) => b[1].length - a[1]
 if (changed) console.log(`\n${changed} sources changed their answer since the last time`);
 console.log(`kept in ${KEPT}`);
 
-// ➤ Only a host that answers nothing, or a wall, is worth giving up on. Every other answer is
-// ➤ a site that is alive and merely awkward, so its failures are forgiven and it is read again
-// ➤ at once: no useful site is lost to a fortnight of silly failures. (The crawler owns this
-// ➤ file; should a pass be writing it this second, the worst that happens is that the
-// ➤ forgiveness waits for next Sunday.)
-const GIVE_UP = new Set(['dead', 'wall']);
+// ➤ Only a host that answers nothing, a wall, or a robots.txt that closes it is worth giving up
+// ➤ on. Every other answer is a site that is alive and merely awkward, so its failures are
+// ➤ forgiven and it is read again at once: no useful site is lost to a fortnight of silly
+// ➤ failures. (The crawler owns this file; should a pass be writing it this second, the worst
+// ➤ that happens is that the forgiveness waits for next Sunday.)
+const GIVE_UP = new Set(['dead', 'wall', 'robots']);
 const alive = rows.filter(r => r.fails && !GIVE_UP.has(r.label));
 if (alive.length && existsSync(STATUS)) {
   const status = JSON.parse(readFileSync(STATUS, 'utf8'));
