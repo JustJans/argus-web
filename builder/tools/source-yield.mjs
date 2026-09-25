@@ -7,9 +7,9 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { compileFamilies, familiesOf, hygieneReason } from '../gate.mjs';
+import { compileFamilies, familiesOf, hygieneReason, languagesOfCountry } from '../gate.mjs';
 import { readCodes } from '../codes.mjs';
-import { compileCountries, toRecord } from '../normalise.mjs';
+import { compileCountries, toRecord, placeOfAdvert } from '../normalise.mjs';
 import { compileScreens } from '../screens.mjs';
 import { eachSource } from '../store.mjs';
 
@@ -32,6 +32,8 @@ const today = new Date().toISOString().slice(0, 10);
 // ➤ reach the site (which also asks where it is). The first says what kind of employer this is.
 function kindOfWork(raw) {
   if (!/^https?:\/\//.test(String(raw.url || ''))) return false;
+  // ➤ The title read in its country's languages too, as the pile builder reads it.
+  if (!raw.lang) raw.hintLangs = languagesOfCountry(placeOfAdvert(raw, cc).cc || String(raw.country || '').toLowerCase());
   return familiesOf(raw, gate).length > 0 && !hygieneReason(raw);
 }
 

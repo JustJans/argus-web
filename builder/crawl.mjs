@@ -120,7 +120,7 @@ async function pass(src, st, budget, tally) {
     // ➤ serves the whole group (an ATS), the group waits; when every source has its own host
     // ➤ (the employers' sites), only that source does.
     if (e.status === 429 && e.until) {
-      entry.next = e.until + jitter();
+      entry.next = e.until + Math.abs(jitter());   // ➤ never before the host said
       if (sharesHost(src.group)) { (st.groups[src.group] ||= {}).pausedUntil = e.until; log(`${src.group}: ${e.message}; the group waits`); }
       else if (!src.found) log(`${id}: ${e.message}`);
       tally.paused++;
@@ -159,7 +159,7 @@ async function run() {
 
   // ➤ One queue per group, so the lanes spread over hosts instead of hammering one.
   const byGroup = new Map();
-  for (const src of queue) { const g = src.reader === 'browser' ? 'browser' : src.group; (byGroup.get(g) || byGroup.set(g, []).get(g)).push(src); }
+  for (const src of queue) (byGroup.get(src.group) || byGroup.set(src.group, []).get(src.group)).push(src);
   const groups = [...byGroup.keys()];
   const inFlight = Object.fromEntries(groups.map(g => [g, 0]));
   const capOf = g => cfg.budget.in_flight[g] ?? cfg.budget.in_flight.default;
@@ -313,7 +313,7 @@ else if (args.includes('--dry')) {
   if (!src) { console.log(`no source named ${id}`); process.exit(1); }
   const st = loadStatus();
   st.sources ||= {}; st.groups ||= {};
-  await pass(src, st, { left: cfg.budget.pages_a_site, pagesASite: cfg.budget.pages_a_site }, { read: 0, failed: 0, added: 0, gone: 0, paused: 0, groups: {} });
+  await pass(src, st, { left: cfg.budget.pages_a_site, pagesASite: cfg.budget.pages_a_site }, { read: 0, failed: 0, added: 0, gone: 0, paused: 0, postponed: 0, groups: {} });
   saveStatus(st);
 } else if (stopped()) {
   log('STOP is in place: nothing to do');

@@ -158,6 +158,7 @@ async function probeAll(log = console.log) {
   // ➤ Every answer is kept on disk: a rerun (a new month's slugs) asks only what is new, and
   // ➤ --again asks everything afresh.
   const probed = process.argv.includes('--again') ? {} : loadProbed();
+  const monthAgo = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
   const save = () => { mkdirSync(STATE, { recursive: true }); writeFileSync(PROBED, JSON.stringify(probed)); };
   // ➤ One ATS at a time per host, the hosts side by side.
   await Promise.all(Object.entries(slugs).map(async ([ats, list]) => {
@@ -167,7 +168,8 @@ async function probeAll(log = console.log) {
     for (const slug of list) {
       done++;
       const key = `${ats}:${slug}`;
-      if (handled.has(key) || probed[key]) continue;
+      // ➤ A board that failed is asked again a month later: an error then is not an error for ever.
+      if (handled.has(key) || (probed[key] && !(probed[key].dead && probed[key].at < monthAgo))) continue;
       try {
         const r = await deadline(probe(ats, slug, gate, countries, europe), 45_000);
         probed[key] = r.kept ? { name: r.name || pretty(slug), adverts: r.total, kept: r.kept, where: Object.entries(r.by).sort((a, b) => b[1] - a[1]).map(([cc, n]) => `${cc} ${n}`).join(' '), at: new Date().toISOString().slice(0, 10) } : { at: new Date().toISOString().slice(0, 10) };

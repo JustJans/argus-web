@@ -13,7 +13,7 @@ import yaml from 'js-yaml';
 import { get, getText } from '../http.mjs';
 import { parseSitemap, looksLikeJob, jobPostings, jobLinks } from '../lib/crawl.mjs';
 import { robotsOf } from '../robots.mjs';
-import { compileFamilies, familiesOf, hygieneReason } from '../gate.mjs';
+import { compileFamilies, familiesOf, hygieneReason, languagesOfCountry } from '../gate.mjs';
 import { readCodes } from '../codes.mjs';
 import { compileCountries, placeOf } from '../normalise.mjs';
 
@@ -40,7 +40,12 @@ const europe = new Set(countryList.map(c => c.iso));
 
 async function seed() {
   mkdirSync(STATE_DIR, { recursive: true });
-  if (!existsSync(WDC)) { console.log('downloading the Web Data Commons list…'); writeFileSync(WDC, await (await fetch(WDC_URL)).text()); }
+  if (!existsSync(WDC)) {
+    console.log('downloading the Web Data Commons list…');
+    const res = await fetch(WDC_URL);
+    if (!res.ok) throw new Error(`the Web Data Commons list answered ${res.status}`);
+    writeFileSync(WDC, await res.text());
+  }
   const rows = readFileSync(WDC, 'utf8').split(/\r?\n/).slice(1).map(l => l.split('\t')).filter(r => r[0]);
   return rows.map(r => ({ domain: r[0].toLowerCase(), pages: Number(r[2]) || 0 })).filter(r => tlds.includes(r.domain.split('.').pop()) && r.pages >= 2);
 }
@@ -105,6 +110,8 @@ async function look(domain, say = () => {}) {
   let kept = 0;
   for (const p of postings) {
     const raw = { ...p, source: 'careers', codes: {}, lang: '' };
+    // ➤ The title read in its country's languages too, as the pile builder reads it.
+    raw.hintLangs = languagesOfCountry(placeOf(raw.location, countries).cc || String(raw.country || '').toLowerCase());
     if (!familiesOf(raw, gate).length || hygieneReason(raw)) continue;
     const place = p.country && europe.has(p.country) ? { cc: p.country } : placeOf(p.location, countries);
     if (place.cc && place.cc !== 'xx' && !europe.has(place.cc)) continue;
@@ -150,5 +157,8 @@ await Promise.all(Array.from({ length: LANES }, async () => {
 save();
 const sites = progress.found.sort((a, b) => b.kept - a.kept).map(f => ({ name: f.name, ...(f.sitemap ? { sitemap: f.sitemap } : { listing: f.listing }), ...(f.match ? { match: f.match } : {}), domain: f.domain, kept: f.kept, where: f.where }));
 const head = `# Employers' careers sites the careers scout found (builder/tools/scout-careers.mjs) on ${new Date().toISOString().slice(0, 10)}:\n# domains Common Crawl saw JobPosting markup on (Web Data Commons, 2024-12), on European TLDs, that name one hiring\n# organisation across their vacancy pages and whose sample held an advert the gate keeps in Europe. Read by the\n# careers adapter like careers.yml. kept/where are what the scout's sample gave that day.\n`;
-writeFileSync(FOUND, head + yaml.dump({ sites }, { lineWidth: 200 }));
+// ➤ The file is shared with the WDC scout (builder/tools/scout-wdc.mjs): its entries, which name a
+// ➤ host and no domain, stay as they are.
+const existing = existsSync(FOUND) ? (yaml.load(readFileSync(FOUND, 'utf8')) || {}).sites || [] : [];
+writeFileSync(FOUND, head + yaml.dump({ sites: [...existing.filter(s => !s.domain), ...sites] }, { lineWidth: 200 }));
 console.log(`written ${FOUND}: ${sites.length} sites`);

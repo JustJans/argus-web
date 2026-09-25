@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { ATS } from '../adapters/boards.mjs';
 import { getJson, getText } from '../http.mjs';
-import { compileFamilies, familiesOf, hygieneReason } from '../gate.mjs';
+import { compileFamilies, familiesOf, hygieneReason, languagesOfCountry } from '../gate.mjs';
 import { readCodes } from '../codes.mjs';
 import { compileCountries, placeOf } from '../normalise.mjs';
 
@@ -42,6 +42,8 @@ function judge(jobs, ats) {
   for (const p of jobs) {
     const raw = { ...p, source: ats, codes: {}, lang: '' };
     if (!/^https?:\/\//.test(String(raw.url || ''))) continue;
+    // ➤ The title read in its country's languages too, as the pile builder reads it.
+    raw.hintLangs = languagesOfCountry(placeOf(raw.location, countries).cc || String(raw.country || '').toLowerCase());
     if (!familiesOf(raw, gate).length || hygieneReason(raw)) continue;
     const place = placeOf(raw.location, countries);
     if (place.cc && place.cc !== 'xx' && !europe.has(place.cc)) continue;

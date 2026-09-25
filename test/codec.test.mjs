@@ -4,7 +4,7 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { harness } from 'argus/server-bot/test-harness.mjs';
-import { encodeProfile, decodeProfile, normaliseProfile, isEmptyProfile, catalogueIds, crc16, toBase64url, fromBase64url, VERSION, MODES, countryProfile } from '../app/lib/codec.js';
+import { encodeProfile, decodeProfile, normaliseProfile, isEmptyProfile, catalogueIds, crc16, toBase64url, fromBase64url, VERSION, MODES, countryProfile, FAMILY_BYTES, LANGUAGE_BYTES, DEGREE_BYTES } from '../app/lib/codec.js';
 
 const { ok, eq, done } = harness('codec');
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -12,6 +12,9 @@ const load = n => JSON.parse(readFileSync(join(ROOT, 'catalogues', `${n}.json`),
 const cats = catalogueIds({ families: load('families'), countries: load('countries'), languages: load('languages'), degrees: load('degrees'), vetoes: load('vetoes'), occupations: load('occupations') });
 
 eq(VERSION, 4, 'the code is at version 4');
+// ➤ A catalogue that outgrows its room in the code would leave its last entries out of every
+// ➤ code, silently: adding one past the room means a new version of the code.
+eq([cats.families.length <= FAMILY_BYTES * 8, cats.languages.length <= LANGUAGE_BYTES * 8, cats.degrees.length <= DEGREE_BYTES * 8], [true, true, true], `every catalogue fits its room in the code (languages ${cats.languages.length} of ${LANGUAGE_BYTES * 8})`);
 eq(toBase64url(Uint8Array.from([0, 255, 16])), 'AP8Q', 'base64url of three bytes');
 eq([...fromBase64url('AP8Q')], [0, 255, 16], 'and back');
 eq([...fromBase64url(toBase64url(Uint8Array.from([1, 2])))], [1, 2], 'two bytes, no padding needed');

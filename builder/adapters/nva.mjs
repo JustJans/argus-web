@@ -55,7 +55,11 @@ export function parseNva(csv) {
   const rows = parseCsv(csv);
   const head = rows.shift() || [];
   const col = name => head.indexOf(name);
-  const [iId, iDate, iTitle, iSector, iDeadline, iPlace, iUrl, iFrom, iTo, iLoad] = ['Vakances_Nr', 'Aktualizacijas_datums', 'Vakances_nosaukums', 'Vakances_kategorija', 'Pieteiksanas_termins', 'Vieta', 'Vakances_paplasinats_apraksts', 'Alga_no', 'Alga_lidz', 'Slodzes_tips'].map(col);
+  const names = ['Vakances_Nr', 'Aktualizacijas_datums', 'Vakances_nosaukums', 'Vakances_kategorija', 'Pieteiksanas_termins', 'Vieta', 'Vakances_paplasinats_apraksts', 'Alga_no', 'Alga_lidz', 'Slodzes_tips'];
+  // ➤ A column the file no longer has is a changed format: said, not read as empty fields.
+  const missing = names.filter(n => col(n) < 0);
+  if (missing.length) throw new Error(`NVA's file has no ${missing.join(', ')}`);
+  const [iId, iDate, iTitle, iSector, iDeadline, iPlace, iUrl, iFrom, iTo, iLoad] = names.map(col);
   return rows.map(r => {
     const url = String(r[iUrl] || '').trim();
     if (!/^https?:\/\//.test(url)) return null;

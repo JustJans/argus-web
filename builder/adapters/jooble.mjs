@@ -6,7 +6,7 @@
 // ➤ for, newest first, within a budget of calls; what came earlier is kept for thirty days in
 // ➤ builder/state/jooble.json, so the other builds of the day cost no calls.
 // ➤ Keys: JOOBLE_KEY for one key, or JOOBLE_KEYS="es=KEY1,de=KEY2" when Jooble gives one per country.
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { mkdirSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { getJson } from '../http.mjs';

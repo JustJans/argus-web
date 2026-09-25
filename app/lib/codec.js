@@ -10,7 +10,9 @@
 // ➤ more posted windows. Codes of versions 2 and 3 read as they always did; a version-1 code
 // ➤ named families that no longer exist and is refused with a message to make a new one.
 export const VERSION = 4;
-const FAMILY_BYTES = 8, LANGUAGE_BYTES = 2, DEGREE_BYTES = 4;
+// ➤ The room each catalogue has in a code (test/codec.test.mjs fails when one outgrows it:
+// ➤ the next language, the 17th, needs a new version of the code).
+export const FAMILY_BYTES = 8, LANGUAGE_BYTES = 2, DEGREE_BYTES = 4;
 export const MAX_YEARS_STEPS = [null, 1, 2, 3, 5, 7, 10, 15];   // ➤ 3 bits
 export const LEVELS = ['any', 'junior', 'mid', 'senior'];         // ➤ 2 bits
 export const HIGHEST = ['none', 'bachelor', 'master', 'phd'];     // ➤ 2 bits

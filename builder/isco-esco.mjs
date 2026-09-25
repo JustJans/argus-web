@@ -19,13 +19,14 @@ const ESCO = 'https://ec.europa.eu/esco/api';
 const JOBTECH = 'https://taxonomy.api.jobtechdev.se/v1/taxonomy/graphql';
 
 // ➤ The vertical, as decided: ISCO-08 minor groups 214-216 and 311-315 (engineers,
-// ➤ architects/planners/surveyors, technicians, supervisors, plant operators, crews), minus
+// ➤ architects/planners/surveyors, technicians, supervisors, plant operators, crews) and, since
+// ➤ 2026-09-06, 251-252 and 351-352 (software, databases and networks, ICT technicians), minus
 // ➤ product/garment and graphic designers.
 export const MINOR_GROUPS = ['214', '215', '216', '251', '252', '311', '312', '313', '315', '351', '352'];
 export const EXCLUDED_UNITS = ['2163', '2166'];
-// ➤ Groups next door whose job titles look like ours but are out (software and ICT, technical
-// ➤ sales): their ESCO titles let the gate refuse "software engineer" or "sales engineer"
-// ➤ instead of reading them as engineers.
+// ➤ Groups next door whose job titles look like ours but are out (technical and medical sales):
+// ➤ their ESCO titles let the gate refuse "sales engineer" instead of reading it as an
+// ➤ engineer.
 export const BLOCKER_GROUPS = ['243'];
 // ➤ The languages kept: those of today's and tomorrow's sources. ESCO has no Catalan.
 export const LANGS = ['en', 'es', 'fr', 'de', 'nl', 'sv', 'no', 'da', 'fi', 'it', 'pt', 'pl', 'cs', 'lt', 'lv'];
@@ -145,7 +146,7 @@ export async function buildIsco(log = console.log) {
   for (const unit of Object.values(units)) { union(unit, 'labels'); union(unit, 'preferred'); }
   for (const b of Object.values(blockers)) { union(b, 'labels'); delete b.occupations; }
   const out = {
-    _about: 'ISCO-08 minor groups of the vertical, their unit groups, and every ESCO occupation under them with the job titles ESCO gives per language (through Argus\'s usableLabels). Built by builder/isco-esco.mjs from https://ec.europa.eu/esco/api. `blockers`: titles of neighbouring groups that are out (ICT, technical sales), so a generic "engineer" never covers them. `outside` lists occupations reached through the walk that ESCO files under other groups.',
+    _about: 'ISCO-08 minor groups of the vertical, their unit groups, and every ESCO occupation under them with the job titles ESCO gives per language (through Argus\'s usableLabels). Built by builder/isco-esco.mjs from https://ec.europa.eu/esco/api. `blockers`: titles of neighbouring groups that are out (technical sales), so a generic "engineer" never covers them. `outside` lists occupations reached through the walk that ESCO files under other groups.',
     built_at: new Date().toISOString(), langs: LANGS, groups, units, blockers, outside, skipped,
   };
   mkdirSync(OUT, { recursive: true });
@@ -158,6 +159,7 @@ export async function buildIsco(log = console.log) {
 export async function buildSsyk(log = console.log) {
   const query = '{ concepts(type:"ssyk-level-4", limit: 2000) { id preferred_label ssyk_code_2012 related(type:"isco-level-4") { isco_code_08 } } }';
   const res = await cached(`${JOBTECH}?query=${encodeURIComponent(query)}`, 'jobtech_ssyk4_isco');
+  if (!res?.data) throw new Error('JobTech did not answer: ssyk-isco.json is left as it was');
   const table = {};
   for (const c of res.data?.concepts || []) table[c.id] = { ssyk: c.ssyk_code_2012, label: c.preferred_label, isco: [...new Set(c.related.map(r => r.isco_code_08))].sort() };
   const out = { _about: 'SSYK-2012 level-4 concepts of JobTech\'s taxonomy (the codes Arbetsförmedlingen\'s adverts carry) and the ISCO-08 unit groups the taxonomy relates them to. Built by builder/isco-esco.mjs from ' + JOBTECH, built_at: new Date().toISOString(), concepts: table };

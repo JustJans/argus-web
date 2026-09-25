@@ -9,16 +9,17 @@
 // ➤ softgarden are named and left.
 // ➤   node builder/tools/hunt.mjs vestas.com boskalis.com [--write]
 // ➤   node builder/tools/hunt.mjs --file domains.txt [--take 300] [--lanes 6] [--write]
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import yaml from 'js-yaml';
+import { writeFileAtomic } from 'argus/server-bot/fs-atomic.mjs';
 import { get, getText, deadline } from '../http.mjs';
 import { ATS, readBoard, loadVendors, loadCompanies } from '../adapters/boards.mjs';
 import { resolve, listed, loadSites } from '../adapters/careers.mjs';
 import { robotsOf } from '../robots.mjs';
 import { careerLinks, detectPlatform, jobPostings, feedName, isBoardHost } from '../lib/crawl.mjs';
-import { compileFamilies, familiesOf, hygieneReason } from '../gate.mjs';
+import { compileFamilies, familiesOf, hygieneReason, languagesOfCountry } from '../gate.mjs';
 import { readCodes } from '../codes.mjs';
 import { compileCountries, placeOf } from '../normalise.mjs';
 import { parseSuccessFactors } from 'argus/server-bot/scan.mjs';
@@ -48,6 +49,8 @@ function judge(jobs, source) {
   for (const p of jobs) {
     const raw = { ...p, source, codes: {}, lang: '' };
     if (!/^https?:\/\//.test(String(raw.url || ''))) continue;
+    // ➤ The title read in its country's languages too, as the pile builder reads it.
+    raw.hintLangs = languagesOfCountry(placeOf(raw.location, countries).cc || String(raw.country || '').toLowerCase());
     if (!familiesOf(raw, gate).length || hygieneReason(raw)) continue;
     work++;
     const place = placeOf(raw.location, countries);
@@ -192,7 +195,9 @@ function write(results) {
     added++;
   }
   const head = '# ➤ Sources the hunter found (builder/tools/hunt.mjs --write): companies read through their\n# ➤ ATS\'s public listing, and sites read through their feed, sitemap or listing page. Read by the\n# ➤ builder like companies.yml and careers.yml; a source those name is left to them. adverts and\n# ➤ kept are what the hunter saw that day, for the record.\n';
-  writeFileSync(HUNTED, head + yaml.dump({ companies, sites }, { lineWidth: 200 }));
+  // ➤ Written to a scratch file and renamed over the old one: the crawler reads this list every
+  // ➤ hour and must never meet it half written.
+  writeFileAtomic(HUNTED, head + yaml.dump({ companies, sites }, { lineWidth: 200 }));
   return added;
 }
 
