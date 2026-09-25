@@ -1,0 +1,5 @@
+# Adverts that must not be shown, by the address of the page they live on. A takedown asked
+# for (an issue on the repository, "remove this advert") is done here, and the next
+# publication, within three hours, leaves the advert out. A whole source is taken down in its
+# own list instead (enabled: false in careers.yml or companies.yml), with the reason beside it.
+adverts: []
