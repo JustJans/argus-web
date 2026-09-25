@@ -30,7 +30,9 @@ The home and list page:
 - **Nav:** the brand, the light/dark switch, Privacy, Sources and the language menu.
 - **Hero:** the count of offers listed today, large (Archivo), then "Offers Listed Today". Once
   there are results (`body.has-results`) it becomes the count that matches, with "offers match
-  your filters", and "out of N listed today" under it.
+  your filters", and "out of N listed today" under it. While either count is loading its figures
+  turn in their windows and stop one after the other when the number comes (`app/lib/roll.js`,
+  docs/research/count-animation.md). Numbers carry a dot between thousands on both pages.
 - **The search bar:** one field for titles, companies, towns, countries and pasted codes
   (`app/lib/query.js` reads the towns and countries: docs/research/single-search.md). Under it,
   the Filters button and, once the bar has read a town, the radius pill.
@@ -81,8 +83,9 @@ the `<!-- language menu -->` mark:
 - **Classes the scripts add**: `check-row` (with a `count` span), `checks`, `sub`,
   `occupation-group`, `offers`, `offer`, `offer__title`, `offer__meta`, `offer__tags`, `tag`,
   `tag-outline` (the source), `tag-accent` (the pay), `tag-neutral`, `offers__divider`, `more`,
-  `btn`, `btn-secondary`, `empty`, `empty__n`, `debug`, `num`, and for the loop `loop__rows`,
-  `loop__row`, `loop__text`, `loop__title`, `loop__meta`, `loop__tags`.
+  `btn`, `btn-secondary`, `empty`, `empty__n`, `debug`, `num`, for the loop `loop__rows`,
+  `loop__row`, `loop__text`, `loop__title`, `loop__meta`, `loop__tags`, and for a loading count
+  `roll__col`, `roll__strip`, `roll__digit`, `roll__mark`.
 - **Ticks** are real checkboxes and radios inside a `label.check-row`, the input on the left.
 - **No third-party fonts, scripts or images** anywhere (the privacy promise). pdf.js and the
   Archivo font are served from this site; pdf.js loads only when a PDF is chosen. Icons are

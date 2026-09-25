@@ -16,6 +16,7 @@ import { renderList, renderEmpty, renderDebug, loopRow } from './lib/render.js';
 import { matchesWords, isExpired, newestFirst } from './lib/search.js';
 import { compileGazetteer, countryNames, readQuery, scopeCountries } from './lib/query.js';
 import { startLoop } from './lib/ticker.js';
+import { spin, land } from './lib/roll.js';
 import { readCv } from './lib/cv.js';
 import * as engine from './lib/engine.js';
 import { t, label, countryLabel, languageLabel, number } from './lib/i18n.js';
@@ -194,7 +195,7 @@ function drawPile() {
   // ➤ The pile is built from what the crawler read, and the crawler may stop while the
   // ➤ building goes on: the age that matters is the newest read, not the newest build.
   const readHours = Math.round((Date.now() - new Date(index.crawled_at || index.generated_at).getTime()) / 36e5);
-  text('#hero-count', n(index.counts.offers));
+  land($('#hero-count'), n(index.counts.offers));
   text('#hero-stats', t('out of {n} listed today', { n: n(index.counts.offers) }));
   if (readHours > STALE_HOURS) { text('#stale-text', t('The sources were last read {n} days ago; some offers may have closed since.', { n: Math.round(readHours / 24) })); $('#stale').hidden = false; }
 }
@@ -219,7 +220,7 @@ function draw() {
   // ➤ How many match, large above the list. The status line says out of how many (the whole
   // ➤ pile, or the newest part of it that was searched) and where the ones that match are, the
   // ➤ fullest countries first.
-  text('#hero-match', n(shown.length));
+  land($('#hero-match'), n(shown.length));
   text('#hero-match-text', !narrowed ? t('newest offers') : shown.length === 1 ? t('offer matches your filters') : t('offers match your filters'));
   const where = new Map();
   for (const o of shown) where.set(o.cc, (where.get(o.cc) || 0) + 1);
@@ -299,6 +300,7 @@ async function run() {
   if (loaded && loaded.key === key) { showResults(true); draw(); return; }
   loaded = null;
   showResults(true);
+  spin($('#hero-match'), '0.000');
   $('#list').replaceChildren();
   // ➤ The parts of the pile: the profile's, and those of the places read (a town's radius may
   // ➤ reach over a border).
@@ -412,7 +414,9 @@ function wireControls() {
 }
 
 async function main() {
-  try { index = await getJson('data/index.json'); } catch { text('#hero-count', '0'); barNote(t('The pile is not published yet. Come back in a few hours.')); return; }
+  // ➤ The count turns while the pile's index and the catalogues come, and lands on the number.
+  spin($('#hero-count'));
+  try { index = await getJson('data/index.json'); } catch { land($('#hero-count'), '0'); barNote(t('The pile is not published yet. Come back in a few hours.')); return; }
   const names = ['families', 'occupations', 'countries', 'languages', 'degrees', 'seniority', 'vetoes'];
   const all = await Promise.all(names.map(name => getJson(`catalogues/${name}.json`)));
   cats = Object.fromEntries(names.map((name, i) => [name, all[i]]));
