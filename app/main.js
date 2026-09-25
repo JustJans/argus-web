@@ -270,7 +270,6 @@ async function run() {
   $('#q').value = q;
   $('#code-input').value = code;
   $('#radius').value = String(r);
-  clearNote();
   let profile = normaliseProfile({});
   if (code) {
     try { profile = decodeProfile(code, ids); } catch { unreadable(); showResults(false); loaded = null; startFrontLoop(); return; }
@@ -368,6 +367,7 @@ function wireControls() {
   // ➤ said under the bar, and searched as words all the same.
   $('#search').addEventListener('submit', e => {
     e.preventDefault();
+    clearNote();
     const typed = $('#q').value.trim();
     if (/^[A-Za-z0-9_-]{8,}$/.test(typed)) {
       try { decodeProfile(typed, ids); $('#q').value = ''; search({ ...stateFromForm(), p: typed, q: '' }); return; } catch { if (/\d/.test(typed) && /[A-Z]/.test(typed)) unreadable(); }
@@ -378,6 +378,7 @@ function wireControls() {
   });
   // ➤ The code in the panel: pasted or typed over, it loads when it reads; emptied, the filters go.
   $('#code-input').addEventListener('change', () => {
+    clearNote();
     const code = $('#code-input').value.trim();
     const { q, r } = stateFromForm();
     if (!code) { writeHash({ q, r }); return; }
