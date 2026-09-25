@@ -60,18 +60,24 @@ const STATE_TOWNS = { de: ['wilmington', 'newark', 'dover'], nl: ["st. john's", 
 // ➤ beside them they are the United States, before any town name is read, or "Naples, FL"
 // ➤ would be Naples in Italy.
 const US_STATES = new Set('ak az ar ca co ct fl ga hi id il in ia ks ky la ma mi mn ms mo ne nv nh nj nm ny nc nd oh ok or pa ri sc sd tn tx ut vt va wa wv wi wy dc'.split(' '));
-// ➤ The states by name, for "Dublin, Ohio" and "Long Island, New York": not Georgia (a
-// ➤ country too), Washington (a town in Tyne and Wear) or Montana (a province of Bulgaria).
-const US_STATE_NAMES = ['alabama', 'alaska', 'arizona', 'arkansas', 'california', 'colorado', 'connecticut', 'delaware', 'florida', 'hawaii', 'idaho', 'illinois', 'indiana', 'iowa', 'kansas', 'kentucky', 'louisiana', 'maine', 'maryland', 'massachusetts', 'michigan', 'minnesota', 'mississippi', 'missouri', 'nebraska', 'nevada', 'new hampshire', 'new jersey', 'new mexico', 'new york', 'north carolina', 'north dakota', 'ohio', 'oklahoma', 'oregon', 'pennsylvania', 'rhode island', 'south carolina', 'south dakota', 'tennessee', 'texas', 'utah', 'vermont', 'virginia', 'west virginia', 'wisconsin', 'wyoming', 'district of columbia'].join('|');
-const STATE_NAMES = new RegExp(`(?:^|[^a-z])(${US_STATE_NAMES})(?![a-z])`, 'g');
+// ➤ The states by name, for "Dublin, Ohio" and "Merritt Island, Florida": not Georgia (a
+// ➤ country too), Washington (a town in Tyne and Wear) or Montana (a province of Bulgaria);
+// ➤ New York only opening a place, since at its end it is mostly the city ("London, New York").
+const US_STATE_NAMES = ['alabama', 'alaska', 'arizona', 'arkansas', 'california', 'colorado', 'connecticut', 'delaware', 'florida', 'hawaii', 'idaho', 'illinois', 'indiana', 'iowa', 'kansas', 'kentucky', 'louisiana', 'maine', 'maryland', 'massachusetts', 'michigan', 'minnesota', 'mississippi', 'missouri', 'nebraska', 'nevada', 'new hampshire', 'new jersey', 'new mexico', 'north carolina', 'north dakota', 'ohio', 'oklahoma', 'oregon', 'pennsylvania', 'rhode island', 'south carolina', 'south dakota', 'tennessee', 'texas', 'utah', 'vermont', 'virginia', 'west virginia', 'wisconsin', 'wyoming', 'district of columbia'].join('|');
 const A_STATE = new RegExp(`^(?:${US_STATE_NAMES})$`);
 // ➤ The United States named as a country, alone ("…, Ohio, United States").
 const US_NAMED = /^(?:us|usa|u s a|united states(?: of america)?|etats-unis(?: d'amerique)?|stati uniti(?: d'america)?|estados unidos(?: de america)?|vereinigte staaten(?: von amerika)?)$/;
 // ➤ An address that opens with the country and its state ("USA - New York - Malta", "USA
-// ➤ Wisconsin Luxemburg", "US-NY-Long Island City") or with the state ("Ohio - Columbus",
-// ➤ "NY - Long Island"); a state's code counts in capitals only ("US or UK" is not Oregon).
-const OPENS_US = new RegExp(`^(?:(?:us|usa|u\\.s\\.a?\\.?|united states(?: of america)?)[\\s.,:–-]+(?:${US_STATE_NAMES})(?![a-z])|(?:${US_STATE_NAMES})\\s+[–-]\\s+)`);
-const OPENS_US_CODE = new RegExp(`^\\s*(?:(?:US|USA|U\\.S\\.A?\\.?|United States)[\\s.,:–-]+)?(?:${[...US_STATES].join('|').toUpperCase()})(?:\\s*[–.-]\\s*|\\s+)\\S`);
+// ➤ Wisconsin Luxemburg", "US-NY-Long Island City") or with the state and a dash ("Ohio -
+// ➤ Columbus", "NY - Long Island"). A state's code counts in capitals and before a dash only:
+// ➤ "LA ROCHELLE" is not Louisiana, "ID #3gf8b" not Idaho, "US or UK" not Oregon.
+const OPENS_US = new RegExp(`^(?:(?:us|usa|u\\.s\\.a?\\.?|united states(?: of america)?)[\\s.,:–-]+(?:${US_STATE_NAMES}|new york)(?![a-z])|(?:${US_STATE_NAMES}|new york)\\s+[–-]\\s+)`);
+const OPENS_US_CODE = new RegExp(`^\\s*(?:(?:US|USA|U\\.S\\.A?\\.?|United States)[\\s.,:–-]+)?(?:${[...US_STATES].join('|').toUpperCase()})\\s*[–.-]\\s*\\S`);
+// ➤ "Island" is Iceland in German and the Nordic languages and a plain word in English place
+// ➤ names ("Long Island City", "Rhode Island"): it names the country only standing on its own
+// ➤ ("Reykjavík, Island").
+const ONLY_ALONE = new Set(['island']);
+const alone = (f, start, end) => /(?:^|[,;(|/–-])\s*$/.test(f.slice(0, start)) && /^\s*(?:$|[,;)|/–-])/.test(f.slice(end));
 
 // ➤ Where in a text a pattern last ends, or -1.
 const lastEnd = (re, text) => { let end = -1; for (const m of text.matchAll(re)) end = m.index + m[0].length; return end; };
@@ -92,24 +98,23 @@ function withoutTail(place) {
 // ➤ The country a place names, read the way addresses are written, from the town to the country:
 // ➤ within one place the country named last is the country, so in "Sydney, New South Wales,
 // ➤ Australia" or "North Kingstown, Rhode Island, USA" the European word inside a state's name
-// ➤ (Wales, Island) is not one. A US state ending the place ("Dublin, Ohio", "Long Island, New
-// ➤ York", "Kent Island, MD") or opening it ("USA - New York - Malta") makes it American, and
-// ➤ a European word inside a state's name ("Rhode Island") never names a country. A list of
-// ➤ places ("Berlin, Germany; Austin, USA") keeps the first that is in Europe. Answers
-// ➤ { cc, european } or null when no country is named.
+// ➤ (Wales, Island) is not one. A US state ending the place ("Dublin, Ohio", "Kent Island, MD")
+// ➤ or opening it ("USA - New York - Malta") makes it American. A list of places ("Berlin,
+// ➤ Germany; Austin, USA") keeps the first that is in Europe. Answers { cc, european } or null
+// ➤ when no country is named.
 function namedCountry(raw, compiled) {
   let far = null;
   for (const segment of raw.split(/[;|]|\s\/\s/)) {
     const place = withoutTail(segment);
     const f = fold(place);
-    const states = [...f.matchAll(STATE_NAMES)].map(m => [m.index, m.index + m[0].length]);
-    const inState = m => states.some(([a, b]) => m.index >= a && m.index + m[0].length <= b);
     let euro = null, euroEnd = -1, farIso = null, farEnd = -1;
-    for (const c of compiled) for (const m of f.matchAll(c.nameAll)) if (m.index + m[0].length > euroEnd && !inState(m)) { euro = c; euroEnd = m.index + m[0].length; }
+    for (const c of compiled) {
+      for (const m of f.matchAll(c.nameAll)) {
+        const end = m.index + m[0].length, name = m[0].replace(/^[^a-z0-9]/, '');
+        if (end > euroEnd && (!ONLY_ALONE.has(name) || alone(f, end - name.length, end))) { euro = c; euroEnd = end; }
+      }
+    }
     for (const [iso, re] of FAR_NAMES) { const end = lastEnd(re, f); if (end > farEnd) { farIso = iso; farEnd = end; } }
-    // ➤ "US" in capitals, as its own word ("New England US Region").
-    const us = lastEnd(/(?:^|[^A-Za-z])US(?![A-Za-z])/g, place);
-    if (us > farEnd) { farIso = 'us'; farEnd = us; }
     // ➤ A code outside Europe ending the place ("…, New South Wales, AU") names its country; a US
     // ➤ state's ("Wallops Island, VA"), or one European countries share when that country is not
     // ➤ the one named ("Kent Island, MD"), only outranks the European word, and is read as the
