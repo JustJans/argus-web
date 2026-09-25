@@ -62,7 +62,6 @@ export default {
     'Any pay': 'Cualquier sueldo',
     'must appear in the title': 'deben salir en el título',
     'words that rule an offer out': 'palabras que descartan una oferta',
-    "Today's offers": 'Ofertas de hoy',
     'Read my CV': 'Leer mi CV',
     'A PDF or text file, read on this device: it ticks your occupations, degrees and languages.': 'Un PDF o un archivo de texto, leído en este dispositivo: marca tus ocupaciones, titulaciones e idiomas.',
     'Your code': 'Tu código',

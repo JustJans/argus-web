@@ -100,8 +100,8 @@ the `<!-- language menu -->` mark:
   notice.
 - The CV line: idle, reading (spinner), ticked (accent), nothing found, file could not be read.
 - The code line: empty (placeholder), showing the current code, Copied (accent border).
-- The loop: moving; still while the pointer or the focus is on it, while the tab is hidden, and
-  under reduced motion.
+- The loop: always moving, even under the pointer; resting in a hidden tab, still under reduced
+  motion. It is decoration: hidden from screen readers and out of the keyboard's way.
 
 ## Preview locally
 
