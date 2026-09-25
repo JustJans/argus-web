@@ -45,6 +45,22 @@ export function townOf(rec, towns) {
   return null;
 }
 
+// ➤ The other towns of a campaign kept once per country (builder/dedupe.mjs), once each and in
+// ➤ order, as [town, lat, lon], or [town] when the town is not on the map: the place search finds
+// ➤ the offer in any of them, and the card names the one nearest the place searched. The
+// ➤ copies must have been located first.
+export function campaignPlaces(rec) {
+  const seen = new Set([fold(rec.ci || '')]);
+  const out = [];
+  for (const o of rec.alsoAt || []) {
+    const k = fold(o.ci || '');
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    out.push(o.g ? [o.ci, ...o.g] : [o.ci]);
+  }
+  return out.sort((a, b) => a[0].localeCompare(b[0]));
+}
+
 // ➤ A town's names in the languages visitors write in ("Londres", "Gotemburgo", "Genf"), for the
 // ➤ search bar: four letters at least, three words at most.
 const otherNames = (town, taken) => [...new Set(town.known.filter(n => n.length >= 4 && n.split(/\s+/).length <= 3 && /^[\p{L}' .-]+$/u.test(n) && !taken.has(fold(n))))];

@@ -231,6 +231,8 @@ function draw() {
   text('#results-status', [head, ...countries].join(' · ') + partsFailed);
   // ➤ Zero results: every stage that dropped something, the date and the words included.
   const stages = { ...loaded.stages, 'posted date': loaded.offers.length - inDate.length, 'search words': inDate.length - shown.length };
+  // ➤ The towns searched, so a job run in many towns names the nearest.
+  ctx.places = loaded.read.towns;
   if (shown.length) renderList($('#list'), shown, ctx); else renderEmpty($('#list'), stages, loaded.total);
   if (debug && loaded.dropped) renderDebug($('#debug'), loaded.dropped); else $('#debug').hidden = true;
 }

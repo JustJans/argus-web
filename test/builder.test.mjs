@@ -11,7 +11,7 @@ import { readCodes } from '../builder/codes.mjs';
 import { compileCountries, placeOf, placeOfAdvert, normUrl, idFor, toRecord } from '../builder/normalise.mjs';
 import { dedupe, roleKey } from '../builder/dedupe.mjs';
 import { buildShards, latestOf, occupationCounts } from '../builder/shard.mjs';
-import { compileTowns, townOf, locate } from '../builder/towns.mjs';
+import { compileTowns, townOf, locate, campaignPlaces } from '../builder/towns.mjs';
 import { shardFiles } from '../app/lib/shards.js';
 import { parseLanbide, isoDay } from '../builder/adapters/lanbide.mjs';
 import { parseFeinaActiva } from '../builder/adapters/feinaactiva.mjs';
@@ -275,6 +275,10 @@ ok(idFor('https://cvvp.nva.gov.lv/#/pub/vakances/1') !== idFor('https://cvvp.nva
   const campaign = Array.from({ length: 12 }, (_, i) => at(`https://c/${i}`, `Town ${i}`, i < 8 ? 'nl' : 'be'));
   eq(dedupe(campaign).kept.map(r => r.cc).sort(), ['be', 'nl'], 'a company and title in more than ten towns is a campaign: once per country');
   eq(dedupe(campaign.slice(0, 3)).kept.length, 3, 'in a few towns, a job per town');
+  const nl = dedupe(campaign).kept.find(r => r.cc === 'nl');
+  eq(nl.alsoAt.length, 7, 'the offer kept for a country carries the copies of its other towns');
+  nl.ci = 'Town 0'; nl.alsoAt.forEach((r, i) => { r.ci = i === 3 ? 'Town 0' : r.ci; if (i < 2) r.g = [52 + i, 5]; });
+  eq(campaignPlaces(nl).map(p => p.length), [3, 3, 1, 1, 1, 1], 'each other town once, with its coordinates when it is on the map');
 }
 
 // ── Shards ──────────────────────────────────────────────────────────────

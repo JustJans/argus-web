@@ -11,6 +11,7 @@ eq(wordsOf('a'), [], 'a one-letter word is noise');
 ok(matchesWords(o, wordsOf('mecanico cadiz'), name), 'every word found across title and city');
 ok(matchesWords(o, wordsOf('naval spain'), name), 'company and country name count too');
 ok(!matchesWords(o, wordsOf('mecanico bilbao'), name), 'one missing word is enough to fail');
+ok(matchesWords({ ...o, m: [['Bilbao', 43.26, -2.93]] }, wordsOf('mecanico bilbao'), name), "any of a campaign's towns counts");
 ok(matchesWords(o, [], name), 'no words: everything matches');
 
 ok(isExpired({ x: '2026-01-01' }, '2026-09-04'), 'a deadline in the past');

@@ -13,7 +13,7 @@ import { compileCountries, placeOfAdvert, toRecord } from './normalise.mjs';
 import { compileScreens } from './screens.mjs';
 import { dedupe } from './dedupe.mjs';
 import { buildShards, writePile } from './shard.mjs';
-import { compileTowns, locate, townOf } from './towns.mjs';
+import { compileTowns, locate, townOf, campaignPlaces } from './towns.mjs';
 import { ambiguousNames } from './place-names.mjs';
 import { loopOffers } from './loop-offers.mjs';
 import { loadCache, saveCache, translateTitles } from './translate.mjs';
@@ -110,7 +110,10 @@ const { kept, sameUrl, sameRole } = dedupe(items, rec => { const hit = townOf(re
 stage('duplicates');
 
 // ➤ Each advert on the map, for the search by town and distance: its town found in GeoNames.
-const onMap = locate(kept, towns);
+// ➤ A campaign kept once per country is on the map in every town it names.
+const onMap = locate([...kept, ...kept.flatMap(rec => rec.alsoAt || [])], towns);
+for (const rec of kept) if (rec.alsoAt) { const more = campaignPlaces(rec); if (more.length) rec.m = more; delete rec.alsoAt; }
+const onMapKept = kept.filter(rec => rec.g).length;
 stage('towns');
 
 // ➤ Titles in English, as the bot shows them, and in Spanish for the Spanish site; a cache on
@@ -152,7 +155,7 @@ const index = {
   v: 1, generated_at: generatedAt, crawled_at: crawledAt || generatedAt,
   expires_at: new Date(Date.parse(crawledAt || generatedAt) + 48 * 3600 * 1000).toISOString(), catalogue_v: 2,
   families: familiesIndex, latest, sources,
-  counts: { offers: kept.length, found: counts.found, by_country: perCountry, via: viaCount, sources: sourceFiles, companies: boardSources, on_map: onMap.placed, with_pay: withPay, with_mode: withMode },
+  counts: { offers: kept.length, found: counts.found, by_country: perCountry, via: viaCount, sources: sourceFiles, companies: boardSources, on_map: onMapKept, with_pay: withPay, with_mode: withMode },
   status: { ok: kept.length > 0, seconds: Math.round((Date.now() - startedAt) / 1000) },
 };
 mkdirSync(OUT, { recursive: true });
@@ -173,7 +176,7 @@ stage('writing');
 log(`store: ${sourceFiles} sources, newest pass ${crawledAt || 'never'}`);
 log(`found ${counts.found} · outside vertical ${counts.outsideVertical} · outside Europe ${counts.outsideEurope} · hygiene ${counts.hygiene} · no link ${counts.noLink} · stale ${counts.stale} · duplicates ${sameUrl + sameRole}`);
 log(`kept ${kept.length} offers in ${Object.keys(files).length} shards → ${OUT}`);
-log(`on the map: ${onMap.placed} offers in ${onMap.list.length} towns`);
+log(`on the map: ${onMapKept} offers in ${onMap.list.length} towns`);
 log(`pay stated on ${withPay} offers (ECB rates of ${rates.day || 'no day: only pay in euros read'}); work mode stated on ${withMode}`);
 log(`stages: ${stages.join(' · ')}`);
 if (kept.length === 0) { log('nothing usable in the store: not publishing'); process.exit(1); }

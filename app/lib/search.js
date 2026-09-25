@@ -8,11 +8,11 @@ export function wordsOf(q) {
   return fold(q).split(/[\s,;]+/).filter(w => w.length >= 2);
 }
 
-// ➤ Every word must appear somewhere in the advert's title, company, city, location or
-// ➤ country name.
+// ➤ Every word must appear somewhere in the advert's title, company, city (any of a campaign's
+// ➤ towns), location or country name.
 export function matchesWords(o, words, countryName = () => '') {
   if (!words.length) return true;
-  const hay = fold([o.t, o.te, o.ts, o.c, o.ci, o.l, countryName(o.cc)].filter(Boolean).join(' '));
+  const hay = fold([o.t, o.te, o.ts, o.c, o.ci, ...(o.m || []).map(p => p[0]), o.l, countryName(o.cc)].filter(Boolean).join(' '));
   return words.every(w => hay.includes(w));
 }
 
