@@ -165,4 +165,14 @@ body.has-results .hero-results { display: flex; }
   .loop__meta { @apply text-[13px] text-n-800; }
   .loop__tags { @apply flex flex-none flex-wrap gap-1.5; }
   .loop__tags .tag { @apply whitespace-nowrap; }
+
+  /* A count while it loads (lib/roll.js): each figure turns in a window a little taller than
+     the line, faded at its edges, so the figures look the same as the plain number once they
+     stop. A turn of the strip is ten figures of 1.2em. */
+  .roll__col, .roll__mark { display: inline-block; height: 1.2em; margin-block: -0.1em; line-height: 1.2em; vertical-align: top; }
+  .roll__col { overflow: hidden; mask-image: linear-gradient(to bottom, transparent 0, #000 16%, #000 84%, transparent 100%); }
+  .roll__strip { display: block; will-change: transform; }
+  .roll__digit { display: block; height: 1.2em; }
 }
+@keyframes roll-turn { to { transform: translateY(-12em); } }
+@media (prefers-reduced-motion: reduce) { .roll__strip { animation: none !important; transition: none !important; } }
