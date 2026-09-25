@@ -17,7 +17,7 @@ import { get, getText, deadline } from '../http.mjs';
 import { ATS, readBoard, loadVendors, loadCompanies } from '../adapters/boards.mjs';
 import { resolve, listed, loadSites } from '../adapters/careers.mjs';
 import { robotsOf } from '../robots.mjs';
-import { careerLinks, detectPlatform, jobPostings, feedName, BOARD_HOSTS } from '../lib/crawl.mjs';
+import { careerLinks, detectPlatform, jobPostings, feedName, isBoardHost } from '../lib/crawl.mjs';
 import { compileFamilies, familiesOf, hygieneReason } from '../gate.mjs';
 import { readCodes } from '../codes.mjs';
 import { compileCountries, placeOf } from '../normalise.mjs';
@@ -138,7 +138,7 @@ async function hunt(domain) {
     let got;
     try { got = await page(c); } catch { continue; }
     // ➤ A page that turns out to be a job board's or a social network's is not read.
-    if (!got.ok || seen.has(`${got.url}#`) || BOARD_HOSTS.test(new URL(got.url).hostname)) continue;
+    if (!got.ok || seen.has(`${got.url}#`) || isBoardHost(new URL(got.url).hostname)) continue;
     seen.add(`${got.url}#`);
     looked++;
     const found = await recognise(got.url, got.html);

@@ -13,7 +13,7 @@ import { dirname, join } from 'path';
 import yaml from 'js-yaml';
 import { get } from '../http.mjs';
 import { loadSites } from '../adapters/careers.mjs';
-import { BOARD_HOSTS } from '../lib/crawl.mjs';
+import { isBoardHost } from '../lib/crawl.mjs';
 
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 const flag = (name, dflt) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : dflt; };
@@ -58,7 +58,7 @@ function pickSites(rows, cc) {
   const byName = new Map();
   for (const r of rows) {
     let host; try { host = new URL(r.web).host.toLowerCase().replace(/^www\./, ''); } catch { continue; }
-    if (!host || BOARD_HOSTS.test(host)) continue;
+    if (!host || isBoardHost(host)) continue;
     const before = byName.get(r.name);
     const better = !before || (host.endsWith(`.${cc}`) && !before.host.endsWith(`.${cc}`)) || (host.length < before.host.length && before.host.endsWith(`.${cc}`) === host.endsWith(`.${cc}`));
     if (better) byName.set(r.name, { host, name: r.name, staff: r.staff, cc, industry: r.industry || '', ours: OURS.test(r.industry || '') });

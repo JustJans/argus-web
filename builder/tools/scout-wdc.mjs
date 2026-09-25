@@ -17,6 +17,7 @@ import yaml from 'js-yaml';
 import { compileFamilies, familiesOf, hygieneReason } from '../gate.mjs';
 import { readCodes } from '../codes.mjs';
 import { compileCountries, placeOf } from '../normalise.mjs';
+import { isBoardHost } from '../lib/crawl.mjs';
 
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 const args = process.argv.slice(2);
@@ -26,8 +27,6 @@ const DRY = args.includes('--dry');                                   // ➤ --d
 const HOSTS = join(ROOT, 'builder', 'state', 'wdc-hosts.json');
 const FOUND = join(ROOT, 'builder', 'config', 'careers-found.yml');
 const MAX_URLS_A_HOST = 12;
-// ➤ The hosts of job boards and aggregators are never employers, whatever the rule says of them.
-const BOARDS = /(?:^|\.)(?:freelance-informatique|rollingadz|php-resource|qreer|studentjob|jobteaser|indeed|linkedin|glassdoor|monster|stepstone|infojobs|infoempleo|tecnoempleo|jobrapido|jooble|adzuna|talent|neuvoo|trovit|mitula|careerjet|jobted|jobijoba|kimeta|jobware|stellenanzeigen|jobvector|hays|adecco|randstad|manpower|michaelpage|robertwalters|reed|totaljobs|cv-library|jobsite|welcometothejungle|jobteaser|hellowork|apec|francetravail|pole-emploi|arbeitsagentur|arbeitnow|jobs\.ch|jobscout24|karriere\.at|willhaben|pracuj|olx|jobs\.cz|profesia|nofluffjobs|justjoin|jobs\.bg|ejobs|bestjobs|cvbankas|cv\.lv|cvkeskus|duunitori|oikotie|finn|nav\.no|jobindex|jobnet|arbetsformedlingen|platsbanken|ledigajobb|blocket|jobsora|jobsinnetwork|jobs\.de|jobcenter|jobbnorge|thelocal|eurojobs|eures|ziprecruiter|simplyhired|careerbuilder|workable|jobvite|lever|greenhouse|smartrecruiters|recruitee|personio|teamtailor|successfactors|myworkdayjobs|taleo|icims|bamboohr|breezy|ashbyhq|jobs\.lever|boards\.greenhouse)\.[a-z.]+$/i;
 
 const read = p => JSON.parse(readFileSync(join(ROOT, ...p.split('/')), 'utf-8'));
 const gate = compileFamilies(read('catalogues/families.json'), readCodes(ROOT));
@@ -117,7 +116,7 @@ if (DRY) for (const [host, h] of Object.entries(hosts).slice(0, 6)) console.log(
 // ➤ Employers: one organisation on most pages, not a board, adverts of ours in Europe.
 const sites = [];
 for (const [host, h] of Object.entries(hosts)) {
-  if (!h.kept || BOARDS.test(host)) continue;
+  if (!h.kept || isBoardHost(host)) continue;
   const orgs = Object.entries(h.orgs).sort((a, b) => b[1] - a[1]);
   const total = orgs.reduce((s, [, n]) => s + n, 0);
   if (!orgs.length || orgs[0][1] / total < 0.8) continue;

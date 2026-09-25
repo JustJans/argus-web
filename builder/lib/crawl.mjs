@@ -197,9 +197,24 @@ export function jobPostings(html, pageUrl) {
 }
 
 // ➤ The hosts a crawler of employers' own pages never follows: job boards and aggregators
-// ➤ (their terms), recruitment agencies, social networks. A host is one of them when its
-// ➤ registrable name is in the list ("jobs.linkedin.com", "es.indeed.com").
-export const BOARD_HOSTS = /(?:^|\.)(?:facebook|twitter|x|instagram|youtube|tiktok|xing|wikipedia|freelance-informatique|rollingadz|php-resource|qreer|studentjob|jobteaser|indeed|linkedin|glassdoor|monster|stepstone|infojobs|infoempleo|tecnoempleo|jobrapido|jooble|adzuna|talent|neuvoo|trovit|mitula|careerjet|jobted|jobijoba|kimeta|jobware|stellenanzeigen|jobvector|hays|adecco|randstad|manpower|michaelpage|robertwalters|reed|totaljobs|cv-library|jobsite|welcometothejungle|jobteaser|hellowork|apec|francetravail|pole-emploi|arbeitsagentur|arbeitnow|jobs\.ch|jobscout24|karriere\.at|willhaben|pracuj|olx|jobs\.cz|profesia|nofluffjobs|justjoin|jobs\.bg|ejobs|bestjobs|cvbankas|cv\.lv|cvkeskus|duunitori|oikotie|finn|nav\.no|jobindex|jobnet|arbetsformedlingen|platsbanken|ledigajobb|blocket|jobsora|jobsinnetwork|jobs\.de|jobcenter|jobbnorge|thelocal|eurojobs|eures|ziprecruiter|simplyhired|careerbuilder)\.[a-z.]+$/i;
+// ➤ (their terms), recruitment agencies, social networks. A host is one of them when the name
+// ➤ it is registered under is in the list, whatever the country's ending ("es.indeed.com",
+// ➤ "www.reed.co.uk"), or when that whole name is ("jobs.ch"), or when it is a board's own
+// ➤ host ("eures.europa.eu"); an employer's host that merely starts with such a word
+// ➤ ("talent.siemens.com") is not one.
+const BOARD_NAMES = new Set('facebook twitter x instagram youtube tiktok xing wikipedia freelance-informatique rollingadz php-resource qreer studentjob jobteaser indeed linkedin glassdoor monster stepstone infojobs infoempleo tecnoempleo jobrapido jooble adzuna talent neuvoo trovit mitula careerjet jobted jobijoba kimeta jobware stellenanzeigen jobvector hays adecco randstad manpower michaelpage robertwalters reed totaljobs cv-library jobsite welcometothejungle hellowork apec francetravail pole-emploi arbeitsagentur arbeitnow jobscout24 willhaben pracuj olx profesia nofluffjobs justjoin ejobs bestjobs cvbankas cvkeskus duunitori oikotie finn jobindex jobnet arbetsformedlingen ledigajobb blocket jobsora jobsinnetwork jobcenter jobbnorge thelocal eurojobs ziprecruiter simplyhired careerbuilder'.split(' '));
+const BOARD_DOMAINS = new Set(['jobs.ch', 'karriere.at', 'jobs.cz', 'jobs.bg', 'cv.lv', 'nav.no', 'jobs.de']);
+const BOARD_OWN_HOSTS = ['eures.europa.eu'];
+// ➤ The name a host is registered under: "es.indeed.com" is indeed.com, "www.reed.co.uk" reed.co.uk.
+export function registrable(host) {
+  const labels = String(host || '').toLowerCase().replace(/\.$/, '').split('.');
+  const n = labels.length >= 3 && /^(?:co|com|org|net|ac|gov|edu)$/.test(labels.at(-2)) && labels.at(-1).length === 2 ? 3 : 2;
+  return labels.slice(-n).join('.');
+}
+export function isBoardHost(host) {
+  const h = String(host || '').toLowerCase(), reg = registrable(h);
+  return BOARD_NAMES.has(reg.split('.')[0]) || BOARD_DOMAINS.has(reg) || BOARD_OWN_HOSTS.some(b => h === b || h.endsWith(`.${b}`));
+}
 
 // ➤ The words a careers link carries, in the languages of the sites read.
 const CAREER_WORDS = /(?:^|[^a-z])(?:careers?|jobs?|vacanc(?:y|ies)|talento?|[uú]nete|trabajar|emprego|recruit(?:ing|ment)?|work[-\s]with[-\s]us|join[-\s]us|work(?:ing)?[-\s](?:with|for|at)[-\s]us|empleo|trabaja[-\s]con[-\s]nosotros|ofertas[-\s]de[-\s]empleo|carri[eè]res?|emplois?|recrutement|nous[-\s]rejoindre|karriere|stellen(?:angebote|anzeigen)?|vacatures?|werken[-\s]bij|lediga[-\s]jobb|jobb|ledige[-\s]stillinger|stillinger|kariera|praca|oferty[-\s]pracy|lavora[-\s]con[-\s]noi|carriere|posizioni[-\s]aperte|carreiras?|recrutamento|voln[aá][-\s]m[ií]sta|kari[eé]ra|vakances)(?![a-z])/i;
@@ -213,7 +228,7 @@ export function careerLinks(html, pageUrl) {
   for (const m of String(html || '').matchAll(/<a\s[^>]*href\s*=\s*["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
     let u;
     try { u = new URL(text(m[1]), base); } catch { continue; }
-    if (!/^https?:$/.test(u.protocol) || BOARD_HOSTS.test(u.hostname)) continue;
+    if (!/^https?:$/.test(u.protocol) || isBoardHost(u.hostname)) continue;
     const label = text(m[2]).replace(/\s+/g, ' ').trim();
     const inHref = CAREER_WORDS.test(u.hostname + u.pathname), inText = CAREER_WORDS.test(label);
     if (!inHref && !inText) continue;
