@@ -74,6 +74,8 @@ const typical = { families: ['2144', '3151'], specialties: ['2144.1.14', '2144.1
   const code = encodeProfile({ roles: ['Ingénieur études — mécanique (H/F) et plus encore, vraiment long'] }, cats);
   const back = decodeProfile(code, cats);
   ok(back.roles[0].length > 0 && new TextEncoder().encode(back.roles[0]).length <= 24, 'a long free term is cut at 24 bytes without breaking');
+  const accented = decodeProfile(encodeProfile({ roles: ['responsable de producción'] }, cats), cats).roles[0];
+  ok(!accented.includes('�') && 'responsable de producción'.startsWith(accented), 'and cut between two characters, never inside one');
 }
 {
   const code = encodeProfile(typical, cats);

@@ -14,8 +14,9 @@ else {
   for (const s of Object.values(index.sources || {})) {
     const tr = document.createElement('tr');
     const name = document.createElement('td'), terms = document.createElement('td');
-    const a = document.createElement('a'); a.href = s.url; a.rel = 'noopener noreferrer'; a.target = '_blank'; a.textContent = s.name;
-    name.append(a);
+    // ➤ A source's link only when it is a web address; its name alone otherwise.
+    const href = (() => { try { const u = new URL(s.url); return /^https?:$/.test(u.protocol) ? u.href : ''; } catch { return ''; } })();
+    if (href) { const a = document.createElement('a'); a.href = href; a.rel = 'noopener noreferrer'; a.target = '_blank'; a.textContent = s.name; name.append(a); } else name.textContent = s.name;
     terms.textContent = `${s.licence}${s.credit ? ` · ${s.credit}` : ''} · ${t('extracted {day}', { day: String(s.extracted_at || '').slice(0, 10) })}`;
     tr.append(name, terms);
     rows.append(tr);

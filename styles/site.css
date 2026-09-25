@@ -136,7 +136,6 @@ body.has-results .hero-results { display: flex; }
   .offer { @apply flex flex-col gap-1 rounded-2xl border border-hair px-4 py-4 transition-colors hover:border-line hover:bg-ink/[.02] md:px-5; }
   .offer__title { @apply m-0 font-head text-xl leading-6 font-bold; }
   /* Title case is English: the Spanish site keeps each title as it is written. */
-  :lang(en) .offer__title, :lang(en) .loop__title { @apply capitalize; }
   .offer__title a { @apply text-ink no-underline hover:underline; }
   .offer__meta { @apply m-0 text-sm text-n-800; }
   .offer__tags { @apply m-0 mt-2 flex flex-wrap gap-1.5; }

@@ -37,7 +37,7 @@ The home and list page:
 - **Filters:** a panel that opens under the bar: the code band (the code and Copy), the CV row
   (Read my CV, Clear), then the groups in four columns (Country with today's counts,
   Occupations by group with a ticked family's specialties, Posted, Work mode, Level and a years
-  cap, Languages, Degrees and the highest one), then Pay at least, Title words and Exclude.
+  cap, Languages, Degrees), then Pay at least, Title words and Exclude.
 - **The loop** (front only), there for the look: today's offers from `data/today.json`, faint,
   sliding down one slot every two seconds (`app/lib/ticker.js`).
 - **Results:**
@@ -66,7 +66,7 @@ the `<!-- language menu -->` mark:
   `#filters-toggle-label`, `#radius-pill`, `#radius`, `#filters`, `#code-input`, `#copy-code`,
   `#copy-label`, `#cv-file`, `#cv-status`, `#filters-clear`, `#filters-form`, `#countries-pick`,
   `#remote`, `#families-pick`, `#levels-pick`, `#max-years`, `#languages-pick`,
-  `#degrees-pick`, `#highest`, `#min-pay`, `#pay-stated`, `#roles`, `#no-words`, `#stale`,
+  `#degrees-pick`, `#min-pay`, `#pay-stated`, `#roles`, `#no-words`, `#stale`,
   `#stale-text`, `#loop`, `#results`, `#results-status`,
   `#progress`, `#skeleton`, `#list`, `#debug`, `#hero-count`, `#hero-match`,
   `#hero-match-text`, `#hero-stats`, `#dark-mode`. On the Sources page: `#generated`,

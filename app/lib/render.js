@@ -22,7 +22,18 @@ function adzunaLabel(cc) {
 
 // ➤ The title in the page's language (English, or Spanish on the Spanish site) when the
 // ➤ original is in another.
-const titleOf = o => (lang === 'es' ? o.ts : o.te) || o.t;
+const titleOf = o => (lang === 'es' ? o.ts || o.t : titleCase(o.te || o.t));
+
+// ➤ Title case on the English site, the way it is set by hand: the first letter of each word
+// ➤ written all in small letters, but not of the short words inside ("of", "and", "de"); a word
+// ➤ that already has a capital or a figure ("iOS", "eBay", "SAP", "3D") is left as it is.
+const SMALL = new Set(['a', 'an', 'and', 'as', 'at', 'but', 'by', 'for', 'in', 'of', 'on', 'or', 'the', 'to', 'via', 'with', 'de', 'del', 'der', 'des', 'di', 'du', 'la', 'le', 'van', 'von', 'y', 'e']);
+export function titleCase(s) {
+  return String(s || '').split(/(\s+)/).map((w, i) => {
+    if (!/^[\p{Ll}'’-]+$/u.test(w) || (i > 0 && SMALL.has(w))) return w;
+    return w.split('-').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join('-');
+  }).join('');
+}
 
 // ➤ The town, or the country when the advert names no town ("Remote" for no fixed country). A
 // ➤ job run in many towns (`m`) names the town nearest the place searched, and how many more.
@@ -83,11 +94,15 @@ export function renderList(container, offers, ctx, pageSize = 40) {
   let shown = 0;
   const more = el('button', 'btn btn-secondary more');
   more.type = 'button';
+  // ➤ A page is forty offers; the line before the intermediaries' is not one of them.
+  const offersIn = list => list.filter(o => !o.divider).length;
   const show = () => {
-    for (const o of rows.slice(shown, shown + pageSize)) ul.append(o.divider ? el('li', 'offers__divider', t('Via intermediaries ({n})', { n: number(o.divider) })) : card(o, ctx));
-    shown = Math.min(rows.length, shown + pageSize);
+    let end = shown, n = 0;
+    while (end < rows.length && (n < pageSize || rows[end].divider)) { if (!rows[end].divider) n++; end++; }
+    for (const o of rows.slice(shown, end)) ul.append(o.divider ? el('li', 'offers__divider', t('Via intermediaries ({n})', { n: number(o.divider) })) : card(o, ctx));
+    shown = end;
     more.hidden = shown >= rows.length;
-    more.textContent = t('Show more ({n} left)', { n: number(rows.length - shown) });
+    more.textContent = t('Show more ({n} left)', { n: number(offersIn(rows.slice(shown))) });
   };
   more.addEventListener('click', show);
   container.append(more);
