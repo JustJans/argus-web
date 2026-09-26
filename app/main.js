@@ -8,14 +8,14 @@
 // ➤ list can be bookmarked and shared. A CV read on the device ticks the occupations, degrees
 // ➤ and languages it names. A search downloads only the parts of the pile it needs, judges
 // ➤ them here, hides adverts past their deadline and draws the list; with nothing asked, the
-// ➤ front shows today's offers in a loop. Nothing about the visitor leaves the browser.
+// ➤ front shows today's offers behind it. Nothing about the visitor leaves the browser.
 import { encodeProfile, decodeProfile, normaliseProfile, isEmptyProfile, catalogueIds, familyOfSpecialty } from './lib/codec.js';
 import { makeJudge, sortOffers } from './lib/gates.js';
 import { shardFiles, loadShards } from './lib/shards.js';
-import { renderList, renderEmpty, renderDebug, loopRow } from './lib/render.js';
+import { renderList, renderEmpty, renderDebug, backdropRow } from './lib/render.js';
 import { matchesWords, isExpired, newestFirst } from './lib/search.js';
 import { compileGazetteer, countryNames, readQuery, scopeCountries } from './lib/query.js';
-import { startLoop } from './lib/ticker.js';
+import { startBackdrop } from './lib/backdrop.js';
 import { spin, land } from './lib/roll.js';
 import { readCv } from './lib/cv.js';
 import * as engine from './lib/engine.js';
@@ -38,7 +38,7 @@ const countryOrder = [];        // ➤ the order countries were ticked in: the f
 let familyTerms = null;         // ➤ ESCO's job titles, fetched the first time a CV is read
 let gazetteer = null;           // ➤ the towns and countries the bar reads, fetched the first time something is searched
 let places = null;              // ➤ the same, once fetched
-let looping = false;            // ➤ the front's loop has started
+let backdropDrawn = false;      // ➤ the front's backdrop has been drawn
 
 // ➤ The state in the address: p = the code (every filter), q = the search words, r = the
 // ➤ distance around the towns typed, all = the whole pile was asked for with nothing set.
@@ -237,7 +237,7 @@ function draw() {
   if (debug && loaded.dropped) renderDebug($('#debug'), loaded.dropped); else $('#debug').hidden = true;
 }
 
-// ➤ Results shown or hidden: the front's count and loop make way for them.
+// ➤ Results shown or hidden: the front's count and backdrop make way for them.
 function showResults(on) {
   $('#results').hidden = !on;
   document.body.classList.toggle('has-results', on);
@@ -255,14 +255,14 @@ function loadGazetteer() {
   return gazetteer;
 }
 
-// ➤ The front's loop of today's offers (data/today.json), started once.
-async function startFrontLoop() {
-  if (looping) return;
-  looping = true;
+// ➤ The front's backdrop of today's offers (data/today.json), drawn once.
+async function drawBackdrop() {
+  if (backdropDrawn) return;
+  backdropDrawn = true;
   try {
     const { offers } = await getJson('data/today.json');
-    startLoop($('#loop'), offers || [], { row: o => loopRow(o, ctx) });
-  } catch { $('#loop').hidden = true; }
+    startBackdrop($('#backdrop'), offers || [], { row: o => backdropRow(o, ctx) });
+  } catch { $('#backdrop').hidden = true; }
 }
 
 // ➤ Reads the address, puts it into the controls, downloads what the search needs, judges,
@@ -279,7 +279,7 @@ async function run() {
   $('#radius').value = String(r);
   let profile = normaliseProfile({});
   if (code) {
-    try { profile = decodeProfile(code, ids); } catch { unreadable(); showResults(false); loaded = null; startFrontLoop(); return; }
+    try { profile = decodeProfile(code, ids); } catch { unreadable(); showResults(false); loaded = null; drawBackdrop(); return; }
   }
   // ➤ An older code with a town in it: the town goes into the bar and its distance into the
   // ➤ pill, where the search reads places now, and the code is written again without it.
@@ -290,7 +290,7 @@ async function run() {
     return run();
   }
   fillFilters(profile);
-  if (isEmptyProfile(profile) && !q && !all) { showResults(false); loaded = null; $('#radius-pill').hidden = true; startFrontLoop(); return; }
+  if (isEmptyProfile(profile) && !q && !all) { showResults(false); loaded = null; $('#radius-pill').hidden = true; drawBackdrop(); return; }
 
   const read = readQuery(q, q ? await loadGazetteer() : null);
   if (search !== searches) return;

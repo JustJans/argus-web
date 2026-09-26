@@ -68,20 +68,18 @@ export function card(o, ctx) {
   return li;
 }
 
-// ➤ A row of the front page's loop (lib/ticker.js): the advert's link, with its title, the
-// ➤ employer and the town, and the source, the pay and the work mode.
-export function loopRow(o, ctx) {
-  const a = el('a', 'loop__row');
-  const href = safeUrl(o.u);
-  if (href) { a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; }
-  const text = el('div', 'loop__text');
-  text.append(el('div', 'loop__title', titleOf(o)), el('div', 'loop__meta', [o.c, o.ci || ctx.countryName(o.cc)].filter(Boolean).join(' · ')));
-  const tags = el('div', 'loop__tags');
+// ➤ A row of the front page's backdrop (lib/backdrop.js): the title, the employer and the town,
+// ➤ and the source, the pay and the work mode. Only there for the look, so not a link.
+export function backdropRow(o, ctx) {
+  const row = el('div', 'backdrop__row');
+  const text = el('div', 'backdrop__text');
+  text.append(el('div', 'backdrop__title', titleOf(o)), el('div', 'backdrop__meta', [o.c, o.ci || ctx.countryName(o.cc)].filter(Boolean).join(' · ')));
+  const tags = el('div', 'backdrop__tags');
   tags.append(el('span', 'tag tag-outline', t('via {source}', { source: ctx.sourceName(o.s) })));
   if (o.p) tags.append(el('span', 'tag tag-accent', payText(o.p)));
   if (o.w) tags.append(el('span', 'tag tag-neutral', workModeLabel(o.w)));
-  a.append(text, tags);
-  return a;
+  row.append(text, tags);
+  return row;
 }
 
 // ➤ The intermediaries' adverts come after the employers' own, under one line that says so.

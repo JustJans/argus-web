@@ -1,12 +1,13 @@
-// ➤ The offers the front page's loop shows, written to data/today.json: the newest from the
-// ➤ employers' own boards and sites (no intermediaries), one country after another so the loop
-// ➤ shows the pile's spread, one offer per company, and only offers whose title and
-// ➤ "company · town" fit on one line of a phone in both languages, since nothing is cut short.
+// ➤ The offers behind the front page (app/lib/backdrop.js), written to data/today.json: the
+// ➤ newest from the employers' own boards and sites (no intermediaries), one country after
+// ➤ another so the backdrop shows the pile's spread, one offer per company, and only offers
+// ➤ whose title and "company · town" keep to one line in both languages, so every row keeps
+// ➤ its height and nothing is cut short.
 const TITLE = 40;
 const META = 40;
 
-// ➤ records: the pile; isVia(source): the source is an intermediary.
-export function loopOffers(records, isVia = () => false, n = 20) {
+// ➤ records: the pile; isVia(source): the source is an intermediary; n: three columns of 80.
+export function backdropOffers(records, isVia = () => false, n = 240) {
   const fits = r => [r.te || r.t, r.ts || r.t].every(s => s && s.length <= TITLE) && `${r.c} · ${r.ci}`.length <= META;
   const byCountry = new Map();
   for (const r of [...records].sort((a, b) => String(b.d || '').localeCompare(String(a.d || '')))) {
