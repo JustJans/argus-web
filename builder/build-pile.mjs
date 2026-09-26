@@ -17,7 +17,7 @@ import { dedupe } from './dedupe.mjs';
 import { buildShards, writePile } from './shard.mjs';
 import { compileTowns, locate, townOf, campaignPlaces } from './towns.mjs';
 import { ambiguousNames } from './place-names.mjs';
-import { loopOffers } from './loop-offers.mjs';
+import { backdropOffers } from './backdrop-offers.mjs';
 import { loadCache, saveCache, translateTitles } from './translate.mjs';
 import { eachSource } from './store.mjs';
 import { allSources, licenceFor, sourceId } from './sources.mjs';
@@ -180,10 +180,10 @@ mkdirSync(OUT, { recursive: true });
 // ➤ their own; loaded when a visitor starts to search.
 const ambiguous = ambiguousNames(onMap.list, kept);
 stage('place names');
-// ➤ And the offers the front page's loop shows.
+// ➤ And the offers behind the front page.
 const extras = {
   'places.json': JSON.stringify({ v: 2, places: onMap.list, ambiguous }),
-  'today.json': JSON.stringify({ v: 1, offers: loopOffers(kept, s => viaSources.has(s)) }),
+  'today.json': JSON.stringify({ v: 1, offers: backdropOffers(kept, s => viaSources.has(s)) }),
 };
 if (EXPLAIN) extras['explain.txt'] = dropped.map(([why, raw]) => `[${why}] ${raw.title} | ${raw.company} | ${raw.location} (${raw.source})`).join('\n') + '\n';
 writePile(OUT, files, index, extras);

@@ -30,7 +30,7 @@ import { parseRobots, allowed, parseSitemap, looksLikeJob, pathShape, jobLinks, 
 import { toRaw as careersRaw } from '../builder/adapters/careers.mjs';
 import { deadline } from '../builder/http.mjs';
 import { brandName } from '../builder/lib/names.mjs';
-import { loopOffers } from '../builder/loop-offers.mjs';
+import { backdropOffers } from '../builder/backdrop-offers.mjs';
 import { bothGenders, spanishName, buildOccupations } from '../builder/tools/occupations.mjs';
 
 const { ok, eq, done } = harness('builder');
@@ -492,8 +492,8 @@ eq([brandName('Washington and Lee University', 'Washington and Lee University', 
 eq(brandName('GERMANY', '7090 Gamer Lasertechnik', 'trumpf.wd3/germany'), 'Gamer Lasertechnik', 'a country is not an employer: the legal name takes its place');
 eq([brandName('Leidos', 'LEIDOS INC', 'leidos.wd5/x'), brandName('Kla', 'KLA Corporation', 'kla.wd1/x')], ['Leidos', 'KLA'], 'shouting comes down, acronyms stay');
 
-// ➤ The front page's loop: the newest employers' own offers, one country after another, one per
-// ➤ company, and only those short enough to show whole.
+// ➤ The front page's backdrop: the newest employers' own offers, one country after another, one
+// ➤ per company, and only those short enough to show whole.
 {
   const offer = (id, cc, c, d, more = {}) => ({ id, t: 'Process Engineer', c, ci: 'Town', cc, u: `https://x.test/${id}`, s: 'greenhouse', d, ...more });
   const pile = [
@@ -502,9 +502,9 @@ eq([brandName('Leidos', 'LEIDOS INC', 'leidos.wd5/x'), brandName('Kla', 'KLA Cor
     offer('x1', 'fr', 'Agency', '2026-09-25', { s: 'jooble' }), offer('y1', 'nl', 'Long', '2026-09-25', { t: 'A title far too long to show whole on the narrowest phone screen' }),
     offer('z1', 'xx', 'Remote Co', '2026-09-25'), offer('w1', 'it', 'Nameless', '2026-09-25', { ci: '' }),
   ];
-  const loop = loopOffers(pile, s => s === 'jooble', 5);
-  eq(loop.map(o => o.id), ['a1', 'b1', 'c1', 'a2'], 'newest first, a country at a time, one offer per company; no intermediary, no long title, no remote or townless offer');
-  eq(Object.keys(loop[0]).sort(), ['c', 'cc', 'ci', 'id', 'p', 's', 't', 'te', 'ts', 'u', 'w'], 'each with only what a row shows');
+  const backdrop = backdropOffers(pile, s => s === 'jooble', 5);
+  eq(backdrop.map(o => o.id), ['a1', 'b1', 'c1', 'a2'], 'newest first, a country at a time, one offer per company; no intermediary, no long title, no remote or townless offer');
+  eq(Object.keys(backdrop[0]).sort(), ['c', 'cc', 'ci', 'id', 'p', 's', 't', 'te', 'ts', 'u', 'w'], 'each with only what a row shows');
 }
 
 done();

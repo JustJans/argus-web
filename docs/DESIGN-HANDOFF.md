@@ -1,8 +1,8 @@
 # Design handoff
 
 The site follows the final design handoff "Argus Web, final design (search-first, Tailwind
-CSS)" (September 2026): one big search bar, the filters in a panel under it, a slow loop of
-today's offers on the front, steel blue on a light technical ground, rounded controls, cards
+CSS)" (September 2026): one big search bar, the filters in a panel under it, today's offers
+drifting on a tilted plane behind the front, steel blue on a light technical ground, rounded controls, cards
 and panels, hairline borders, and a dark theme. The pages carry Tailwind utility classes.
 `styles/site.css` holds:
 - the tokens (`@theme`) and the dark theme (`.dark` redefines the same tokens);
@@ -40,8 +40,9 @@ The home and list page:
   (Read my CV, Clear), then the groups in four columns (Country with today's counts,
   Occupations by group with a ticked family's specialties, Posted, Work mode, Level and a years
   cap, Languages, Degrees), then Pay at least, Title words and Exclude.
-- **The loop** (front only), there for the look: today's offers from `data/today.json`, faint,
-  sliding down one slot every two seconds (`app/lib/ticker.js`).
+- **The backdrop** (front only), there for the look: today's offers from `data/today.json` in
+  three columns on a tilted plane behind the page, faint and out of focus, drifting towards the
+  visitor (`app/lib/backdrop.js`, docs/research/front-backdrop.md).
 - **Results:**
   - the status line: "14 of 3,330 offers · Spain 9 · Remote 5", with the per-country counts
     of the offers that match;
@@ -49,7 +50,7 @@ The home and list page:
   - the intermediaries' divider, and "Show more".
 
 On phones (up to 760px) the bar is 56px with a round search button, the panel stacks its parts
-with rows 44px high, the loop shows three rows, and the nav drops Privacy.
+with rows 44px high, the backdrop's columns narrow, and the nav drops Privacy.
 
 **Light and dark.** The page follows the system: the head sets `.dark` before the first paint,
 and `app/lib/theme.js` keeps the switch in step and listens for changes. The switch overrides the
@@ -69,7 +70,7 @@ the `<!-- language menu -->` mark:
   `#copy-label`, `#cv-file`, `#cv-status`, `#filters-clear`, `#filters-form`, `#countries-pick`,
   `#remote`, `#families-pick`, `#levels-pick`, `#max-years`, `#languages-pick`,
   `#degrees-pick`, `#min-pay`, `#pay-stated`, `#roles`, `#no-words`, `#stale`,
-  `#stale-text`, `#loop`, `#results`, `#results-status`,
+  `#stale-text`, `#backdrop`, `#results`, `#results-status`,
   `#progress`, `#skeleton`, `#list`, `#debug`, `#hero-count`, `#hero-match`,
   `#hero-match-text`, `#hero-stats`, `#dark-mode`. On the Sources page: `#generated`,
   `#source-rows`.
@@ -79,12 +80,13 @@ the `<!-- language menu -->` mark:
   - `#cv-status[data-state]`;
   - `body.has-results`, `#filters-toggle[aria-expanded]`, `#search.is-unreadable`, and
     `.btn.is-done` on Copy after copying;
-  - the classes `hero-front`, `hero-results` and `loop`, which the states above read.
+  - the classes `hero-front`, `hero-results` and `backdrop`, which the states above read.
 - **Classes the scripts add**: `check-row` (with a `count` span), `checks`, `sub`,
   `occupation-group`, `offers`, `offer`, `offer__title`, `offer__meta`, `offer__tags`, `tag`,
   `tag-outline` (the source), `tag-accent` (the pay), `tag-neutral`, `offers__divider`, `more`,
-  `btn`, `btn-secondary`, `empty`, `empty__n`, `debug`, `num`, for the loop `loop__rows`,
-  `loop__row`, `loop__text`, `loop__title`, `loop__meta`, `loop__tags`, and for a loading count
+  `btn`, `btn-secondary`, `empty`, `empty__n`, `debug`, `num`, for the backdrop
+  `backdrop__stage`, `backdrop__plane`, `backdrop__column`, `backdrop__track`, `backdrop__row`,
+  `backdrop__text`, `backdrop__title`, `backdrop__meta`, `backdrop__tags`, and for a loading count
   `roll__col`, `roll__strip`, `roll__digit`, `roll__mark`.
 - **Ticks** are real checkboxes and radios inside a `label.check-row`, the input on the left.
 - **No third-party fonts, scripts or images** anywhere (the privacy promise). pdf.js and the
@@ -93,18 +95,18 @@ the `<!-- language menu -->` mark:
 - **No cookies, no storage.** The visitor's state lives in the URL fragment only: `p` the code,
   `q` the search words, `r` the radius.
 - Text is inserted with `textContent`; markup in data is never rendered. Nothing is cut short:
-  the loop only takes offers whose title fits whole.
+  the backdrop only takes offers whose title fits whole.
 
 ## States
 
-- Home with nothing chosen (the loop); results with filters; zero results (the empty state lists
+- Home with nothing chosen (the backdrop); results with filters; zero results (the empty state lists
   how many offers fell at each stage); an unreadable code (a line under the bar, and the bar's
   border darker); downloading (a rounded progress bar and a skeleton card); the stale-pile
   notice.
 - The CV line: idle, reading (spinner), ticked (accent), nothing found, file could not be read.
 - The code line: empty (placeholder), showing the current code, Copied (accent border).
-- The loop: always moving, even under the pointer; resting in a hidden tab, still under reduced
-  motion. It is decoration: hidden from screen readers and out of the keyboard's way.
+- The backdrop: always drifting; resting in a hidden tab, still under reduced motion. It is
+  decoration: nothing in it is a link, and it is hidden from screen readers and the pointer.
 
 ## Preview locally
 
