@@ -29,7 +29,9 @@ them installed; system fonts otherwise. Nothing comes from a third party (the pr
 The home and list page:
 - **Nav:** the brand, the switch that starts and stops the backdrop (front only, gone with
   results), Privacy, Sources, the language menu, and the theme button (a moon in the light, a
-  sun in the dark; Lucide shapes).
+  sun in the dark; Lucide shapes). The language pill and the theme button give their padding back
+  with negative margins, so every item stands one gap from the next and the last one ends at
+  the page's edge, as the brand starts at the other.
 - **Hero:** the count of offers listed today, large (Archivo), then "Offers Listed Today". Once
   there are results (`body.has-results`) it becomes the count that matches, with "offers match
   your filters", and "out of N listed today" under it. While either count is loading its figures
