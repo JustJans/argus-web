@@ -57,7 +57,7 @@ The home and list page:
 
 On phones (up to 760px) the bar is 56px with a round search button, the panel stacks its parts
 with rows 44px high, the backdrop's columns narrow, and the nav drops Privacy and the language
-menu's arrow and tightens its gaps, so it keeps to one line from 360px up.
+menu's arrow, so it keeps to one line, with the desk's 14px gaps, from 360px up.
 
 **Light and dark.** The page follows the system: the head sets `.dark` before the first paint,
 and `app/lib/theme.js` keeps the theme button in step (`aria-pressed`) and listens for changes.
