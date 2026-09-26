@@ -20,6 +20,8 @@ export function languageMenu(current, otherHref) {
   const item = lang => lang === current
     ? `<span aria-current="true" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-ink">${FLAGS[lang]}${NAMES[lang]}</span>`
     : `<a class="nav__lang flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-n-800 no-underline hover:bg-ink/[.06] hover:text-ink" href="${otherHref}" hreflang="${lang}" lang="${lang}">${FLAGS[lang]}${NAMES[lang]}</a>`;
-  return `<details class="relative"><summary class="flex min-h-8 cursor-pointer list-none items-center gap-1.5 rounded-full border border-transparent px-2.5 text-sm font-semibold tracking-[.04em] text-ink hover:border-line" aria-label="${current === 'es' ? 'Idioma' : 'Language'}">${FLAGS[current]}${current.toUpperCase()}${CHEVRON}</summary>`
+  // ➤ The pill's padding and border give way (-11px each side), so its flag and code sit one
+  // ➤ nav gap from their neighbours, like the plain links.
+  return `<details class="relative -mx-[11px]"><summary class="flex min-h-8 cursor-pointer list-none items-center gap-1.5 rounded-full border border-transparent px-2.5 text-sm font-semibold tracking-[.04em] text-ink hover:border-line" aria-label="${current === 'es' ? 'Idioma' : 'Language'}">${FLAGS[current]}${current.toUpperCase()}${CHEVRON}</summary>`
     + `<div class="absolute right-0 top-full z-10 mt-1 flex min-w-[140px] flex-col rounded-xl border border-line bg-ground p-1 shadow-[0_4px_16px_rgba(29,31,32,.08)]">${item('en')}${item('es')}</div></details>`;
 }
