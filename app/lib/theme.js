@@ -1,13 +1,14 @@
-// ➤ Light or dark: the system's choice when the page opens and whenever it changes; the switch
-// ➤ in the nav overrides it for this page view only. Nothing is stored, so the next visit
-// ➤ follows the system again. The page's head sets the class before the first paint; this
-// ➤ keeps the switch in step and listens.
+// ➤ Light or dark: the system's choice when the page opens and whenever it changes; the button
+// ➤ at the end of the nav overrides it for this page view only. Nothing is stored, so the next
+// ➤ visit follows the system again. The page's head sets the class before the first paint; the
+// ➤ button shows where it leads (a moon in the light, a sun in the dark: styles/site.css) and
+// ➤ tells screen readers whether the dark theme is on.
 const media = matchMedia('(prefers-color-scheme: dark)');
-const toggle = document.getElementById('dark-mode');
+const button = document.getElementById('theme');
 const set = dark => {
   document.documentElement.classList.toggle('dark', dark);
-  if (toggle) toggle.checked = dark;
+  button?.setAttribute('aria-pressed', String(dark));
 };
 set(media.matches);
 media.addEventListener('change', e => set(e.matches));
-toggle?.addEventListener('change', () => set(toggle.checked));
+button?.addEventListener('click', () => set(!document.documentElement.classList.contains('dark')));

@@ -15,7 +15,7 @@ import { shardFiles, loadShards } from './lib/shards.js';
 import { renderList, renderEmpty, renderDebug, backdropRow } from './lib/render.js';
 import { matchesWords, isExpired, newestFirst } from './lib/search.js';
 import { compileGazetteer, countryNames, readQuery, scopeCountries } from './lib/query.js';
-import { startBackdrop } from './lib/backdrop.js';
+import { startBackdrop, wireMotion } from './lib/backdrop.js';
 import { spin, land } from './lib/roll.js';
 import { readCv } from './lib/cv.js';
 import * as engine from './lib/engine.js';
@@ -39,6 +39,7 @@ let familyTerms = null;         // ➤ ESCO's job titles, fetched the first time
 let gazetteer = null;           // ➤ the towns and countries the bar reads, fetched the first time something is searched
 let places = null;              // ➤ the same, once fetched
 let backdropDrawn = false;      // ➤ the front's backdrop has been drawn
+let pending = false;            // ➤ the filters panel holds choices not searched yet
 
 // ➤ The state in the address: p = the code (every filter), q = the search words, r = the
 // ➤ distance around the towns typed, all = the whole pile was asked for with nothing set.
@@ -184,6 +185,24 @@ function fillFilters(p) {
   for (const group of $$('#filters-form .filter-group')) group.classList.toggle('is-active', active.has(group.dataset.group));
   text('#filters-toggle-label', active.size ? `${t('Filters')} · ${active.size}` : t('Filters'));
 }
+// ➤ A choice made in the filters panel shows at once (the ticks, a family's specialties, the
+// ➤ marks, the count on the Filters button and the code they pack) but is searched only when
+// ➤ the panel closes or Search is pressed, so the front stays as it is while the visitor
+// ➤ chooses (docs/research/front-controls.md).
+function choose(profile = profileFromForm()) {
+  fillFilters(profile);
+  $('#code-input').value = isEmptyProfile(profile) ? '' : encodeProfile(profile, ids);
+  pending = true;
+}
+function searchChoices() {
+  if (!pending) return;
+  pending = false;
+  search(stateFromForm());
+}
+function openPanel(open) {
+  $('#filters').hidden = !open;
+  $('#filters-toggle').setAttribute('aria-expanded', String(open));
+}
 function activeGroups(p) {
   const on = { country: p.countries.length || p.remote, occupations: p.families.length, posted: p.posted, mode: p.modes.length, pay: p.minPay || p.payStated, level: p.level !== 'any' || p.maxYears, languages: p.languages.length, degrees: p.degrees.length, roles: p.roles.length, exclude: p.noWords.length };
   return new Set(Object.keys(on).filter(k => on[k]));
@@ -262,7 +281,7 @@ async function drawBackdrop() {
   try {
     const { offers } = await getJson('data/today.json');
     startBackdrop($('#backdrop'), offers || [], { row: o => backdropRow(o, ctx) });
-  } catch { $('#backdrop').hidden = true; }
+  } catch { $('#backdrop').hidden = true; $('#motion').closest('label').hidden = true; }
 }
 
 // ➤ Reads the address, puts it into the controls, downloads what the search needs, judges,
@@ -290,6 +309,7 @@ async function run() {
     return run();
   }
   fillFilters(profile);
+  pending = false;
   if (isEmptyProfile(profile) && !q && !all) { showResults(false); loaded = null; $('#radius-pill').hidden = true; drawBackdrop(); return; }
 
   const read = readQuery(q, q ? await loadGazetteer() : null);
@@ -351,33 +371,40 @@ async function readCvFile(file) {
     const merged = normaliseProfile({ ...p, families: [...p.families, ...s.families], degrees: [...p.degrees, ...s.degrees], languages: [...p.languages, ...s.languages] });
     const found = [s.families.length ? familiesSummary(s.families) : '', s.degrees.length ? t('degrees: {list}', { list: s.degrees.map(degreeName).join(', ') }) : '', s.languages.length ? t('languages: {list}', { list: s.languages.map(languageName).join(', ') }) : ''].filter(Boolean);
     if (found.length) cvStatus('ticked', t('Ticked from your CV: {found}.', { found: found.join(' · ') })); else cvStatus('none', t('Nothing of ours found in that CV; tick the filters by hand.'));
-    writeHash(stateFromForm(merged));
+    choose(merged);
   } catch (e) {
     cvStatus('error', t('Could not read that file ({error}).', { error: e.message }));
   }
 }
 
 function wireControls() {
-  // ➤ The Filters button opens and closes the panel under the bar.
-  const toggle = $('#filters-toggle');
-  toggle.addEventListener('click', () => {
+  wireMotion($('#motion'), $('#backdrop'));
+  // ➤ The Filters button opens and closes the panel under the bar; closing it searches what
+  // ➤ was chosen in it.
+  $('#filters-toggle').addEventListener('click', () => {
     const open = $('#filters').hidden;
-    $('#filters').hidden = !open;
-    toggle.setAttribute('aria-expanded', String(open));
+    openPanel(open);
+    if (!open) searchChoices();
   });
   // ➤ Any change in the panel is the new profile; ticking a country puts it last in the order.
   $('#filters-form').addEventListener('change', e => {
-    if (e.target.name === 'c') { const k = countryOrder.indexOf(e.target.value); if (e.target.checked && k < 0) countryOrder.push(e.target.value); else if (!e.target.checked && k >= 0) countryOrder.splice(k, 1); }
-    writeHash(stateFromForm());
+    const box = e.target, focused = document.activeElement === box;
+    if (box.name === 'c') { const k = countryOrder.indexOf(box.value); if (box.checked && k < 0) countryOrder.push(box.value); else if (!box.checked && k >= 0) countryOrder.splice(k, 1); }
+    choose();
+    // ➤ Drawing the lists again replaces the box just ticked: the keyboard stays on its twin.
+    if (focused && !box.isConnected) $$(`#filters-form input[name="${box.name}"]`).find(i => i.value === box.value)?.focus();
   });
   $('#radius').addEventListener('change', () => search(stateFromForm()));
-  $('#filters-clear').addEventListener('click', () => { countryOrder.length = 0; const { q, r } = stateFromForm(); writeHash({ q, r }); });
+  $('#filters-clear').addEventListener('click', () => { countryOrder.length = 0; choose(normaliseProfile({})); });
   // ➤ The bar: a code pasted whole loads the filters it packs; anything else is searched, and
   // ➤ with nothing at all, the newest of the pile. What looks like a code but does not read is
   // ➤ said under the bar, and searched as words all the same.
   $('#search').addEventListener('submit', e => {
     e.preventDefault();
     clearNote();
+    // ➤ Search takes the panel's choices too, and closes it so the results show.
+    openPanel(false);
+    pending = false;
     const typed = $('#q').value.trim();
     if (/^[A-Za-z0-9_-]{8,}$/.test(typed)) {
       try { decodeProfile(typed, ids); $('#q').value = ''; search({ ...stateFromForm(), p: typed, q: '' }); return; } catch { if (/\d/.test(typed) && /[A-Z]/.test(typed)) unreadable(); }
@@ -386,23 +413,41 @@ function wireControls() {
     if (!state.p && !state.q) state.all = '1';
     search(state);
   });
-  // ➤ The code in the panel: pasted or typed over, it loads when it reads; emptied, the filters go.
+  // ➤ The code in the panel: pasted or typed over, it ticks the filters it packs when it reads;
+  // ➤ emptied, the filters go. An older code with a town in it is searched at once, which
+  // ➤ moves the town into the bar.
   $('#code-input').addEventListener('change', () => {
     clearNote();
     const code = $('#code-input').value.trim();
-    const { q, r } = stateFromForm();
-    if (!code) { writeHash({ q, r }); return; }
-    try { decodeProfile(code, ids); search({ p: code, q, r }); } catch { unreadable(); }
+    if (!code) { choose(normaliseProfile({})); return; }
+    try {
+      const profile = decodeProfile(code, ids);
+      if (profile.place) { const { q, r } = stateFromForm(); openPanel(false); search({ p: code, q, r }); } else choose(profile);
+    } catch { unreadable(); }
   });
-  const copy = $('#copy-code');
+  // ➤ Copy: the icon turns into a tick and a label beside it says the code was copied, read out
+  // ➤ by screen readers too; when the browser will not copy, the code is selected instead.
+  const copy = $('#copy-code'), note = $('#copy-note');
+  let noteTimer;
+  const say = s => {
+    note.textContent = s;
+    note.classList.add('is-shown');
+    clearTimeout(noteTimer);
+    noteTimer = setTimeout(() => {
+      note.classList.remove('is-shown');
+      copy.classList.remove('is-done');
+      setTimeout(() => { if (!note.classList.contains('is-shown')) note.textContent = ''; }, 250);
+    }, 2000);
+  };
   copy.addEventListener('click', async () => {
     const code = $('#code-input').value.trim();
     if (!code) return;
-    try { await navigator.clipboard.writeText(code); text('#copy-label', t('Copied')); copy.classList.add('is-done'); setTimeout(() => { text('#copy-label', t('Copy')); copy.classList.remove('is-done'); }, 1500); } catch { $('#code-input').select(); }
+    try { await navigator.clipboard.writeText(code); copy.classList.add('is-done'); say(t('Copied to the clipboard')); } catch { $('#code-input').select(); say(t('Could not copy; the code is selected')); }
   });
   $('#cv-file').addEventListener('change', e => { const file = e.target.files[0]; if (file) readCvFile(file); e.target.value = ''; });
-  // ➤ Typing redraws at once; the address follows once the typing pauses.
-  $('#q').addEventListener('input', () => { clearNote(); writeHash(stateFromForm(), true); draw(); });
+  // ➤ Typing redraws at once; the address follows, with the filters last searched (not the
+  // ➤ panel's choices, which wait for Search or for the panel to close).
+  $('#q').addEventListener('input', () => { clearNote(); writeHash({ ...stateFromForm(), p: readHash().code }, true); draw(); });
   window.addEventListener('hashchange', () => run().catch(showError));
   // ➤ The other language keeps the visitor's search: the link takes the address's # along.
   const other = $('.nav__lang');

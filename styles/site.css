@@ -80,9 +80,12 @@
 }
 
 /* The states the scripts set on the page. Outside Tailwind's layers, so they win over the
-   utilities the markup carries: with results the front's count and backdrop make way. */
+   utilities the markup carries: with results the front's count and backdrop make way, and
+   the switch that moves the backdrop with them. */
 .hero-results { display: none; }
-body.has-results .hero-front, body.has-results .backdrop { display: none; }
+body.has-results .hero-front, body.has-results .backdrop, body.has-results .motion-switch { display: none; }
+/* The theme button shows where it leads: a moon in the light, a sun in the dark. */
+html:not(.dark) .theme-sun, .dark .theme-moon { display: none; }
 body.has-results .hero-results { display: flex; }
 #filters-toggle[aria-expanded="true"] { background: var(--color-surface); }
 #filters-toggle[aria-expanded="true"] .chev-down { transform: rotate(180deg); }
@@ -109,6 +112,12 @@ body.has-results .hero-results { display: flex; }
   .btn { @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-line bg-transparent text-sm font-medium text-ink; }
   .btn-secondary { @apply hover:bg-ink/[.06] active:bg-ink/[.12]; }
   .btn.is-done { @apply border-accent text-accent-700; }
+  /* Copy, an icon that turns into a tick once the code is copied, and the label beside it that
+     says so for two seconds. */
+  #copy-code .copied-icon, #copy-code.is-done .copy-icon { display: none; }
+  #copy-code.is-done .copied-icon { display: block; }
+  .copy-note { @apply pointer-events-none absolute top-1/2 right-full mr-2 -translate-y-1/2 rounded-lg bg-ink px-2.5 py-1 text-xs font-medium whitespace-nowrap text-ground opacity-0 transition-opacity duration-200; }
+  .copy-note.is-shown { @apply opacity-100; }
   .more { @apply mx-auto mt-6 flex min-h-10 px-6; }
 
   /* The CV line in the panel. */
@@ -167,6 +176,8 @@ body.has-results .hero-results { display: flex; }
   /* Each column drifts towards the visitor at 20px a second, a whole turn in 300s, the three a
      third of a turn apart. */
   .backdrop__track { animation: backdrop-drift 300s linear infinite; will-change: transform; }
+  /* The switch in the nav stops it where it is (lib/backdrop.js). */
+  .backdrop.is-still .backdrop__track { animation-play-state: paused; }
   .backdrop__column:nth-child(2) .backdrop__track { animation-delay: -100s; }
   .backdrop__column:nth-child(3) .backdrop__track { animation-delay: -200s; }
   .backdrop__row { display: flex; align-items: center; gap: 24px; height: 76px; padding: 0 16px; }
@@ -193,4 +204,4 @@ body.has-results .hero-results { display: flex; }
 @keyframes roll-turn { to { transform: translateY(-12em); } }
 @media (prefers-reduced-motion: reduce) { .roll__strip { animation: none !important; transition: none !important; } }
 @keyframes backdrop-drift { from { transform: translateY(-50%); } to { transform: translateY(0); } }
-@media (prefers-reduced-motion: reduce) { .backdrop__track { animation: none; transform: translateY(-25%); } }
+@media (prefers-reduced-motion: reduce) { .backdrop:not(.is-moving) .backdrop__track { animation-play-state: paused; } }

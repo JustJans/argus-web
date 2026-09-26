@@ -9,7 +9,8 @@ const FLAGS = {
   es: `<svg width="16" height="11" viewBox="0 0 16 11" class="${FLAG_CLASS}" aria-hidden="true"><rect width="16" height="11" fill="#c60b1e"/><rect y="2.75" width="16" height="5.5" fill="#ffc400"/></svg>`,
 };
 const NAMES = { en: 'English', es: 'Español' };
-const CHEVRON = '<svg class="chev chev-down size-3 text-n-600 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+// ➤ The arrow shows from the desk layout up: on a phone the nav needs its room.
+const CHEVRON = '<svg class="chev chev-down hidden size-3 text-n-600 transition-transform md:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
 export const MARK = '<!-- language menu -->';
 
 // ➤ current: 'en' or 'es'; otherHref: the same page in the other language.

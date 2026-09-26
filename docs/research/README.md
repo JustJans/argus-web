@@ -20,3 +20,4 @@ do; each note says what was found, with its sources, and what the site does beca
 | [translation.md](translation.md) | Which translator gives every title its English and Spanish |
 | [count-animation.md](count-animation.md) | The count while it loads |
 | [front-backdrop.md](front-backdrop.md) | Today's offers as the front page's background, in perspective |
+| [front-controls.md](front-controls.md) | Pausing the backdrop, light and dark, applying the filters, copying the code |
