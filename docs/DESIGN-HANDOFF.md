@@ -27,7 +27,9 @@ them installed; system fonts otherwise. Nothing comes from a third party (the pr
 | Privacy, Sources | `app/legal/*.html` | Title, subtitle, rule. Sources: today's sources in a rounded table from the pile's index. Privacy: three statements and the fine print. |
 
 The home and list page:
-- **Nav:** the brand, the light/dark switch, Privacy, Sources and the language menu.
+- **Nav:** the brand, the switch that starts and stops the backdrop (front only, gone with
+  results), Privacy, Sources, the language menu, and the theme button (a moon in the light, a
+  sun in the dark; Lucide shapes).
 - **Hero:** the count of offers listed today, large (Archivo), then "Offers Listed Today". Once
   there are results (`body.has-results`) it becomes the count that matches, with "offers match
   your filters", and "out of N listed today" under it. While either count is loading its figures
@@ -36,7 +38,9 @@ The home and list page:
 - **The search bar:** one field for titles, companies, towns, countries and pasted codes
   (`app/lib/query.js` reads the towns and countries: docs/research/single-search.md). Under it,
   the Filters button and, once the bar has read a town, the radius pill.
-- **Filters:** a panel that opens under the bar: the code band (the code and Copy), the CV row
+- **Filters:** a panel that opens under the bar, searched when it closes or on Search, not at
+  each tick: the code band (the code and a copy icon that turns into a tick, with "Copied to
+  the clipboard" beside it for two seconds), the CV row
   (Read my CV, Clear), then the groups in four columns (Country with today's counts,
   Occupations by group with a ticked family's specialties, Posted, Work mode, Level and a years
   cap, Languages, Degrees), then Pay at least, Title words and Exclude.
@@ -50,11 +54,12 @@ The home and list page:
   - the intermediaries' divider, and "Show more".
 
 On phones (up to 760px) the bar is 56px with a round search button, the panel stacks its parts
-with rows 44px high, the backdrop's columns narrow, and the nav drops Privacy.
+with rows 44px high, the backdrop's columns narrow, and the nav drops Privacy and the language
+menu's arrow and tightens its gaps, so it keeps to one line from 360px up.
 
 **Light and dark.** The page follows the system: the head sets `.dark` before the first paint,
-and `app/lib/theme.js` keeps the switch in step and listens for changes. The switch overrides the
-mode for the current page view only. Nothing is stored.
+and `app/lib/theme.js` keeps the theme button in step (`aria-pressed`) and listens for changes.
+The button overrides the mode for the current page view only. Nothing is stored.
 
 **The language menu** (`builder/language-menu.mjs`) is written into every page by the build, at
 the `<!-- language menu -->` mark:
@@ -67,19 +72,20 @@ the `<!-- language menu -->` mark:
 
 - **Ids** used by the scripts: `#search`, `#q`, `#bar-note`, `#filters-toggle`,
   `#filters-toggle-label`, `#radius-pill`, `#radius`, `#filters`, `#code-input`, `#copy-code`,
-  `#copy-label`, `#cv-file`, `#cv-status`, `#filters-clear`, `#filters-form`, `#countries-pick`,
+  `#copy-note`, `#cv-file`, `#cv-status`, `#filters-clear`, `#filters-form`, `#countries-pick`,
   `#remote`, `#families-pick`, `#levels-pick`, `#max-years`, `#languages-pick`,
   `#degrees-pick`, `#min-pay`, `#pay-stated`, `#roles`, `#no-words`, `#stale`,
   `#stale-text`, `#backdrop`, `#results`, `#results-status`,
   `#progress`, `#skeleton`, `#list`, `#debug`, `#hero-count`, `#hero-match`,
-  `#hero-match-text`, `#hero-stats`, `#dark-mode`. On the Sources page: `#generated`,
+  `#hero-match-text`, `#hero-stats`, `#motion`, `#theme`. On the Sources page: `#generated`,
   `#source-rows`.
 - **Data hooks**:
   - `.filter-group[data-group]` for each group of the panel, and `.is-active` on one with
     something set;
   - `#cv-status[data-state]`;
   - `body.has-results`, `#filters-toggle[aria-expanded]`, `#search.is-unreadable`, and
-    `.btn.is-done` on Copy after copying;
+    `.btn.is-done` on Copy after copying, and `.is-shown` on `#copy-note`;
+  - `.is-still` and `.is-moving` on `#backdrop`, set by the motion switch;
   - the classes `hero-front`, `hero-results` and `backdrop`, which the states above read.
 - **Classes the scripts add**: `check-row` (with a `count` span), `checks`, `sub`,
   `occupation-group`, `offers`, `offer`, `offer__title`, `offer__meta`, `offer__tags`, `tag`,
@@ -104,8 +110,10 @@ the `<!-- language menu -->` mark:
   border darker); downloading (a rounded progress bar and a skeleton card); the stale-pile
   notice.
 - The CV line: idle, reading (spinner), ticked (accent), nothing found, file could not be read.
-- The code line: empty (placeholder), showing the current code, Copied (accent border).
-- The backdrop: always drifting; resting in a hidden tab, still under reduced motion. It is
+- The code line: empty (placeholder), showing the code of the ticks, copied (a tick on the icon
+  and "Copied to the clipboard" beside it).
+- The backdrop: drifting while the switch is on; resting in a hidden tab; the switch starts off
+  under reduced motion. It is
   decoration: nothing in it is a link, and it is hidden from screen readers and the pointer.
 
 ## Preview locally

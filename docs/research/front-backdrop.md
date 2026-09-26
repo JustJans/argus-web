@@ -28,8 +28,8 @@ the one with a single column was set aside.
   (<https://www.w3.org/WAI/WCAG22/Understanding/pause-stop-hide.html>), asks that anything that
   moves by itself for more than five seconds alongside other content can be paused, stopped or
   hidden, and its Note 2 extends it to all content on the page, decoration included. The loop
-  the front had before did not meet it either. A pause control, or motion that stops within
-  five seconds, would meet it; that choice is the owner's.
+  the front had before did not meet it either. The owner chose a pause control: the switch in
+  the nav (docs/research/front-controls.md).
 
 ## What this site does
 

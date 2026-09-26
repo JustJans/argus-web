@@ -26,3 +26,16 @@ export function startBackdrop(box, offers, { row }) {
   stage.append(plane);
   box.replaceChildren(stage);
 }
+
+// ➤ The switch in the nav starts and stops the drift (WCAG 2.2.2: anything that moves by itself
+// ➤ can be paused). It starts off when the system asks for reduced motion; turned on, the
+// ➤ backdrop drifts all the same, as the visitor chose. Nothing is stored.
+export function wireMotion(input, box) {
+  const set = on => {
+    input.checked = on;
+    box.classList.toggle('is-still', !on);
+    box.classList.toggle('is-moving', on);
+  };
+  set(!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+  input.addEventListener('change', () => set(input.checked));
+}
