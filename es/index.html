@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="es" data-root="../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="Empleo de ingeniería, informática y técnico en toda Europa, filtrado en tu propio dispositivo. Sin cuenta. Sin intermediarios. Sin rodeos.">
+  <title>Argus Web</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%235980a6'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='sans-serif' font-size='18' font-weight='700' fill='%23f2f2f3'%3EA%3C/text%3E%3C/svg%3E">
+  <script>if (matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="../v/0c01d2ee97/style.css">
+<link rel="alternate" hreflang="en" href="https://justjans.github.io/argus-web/">
+  <link rel="alternate" hreflang="es" href="https://justjans.github.io/argus-web/es/">
+  <link rel="alternate" hreflang="x-default" href="https://justjans.github.io/argus-web/">
+</head>
+<body>
+<div class="relative isolate min-h-screen overflow-hidden">
+<div id="backdrop" class="backdrop" aria-hidden="true"></div>
+<div class="mx-auto flex max-w-[1200px] flex-col px-5 pb-10 md:px-12 md:pb-16">
+  <nav class="flex items-center gap-3.5 pt-3.5 md:pt-[18px]" aria-label="Sitio">
+    <a class="mr-auto font-head text-lg font-semibold uppercase tracking-[.04em] text-ink no-underline hover:text-ink md:text-xl" href="./">Argus Web</a>
+    <label class="motion-switch relative inline-flex h-6 w-11 flex-none cursor-pointer items-center" title="Movimiento del fondo"><input id="motion" type="checkbox" role="switch" aria-label="Movimiento del fondo" class="peer sr-only" checked><span class="absolute inset-0 rounded-full border border-line bg-surface transition-colors duration-200 peer-hover:border-ink/40 peer-checked:bg-n-200 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent"></span><span class="absolute left-1 size-4 rounded-full border-[1.5px] border-ink bg-transparent transition-all duration-200 ease-out peer-checked:translate-x-5 peer-checked:bg-ink"></span></label>
+    <a class="hidden text-sm text-ink no-underline hover:text-accent md:inline" href="legal/privacy.html">Privacidad</a>
+    <a class="text-sm text-ink no-underline hover:text-accent" href="legal/sources.html">Fuentes</a>
+    <details class="relative -mx-[11px]"><summary class="flex min-h-8 cursor-pointer list-none items-center gap-1.5 rounded-full border border-transparent px-2.5 text-sm font-semibold tracking-[.04em] text-ink hover:border-line" aria-label="Idioma"><svg width="16" height="11" viewBox="0 0 16 11" class="block flex-none rounded-[2px] opacity-80 ring-1 ring-ink/15" aria-hidden="true"><rect width="16" height="11" fill="#c60b1e"/><rect y="2.75" width="16" height="5.5" fill="#ffc400"/></svg>ES<svg class="chev chev-down hidden size-3 text-n-600 transition-transform md:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="absolute right-0 top-full z-10 mt-1 flex min-w-[140px] flex-col rounded-xl border border-line bg-ground p-1 shadow-[0_4px_16px_rgba(29,31,32,.08)]"><a class="nav__lang flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-n-800 no-underline hover:bg-ink/[.06] hover:text-ink" href="../" hreflang="en" lang="en"><svg width="16" height="11" viewBox="0 0 60 40" preserveAspectRatio="none" class="block flex-none rounded-[2px] opacity-80 ring-1 ring-ink/15" aria-hidden="true"><rect width="60" height="40" fill="#012169"/><path d="M0 0l60 40M60 0L0 40" stroke="#fff" stroke-width="8"/><path d="M0 0l60 40M60 0L0 40" stroke="#c8102e" stroke-width="3"/><path d="M30 0v40M0 20h60" stroke="#fff" stroke-width="12"/><path d="M30 0v40M0 20h60" stroke="#c8102e" stroke-width="7"/></svg>English</a><span aria-current="true" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-ink"><svg width="16" height="11" viewBox="0 0 16 11" class="block flex-none rounded-[2px] opacity-80 ring-1 ring-ink/15" aria-hidden="true"><rect width="16" height="11" fill="#c60b1e"/><rect y="2.75" width="16" height="5.5" fill="#ffc400"/></svg>Español</span></div></details>
+    <button id="theme" type="button" class="-mx-2 inline-flex size-8 flex-none cursor-pointer items-center justify-center rounded-full border border-transparent bg-transparent text-ink hover:border-line" aria-label="Modo oscuro" aria-pressed="false" title="Claro u oscuro"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="theme-moon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="theme-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg></button>
+  </nav>
+
+  <header class="hero-front flex flex-col items-center gap-2 pt-14 text-center md:gap-3 md:pt-24">
+    <h1 class="m-0 flex flex-col items-center gap-2 font-wide md:gap-3"><span id="hero-count" class="text-[52px] font-bold leading-none tabular-nums text-ink [font-stretch:108%] md:text-[76px] md:tracking-[-.01em]">…</span><span class="whitespace-nowrap text-[17px] font-medium text-n-800 [font-stretch:104%] md:text-[22px] md:tracking-[.01em]">Ofertas publicadas hoy</span></h1>
+  </header>
+  <header class="hero-results flex-col items-center gap-1 pt-10 text-center md:gap-2 md:pt-14">
+    <p class="m-0 flex items-baseline gap-2.5 font-wide md:gap-3"><span id="hero-match" class="text-[40px] font-bold leading-none tabular-nums text-ink [font-stretch:108%] md:text-[52px]"></span><span id="hero-match-text" class="text-[17px] font-medium text-n-800 [font-stretch:104%] md:text-[22px]"></span></p>
+    <p id="hero-stats" class="m-0 text-[13px] tabular-nums text-n-700"></p>
+  </header>
+
+  <div class="mx-auto mt-9 flex w-full max-w-[860px] flex-col md:mt-12">
+    <form id="search" role="search" class="flex h-14 items-center gap-2 rounded-full border border-line bg-ground pr-1.5 pl-4 shadow-[0_2px_12px_rgba(29,31,32,.05)] transition-colors focus-within:border-accent hover:border-ink/40 md:h-16 md:gap-3 md:pr-2 md:pl-6" autocomplete="off">
+      <svg class="hidden flex-none text-n-600 md:block" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="q" class="h-full min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-n-600 focus-visible:outline-none md:text-lg" name="q" type="search" spellcheck="false" placeholder="Puesto, empresa, ciudad o pega tu código" aria-label="Buscar">
+      <button class="hidden h-12 cursor-pointer rounded-full bg-accent px-8 font-head text-base font-semibold uppercase tracking-[.06em] text-ground hover:bg-accent-600 active:bg-accent-700 md:inline-flex md:items-center" type="submit">Buscar</button>
+      <button class="inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-full bg-accent text-ground hover:bg-accent-600 active:bg-accent-700 md:hidden" type="submit" aria-label="Buscar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>
+    </form>
+    <p id="bar-note" class="m-0 mt-2 px-5 text-[13px] text-n-800" aria-live="polite" hidden></p>
+
+    <div class="mt-3 flex min-h-9 flex-wrap items-center justify-center gap-2 px-4">
+      <button id="filters-toggle" class="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-line bg-transparent px-4 text-sm font-medium text-ink hover:bg-ink/[.05] md:min-h-9" type="button" aria-expanded="false" aria-controls="filters"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg><span id="filters-toggle-label">Filtros</span><svg class="chev-down size-3.5 text-n-600 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <label id="radius-pill" class="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-line px-3 text-sm font-medium text-ink hover:bg-ink/[.05] md:min-h-9" hidden><select id="radius" class="cursor-pointer bg-transparent text-sm font-medium text-ink outline-none" aria-label="Distancia"><option value="25">25 km</option><option value="50">50 km</option><option value="100" selected>100 km</option><option value="200">200 km</option></select></label>
+    </div>
+
+    <div id="filters" class="mt-3 overflow-hidden rounded-3xl border border-line bg-ground text-left md:mt-4" hidden>
+      <div class="flex flex-wrap items-center gap-2.5 border-b border-line bg-surface px-4 py-4 md:gap-3 md:px-6">
+        <label for="code-input" class="basis-full text-xs font-semibold uppercase tracking-[.08em] text-accent-700 md:basis-auto md:text-[13px]">Tu código</label>
+        <input id="code-input" class="min-h-11 min-w-0 flex-1 rounded-full border border-line bg-ground px-4 font-mono text-sm text-ink placeholder:text-n-600 hover:border-ink/40 focus:border-accent focus:outline-none md:min-h-9" type="text" spellcheck="false" placeholder="aparece al filtrar" aria-label="Tu código">
+        <span class="relative inline-flex flex-none"><span id="copy-note" class="copy-note" role="status"></span><button id="copy-code" class="btn btn-secondary size-11 md:size-9" type="button" aria-label="Copiar el código" title="Copiar el código"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="copy-icon"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="copied-icon"><path d="M20 6 9 17l-5-5"/></svg></button></span>
+        <span class="basis-full text-[13px] leading-5 text-n-700">Tus filtros, empaquetados. Pégalo en la barra de búsqueda en cualquier visita para recuperarlos.</span>
+      </div>
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-hair px-4 py-3 md:px-6">
+        <div class="flex flex-wrap items-center gap-3">
+          <label class="btn btn-secondary relative min-h-11 px-4 md:min-h-9 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>Leer mi CV<input id="cv-file" type="file" accept=".pdf,.txt,.md,text/plain,application/pdf" class="sr-only"></label>
+          <span id="cv-status" data-state="idle" aria-live="polite">Un PDF o un archivo de texto, leído en este dispositivo: marca tus ocupaciones, titulaciones e idiomas.</span>
+        </div>
+        <button id="filters-clear" class="min-h-11 cursor-pointer rounded-full border-0 bg-transparent px-3 text-sm font-medium text-accent-700 hover:bg-accent/10 md:min-h-8" type="button">Borrar</button>
+      </div>
+      <form id="filters-form" autocomplete="off">
+        <div class="px-4 pt-5 md:columns-4 md:gap-8 md:px-6">
+          <div class="filter-group" data-group="country">
+            <div class="group-name">País</div>
+            <div class="checks">
+              <div id="countries-pick" class="checks"></div>
+              <label class="check-row"><input type="checkbox" id="remote" name="remote"><span>En remoto, sin país fijo</span></label>
+            </div>
+          </div>
+          <div class="filter-group" data-group="occupations">
+            <div class="group-name">Ocupaciones</div>
+            <div id="families-pick"></div>
+          </div>
+          <div class="filter-group" data-group="posted">
+            <div class="group-name">Publicada</div>
+            <div class="checks">
+              <label class="check-row"><input type="radio" name="d" value="" checked><span>Cualquier fecha</span></label>
+              <label class="check-row"><input type="radio" name="d" value="1"><span>Últimas 24 horas</span></label>
+              <label class="check-row"><input type="radio" name="d" value="3"><span>Últimos 3 días</span></label>
+              <label class="check-row"><input type="radio" name="d" value="7"><span>Últimos 7 días</span></label>
+              <label class="check-row"><input type="radio" name="d" value="30"><span>Últimos 30 días</span></label>
+              <label class="check-row"><input type="radio" name="d" value="90"><span>Últimos 90 días</span></label>
+            </div>
+          </div>
+          <div class="filter-group" data-group="mode">
+            <div class="group-name">Modalidad</div>
+            <div class="checks">
+              <label class="check-row"><input type="checkbox" name="mode" value="onsite"><span>Presencial</span></label>
+              <label class="check-row"><input type="checkbox" name="mode" value="hybrid"><span>Híbrido</span></label>
+              <label class="check-row"><input type="checkbox" name="mode" value="remote"><span>Remoto</span></label>
+            </div>
+          </div>
+          <div class="filter-group" data-group="level">
+            <div class="group-name">Nivel</div>
+            <div id="levels-pick" class="checks"></div>
+            <label class="field"><span>Que pidan como mucho</span>
+              <select id="max-years" class="input"><option value="">cualquier experiencia</option><option value="1">1 año</option><option value="2">2 años</option><option value="3">3 años</option><option value="5">5 años</option><option value="7">7 años</option><option value="10">10 años</option><option value="15">15 años</option></select>
+            </label>
+          </div>
+          <div class="filter-group" data-group="languages">
+            <div class="group-name">Idiomas</div>
+            <div id="languages-pick" class="checks"></div>
+          </div>
+          <div class="filter-group" data-group="degrees">
+            <div class="group-name">Titulaciones</div>
+            <div id="degrees-pick" class="checks"></div>
+          </div>
+        </div>
+        <div class="grid gap-5 border-t border-hair px-4 py-5 md:grid-cols-3 md:gap-6 md:px-6">
+          <div class="filter-group m-0 flex flex-col gap-1.5" data-group="pay">
+            <label for="min-pay" class="group-name m-0">Sueldo mínimo</label>
+            <select id="min-pay" class="min-h-11 rounded-full border border-line bg-ground px-4 text-sm text-ink hover:border-ink/40 focus:border-accent focus:outline-none md:min-h-10"><option value="">Cualquier sueldo</option><option value="20">20.000 € al año</option><option value="30">30.000 € al año</option><option value="40">40.000 € al año</option><option value="50">50.000 € al año</option><option value="60">60.000 € al año</option><option value="80">80.000 € al año</option><option value="100">100.000 € al año</option></select>
+            <label class="check-row"><input type="checkbox" id="pay-stated"><span>Solo ofertas que indican el sueldo</span></label>
+          </div>
+          <div class="filter-group m-0 flex flex-col gap-1.5" data-group="roles">
+            <label for="roles" class="group-name m-0">Palabras del título</label>
+            <input id="roles" class="min-h-11 rounded-full border border-line bg-transparent px-4 text-sm text-ink placeholder:text-n-600 hover:border-ink/40 focus:border-accent focus:outline-none md:min-h-10" type="text" placeholder="deben salir en el título">
+          </div>
+          <div class="filter-group m-0 flex flex-col gap-1.5" data-group="exclude">
+            <label for="no-words" class="group-name m-0">Excluir</label>
+            <input id="no-words" class="min-h-11 rounded-full border border-line bg-transparent px-4 text-sm text-ink placeholder:text-n-600 hover:border-ink/40 focus:border-accent focus:outline-none md:min-h-10" type="text" placeholder="palabras que descartan una oferta">
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <p id="stale" class="mx-auto mt-8 mb-0 flex w-full max-w-[860px] items-start gap-2.5 rounded-2xl bg-accent-100 px-5 py-3.5 text-sm leading-[22px] text-accent-900" hidden><svg class="mt-[3px] flex-none text-accent-700" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span id="stale-text"></span></p>
+
+  <section id="results" class="mx-auto mt-10 w-full max-w-[860px] md:mt-12" hidden>
+    <div class="mb-3 flex flex-wrap items-baseline justify-between gap-4 px-1 md:px-4">
+      <span class="text-[13px] font-semibold uppercase tracking-[.08em] text-accent-700">Resultados</span>
+      <p id="results-status" class="m-0 text-[13px] tabular-nums text-n-700" aria-live="polite"></p>
+    </div>
+    <div id="progress" class="progress" hidden><i></i></div>
+    <div id="skeleton" class="skeleton" aria-hidden="true" hidden><i style="width:55%"></i><i style="width:35%"></i><i style="width:70%"></i></div>
+    <div id="list"></div>
+    <div id="debug" hidden></div>
+    <p class="m-0 mt-6 text-center text-[13px] leading-5 text-n-700">Cada oferta enlaza a su fuente.</p>
+  </section>
+</div>
+</div>
+<script type="module" src="../v/0c01d2ee97/main.js"></script>
+</body>
+</html>

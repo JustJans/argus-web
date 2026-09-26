@@ -1,0 +1,15 @@
+{
+  "_about": "Ready-made exclusions the site offered until September 2026 (one-tap chips adding title terms to the negatives). No longer shown or applied: one word cut good offers, and the visitor types words to avoid instead. Kept because profile codes still name them by their position. APPEND ONLY.",
+  "vetoes": [
+    { "id": "sales", "label": "Sales", "es": "Ventas", "terms": ["sales", "comercial", "vendedor", "vendedora", "vendeur", "vendeuse", "commercial", "vertrieb", "verkoop", "saljare", "selger", "account manager", "business developer"] },
+    { "id": "internships", "label": "Internships", "es": "Prácticas", "terms": ["intern", "internship", "trainee", "becario", "becaria", "practicas", "stagiaire", "stage", "praktikant", "praktikum", "werkstudent", "stagiair", "praktikant", "laerling"] },
+    { "id": "software", "label": "Pure software", "es": "Solo software", "terms": ["developer", "software engineer", "programador", "programadora", "developpeur", "entwickler", "ontwikkelaar", "utvecklare", "utvikler", "full stack", "frontend", "backend", "devops", "data scientist"] },
+    { "id": "management", "label": "Management", "es": "Dirección", "terms": ["manager", "director", "directora", "head of", "chief", "jefe", "jefa", "directeur", "directrice", "leiter", "leiterin", "hoofd", "sjef", "leder"] },
+    { "id": "teaching", "label": "Teaching", "es": "Docencia", "terms": ["teacher", "lecturer", "profesor", "profesora", "docente", "enseignant", "enseignante", "lehrer", "lehrerin", "dozent", "docent", "larare", "laerer"] },
+    { "id": "night-shifts", "label": "Night shifts", "es": "Turnos de noche", "terms": ["night shift", "nights", "turno de noche", "nocturno", "nocturna", "nuit", "nachtschicht", "nachtdienst", "nattskift", "nattjobb"] },
+    { "id": "seagoing", "label": "Seagoing", "es": "Embarcado", "terms": ["roustabout", "roughneck", "seafarer", "onboard", "on board", "embarcado", "embarque", "embarque", "navigant", "offshore rotation", "rotation"] },
+    { "id": "defence", "label": "Defence", "es": "Defensa", "terms": ["defence", "defense", "military", "militar", "militaire", "armee", "bundeswehr", "defensie", "forsvaret", "forsvar", "weapons", "armamento"] },
+    { "id": "temp-agency", "label": "Temp agencies", "es": "ETT", "terms": ["temporary", "temporal", "ett", "interim", "zeitarbeit", "uitzend", "bemanning", "vikariat", "vikar"] },
+    { "id": "consulting", "label": "Consultancies", "es": "Consultoras", "terms": ["consultant", "consultor", "consultora", "consultoria", "consulting", "berater", "beraterin", "adviseur", "konsult", "konsulent"] }
+  ]
+}
